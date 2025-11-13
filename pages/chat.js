@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { marked } from 'marked';
 
 export default function Chat() {
   const [models, setModels] = useState([]);
@@ -8,6 +9,7 @@ export default function Chat() {
   const [msgs, setMsgs] = useState([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  const [stream, setStream] = useState(true);
 
   useEffect(() => {
     (async () => {
@@ -41,14 +43,40 @@ export default function Chat() {
     setInput('');
 
     try {
-      const r = await fetch('/api/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ model, messages: next }),
-      });
-      const j = await r.json();
-      const content = j?.completion?.choices?.[0]?.message?.content || j?.error || '(no content)';
-      setMsgs(prev => [...prev, { role: 'assistant', content }]);
+      if (!stream) {
+        const r = await fetch('/api/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ model, messages: next }),
+        });
+        const j = await r.json();
+        const content = j?.completion?.choices?.[0]?.message?.content || j?.error || '(no content)';
+        setMsgs(prev => [...prev, { role: 'assistant', content }]);
+      } else {
+        // streaming
+        setMsgs(prev => [...prev, { role: 'assistant', content: '' }]);
+        const res = await fetch('/api/chat?stream=1', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ model, messages: next }),
+        });
+        const reader = res.body.getReader();
+        const decoder = new TextDecoder();
+        let done = false;
+        while (!done) {
+          const chunk = await reader.read();
+          done = chunk.done;
+          if (chunk.value) {
+            const text = decoder.decode(chunk.value);
+            setMsgs(prev => {
+              const arr = [...prev];
+              const last = arr[arr.length - 1];
+              if (last && last.role === 'assistant') last.content += text;
+              return arr;
+            });
+          }
+        }
+      }
     } catch (e) {
       setError(String(e.message || e));
     } finally {
@@ -83,12 +111,16 @@ export default function Chat() {
         {msgs.map((m, i) => (
           <div key={i} style={{ padding: '8px 0', borderBottom: '1px solid #eee' }}>
             <strong>{m.role === 'user' ? 'You' : m.role === 'assistant' ? 'Assistant' : 'System'}:</strong>
-            <div style={{ whiteSpace: 'pre-wrap' }}>{m.content}</div>
+            <div style={{ whiteSpace: 'pre-wrap' }} dangerouslySetInnerHTML={{ __html: m.role === 'assistant' ? marked.parse(m.content || '') : (m.content || '').replace(/&/g,'&amp;').replace(/</g,'&lt;') }} />
           </div>
         ))}
       </section>
 
-      <section style={{ display: 'flex', gap: 8, marginTop: 12 }}>
+      <section style={{ display: 'flex', gap: 8, marginTop: 12, alignItems: 'center' }}>
+        <label style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <input type="checkbox" checked={stream} onChange={e => setStream(e.target.checked)} />
+          Stream
+        </label>
         <input
           value={input}
           onChange={(e) => setInput(e.target.value)}

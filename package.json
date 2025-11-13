@@ -34,6 +34,7 @@
     "vibe": "cli.cjs"
   },
   "scripts": {
+    "smoke": "node scripts/smoke.cjs",
     "build:bin": "pkg -t node18-linux-x64,node18-macos-x64,node18-win-x64 --out-path dist cli.cjs",
     "release:check": "node -e \"console.log('Tag to release, e.g., v1.0.0')\"",
     "test": "echo \"Error: no test specified\" && exit 1",
@@ -47,6 +48,7 @@
     "chalk": "^5.6.2",
     "fast-glob": "^3.3.3",
     "inquirer": "^12.11.1",
+    "marked": "^17.0.0",
     "next": "^16.0.2",
     "ora": "^9.0.0",
     "picocolors": "^1.1.1",

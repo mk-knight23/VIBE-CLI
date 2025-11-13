@@ -22,6 +22,11 @@ Install (Option B: Prebuilt binaries via Releases)
 Note: replace `your-username/vibe-cli` with your actual GitHub repo path.
 
 Usage
+
+Smoke test
+- Ensure OPENROUTER_API_KEY is set, then: `npm run smoke`
+- Prints a short assistant reply snippet
+
 - Set your API key (recommended):
   - macOS/Linux: `export OPENROUTER_API_KEY="sk-or-..."`
   - Windows PowerShell: `setx OPENROUTER_API_KEY "sk-or-..."` (restart terminal)
