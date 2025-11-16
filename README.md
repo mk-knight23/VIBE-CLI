@@ -8,7 +8,63 @@ This repository now consists of three independent packages:
 
 Each package ships with its own `package.json` and release lifecycle. The root repo acts only as a meta container (no workspaces).
 
+### Quick Links
+- Versioning Strategy: See [`VERSIONING.md`](VERSIONING.md:1)
+- Full Publish Guide (manual + CI): See [`PUBLISHING.md`](PUBLISHING.md:1)
+- CLI Entry: [`vibe-cli/bin/vibe.cjs`](vibe-cli/bin/vibe.cjs:1)
+- Web Root Page: [`vibe-web/src/app/page.tsx`](vibe-web/src/app/page.tsx:1)
+- Extension Activation: [`vibe-code/src/extension.ts`](vibe-code/src/extension.ts:1)
+
 ---
+
+## Architecture Overview
+```
+                +-------------------+             +---------------------------+
+                |   Vibe CLI        |  OpenRouter |  OpenRouter API (Free)     |
+                |  (vibe-cli)       |<----------->|  Models (Free tier only)   |
+                |  Commands: chat,  |             +---------------------------+
+                |  generate,        |
+                |  refactor, debug, |             +---------------------------+
+                |  test, git, agent |<--(planned)-> External Dev Tools (Future)
+                +---------+---------+
+                          |
+                          | File diffs / ops (local FS)
+                          v
+                   +--------------+
+                   | User Project |
+                   | Source Files |
+                   +--------------+
+
+                   +-------------------------+
+                   |        Vibe Web         |
+                   |    (vibe-web, Next.js)  |
+                   |  Marketing + Docs UI    |
+                   +-----------+-------------+
+                               |
+                               | Links / Install Guides
+                               v
+                 +-------------------------------+
+                 |        Vibe Code Extension    |
+                 |       (vibe-code, VSIX)       |
+                 |  In-Editor Chat / Orchestrator|
+                 |  Diff Suggestions / Memory    |
+                 +---------------+---------------+
+                                 |
+                                 | Applies vetted diffs via VS Code APIs
+                                 v
+                           +-----------+
+                           | Workspace |
+                           +-----------+
+```
+
+Key data/control flows:
+- CLI ↔ OpenRouter: structured task prompts + model rotation (TASK_MODEL_MAPPING).
+- Extension ↔ OpenRouter: streaming completions (see [`vibe-code/src/llmService.ts`](vibe-code/src/llmService.ts:1)).
+- Extension ↔ Workspace: diff preview, backup & rollback.
+- Web: static docs referencing latest package versions (no runtime model calls yet).
+
+Legacy folder layout (single root) has been superseded by three isolated package subdirectories: `vibe-cli/`, `vibe-web/`, `vibe-code/`.
+
 
 ## 1. Top-Level Directory Structure
 
@@ -160,9 +216,9 @@ Each package maintains its own semantic version:
 
 | Package | File | Version Source |
 |---------|------|----------------|
-| Vibe CLI | [`vibe-cli/package.json`](vibe-cli/package.json:1) | `"version": "1.0.6"` |
-| Vibe Web | [`vibe-web/package.json`](vibe-web/package.json:1) | `"version": "0.1.0"` |
-| Vibe Code | [`vibe-code/package.json`](vibe-code/package.json:1) | `"version": "0.3.0"` |
+| Vibe CLI | [`vibe-cli/package.json`](vibe-cli/package.json:1) | `"version": "1.0.7"` |
+| Vibe Web | [`vibe-web/package.json`](vibe-web/package.json:1) | `"version": "0.1.1"` |
+| Vibe Code | [`vibe-code/package.json`](vibe-code/package.json:1) | `"version": "0.3.1"` |
 
 Root meta file [`package.json`](package.json:1) is private and does not declare dependencies.
 
@@ -208,6 +264,30 @@ git push origin vibe-cli-v1.0.7 vibe-web-v0.1.1 vibe-code-v0.3.1
 - Re-tag corrections: delete remote tag (`git push --delete origin vibe-cli-v1.0.7`), delete local tag (`git tag -d vibe-cli-v1.0.7`), reapply and push.
 
 For a future unified meta release, a separate `meta-vX.Y.Z` tag could be added referencing coordinated package bumps (not implemented yet).
+
+### Legacy Tag Prefix Deprecation
+Previously used tag prefixes (`cli-vX.Y.Z`, `web-vX.Y.Z`, `code-vX.Y.Z`) are **deprecated** and must not be reused.
+They are replaced by:
+- `vibe-cli-vX.Y.Z`
+- `vibe-web-vX.Y.Z`
+- `vibe-code-vX.Y.Z`
+
+Accidental creation of an old-style tag will:
+1. Not trigger any workflow (prefix mismatch).
+2. Potentially confuse release history.
+
+If you create one by mistake:
+```bash
+git push --delete origin cli-v1.0.6
+git tag -d cli-v1.0.6
+# Recreate correctly
+git tag vibe-cli-v1.0.6
+git push origin vibe-cli-v1.0.6
+```
+
+Reference docs:
+- Detailed strategy: [`VERSIONING.md`](VERSIONING.md:1)
+- End-to-end publishing: [`PUBLISHING.md`](PUBLISHING.md:1)
 
 ---
 
