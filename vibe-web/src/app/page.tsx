@@ -25,7 +25,7 @@ export default function Home() {
       <section className="relative">
         <div className="mx-auto max-w-3xl text-center mb-12">
           <h2 className="font-headline font-semibold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-primary via-accent to-primary text-[2.4rem] md:text-[3rem]">
-            Explore
+            Explore VIBE
           </h2>
           <p className="mt-6 text-lg leading-relaxed text-muted-foreground">
             Navigate focused pages for installation, onboarding, command reference, features, documentation, and support.
