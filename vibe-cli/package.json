@@ -1,6 +1,6 @@
 {
   "name": "vibe-cli",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "description": "Free, privacy-first AI coding assistant CLI (chat, codegen, refactor, debug, test, git, agent).",
   "author": "mk-knight23 <noreply@users.noreply.github.com>",
   "license": "MIT",
