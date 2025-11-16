@@ -1,498 +1,381 @@
-# Vibe CLI (v1.0.6) — Unified Documentation
+# Vibe Repository — Multi-Package Layout (Vibe CLI / Vibe Web / Vibe Code)
 
-A free, privacy‑first AI coding assistant focused on terminal‑centric workflows. Vibe routes to community free OpenRouter models using a Bring Your Own Key strategy, emphasizes explicit user control (no silent writes), and provides modular developer tooling (code generation, refactor, debug, test, git assist) plus a lightweight marketing/onboarding web surface.
+This repository now consists of three independent packages:
 
-## 1. High-Level Purpose
+1. Vibe CLI (Primary): `./vibe-cli` — interactive terminal assistant (chat, codegen, refactor, debug, test, git, agent).
+2. Vibe Web (Marketing & Docs Surface): `./vibe-web` — Next.js site for onboarding, feature overview, future MDX docs.
+3. Vibe Code (VS Code Extension): `./vibe-code` — in-editor chat, agent orchestration, diff workflow.
 
-- Local-first terminal workflows
-- Explicit approval for any file mutations (plan → preview diff → confirm → apply)
-- Defensive-only stance (refuses malicious or exploit instructions)
-- Free model rotation for resilience against per-model rate limits
-- Git-native automation (commit messages, PR descriptions, review context)
-- Accessible onboarding & documentation via modular Next.js site
+Each package ships with its own `package.json` and release lifecycle. The root repo acts only as a meta container (no workspaces).
 
-## 2. What’s New in v1.0.6
+---
 
-- Enhanced AI Agent system (better step/context management)
-- Specialized developer tools: codegen, debug, refactor, testgen, gittools, multiedit
-- Improved OpenRouter integration & model selection
-- Enhanced API key management flow
-- Automated build & publish pipeline (GitHub Actions)
-- Documentation consolidation finalized (removed stale STRUCTURE.md reference in package distribution list)
-- License attribution corrected to mk-knight23
-- Dependency pruning: removed unused axios, chalk, conf, fs-extra, fuse.js, marked, sharp, xterm, xterm-addon-fit; replaced with native fetch + picocolors
-See consolidated changelog summary below.
+## 1. Top-Level Directory Structure
 
-## 3. Installation
-
-### Quick Install (Recommended)
-
-macOS / Linux:
-```bash
-# Auto-detect latest version
-curl -fsSL https://raw.githubusercontent.com/mk-knight23/vibe-cli/main/install.sh | bash
-
-# Install specific version
-VERSION=v1.0.5 curl -fsSL https://raw.githubusercontent.com/mk-knight23/vibe-cli/main/install.sh | bash
+```
+.
+├─ package.json            # Meta repo manifest (no dependencies)
+├─ LICENSE
+├─ README.md               # This file (multi-package overview)
+├─ vibe-cli/               # Vibe CLI package
+│  ├─ package.json
+│  ├─ cli.cjs              # Interactive chat REPL entry
+│  ├─ bin/
+│  │  └─ vibe.cjs          # Command router (vibe <command>)
+│  ├─ install.sh           # Optional installer bootstrap
+│  ├─ tools.cjs            # Web search & docs helpers
+│  ├─ tsconfig.cli.json
+│  ├─ core/
+│  │  ├─ apikey.ts
+│  │  ├─ apikey.cjs
+│  │  ├─ openrouter.ts
+│  │  ├─ openrouter.cjs
+│  │  ├─ index.cjs
+│  ├─ agent/
+│  ├─ code/
+│  ├─ edit/
+│  ├─ git/
+│  ├─ refactor/
+│  ├─ debug/
+│  ├─ test/
+├─ vibe-web/               # Next.js marketing/docs site
+│  ├─ package.json
+│  ├─ next.config.mjs
+│  ├─ tailwind.config.cjs
+│  ├─ postcss.config.cjs
+│  ├─ next-env.d.ts
+│  ├─ src/
+│     ├─ app/
+│     ├─ components/
+│     ├─ hooks/
+│     ├─ lib/              # Shared utilities (utils.ts, placeholder-images.*)
+├─ vibe-code/              # Vibe Code (VS Code extension) package
+│  ├─ package.json
+│  ├─ tsconfig.json
+│  ├─ src/
+│  ├─ media/
+│  ├─ README.md
 ```
 
-Windows:
-Download latest release asset `vibe-win-x64.exe` and add to PATH as `vibe`.
+---
 
-### Install via npm
+## 2. Package Roles
+
+| Package | Purpose | Publish Target | Primary Entry |
+|---------|---------|----------------|---------------|
+| Vibe CLI (`vibe-cli`) | Developer terminal assistant | npm (`vibe-cli`) | [`vibe-cli/bin/vibe.cjs`](vibe-cli/bin/vibe.cjs:1) |
+| Vibe Web (`vibe-web`) | Documentation & marketing | Vercel / static host | [`vibe-web/src/app/page.tsx`](vibe-web/src/app/page.tsx:1) |
+| Vibe Code (`vibe-code`) | IDE integration | VS Code Marketplace | [`vibe-code/src/extension.ts`](vibe-code/src/extension.ts:1) |
+
+---
+
+## 3. Installation & Usage
+
+### 3.1 CLI (Primary)
+
+Global install (npm):
 ```bash
-# Global install
 npm install -g vibe-cli
-
-# GitHub source
-npm i -g github:mk-knight23/vibe-cli#v1.0.5
-
-# One-off run
-npx vibe-cli
+vibe help
 ```
 
-## 4. Quick Start
+Direct chat:
+```bash
+vibe chat "Hello"
+vibe model list
+```
 
-1. Configure API Key
+Key configuration:
 ```bash
 vibe config set openrouter.apiKey sk-or-...
 export OPENROUTER_API_KEY="sk-or-..."
 ```
 
-2. Start chatting
+Core commands:
 ```bash
-vibe chat "Hello, help me code!"
-vibe model use tng/deepseek-r1t2-chimera:free
+vibe generate "Build a Node HTTP server"
+vibe refactor src/**/*.js --type optimization
+vibe debug error.log
+vibe test generate src/utils.ts
+vibe git commit
+vibe agent "Improve logging system" --auto
 ```
 
-## 5. Core Commands
+### 3.2 Web
 
-Basic usage:
+Local development:
 ```bash
-vibe                 # Start interactive chat
-vibe chat "message"  # One-off message
-vibe help            # List commands
-```
-
-AI agent & tooling:
-```bash
-vibe agent start
-vibe codegen
-vibe debug
-vibe refactor
-vibe testgen
-vibe gittools
-vibe multiedit
-```
-
-Model management:
-```bash
-vibe model list
-vibe model use <name>
-vibe cost
-```
-
-Development:
-```bash
-vibe plan "feature"
-vibe fix
-vibe test
-vibe run --yolo      # Auto-approval (use carefully)
-```
-
-Configuration:
-```bash
-vibe config set <key> <value>
-vibe theme set light
-vibe resume
-```
-
-## 6. Advanced Feature Domains
-
-- File operations (read/write/edit/move/delete with safeguards)
-- Glob pattern context injection
-- Batch multi-file diff application
-- Web search integration (DuckDuckGo Instant Answer, docs snippets)
-- Shell command execution & output injection
-- Session management & cost tracking
-- Autonomous bounded agent tasks (step-limited, approval-gated)
-
-## 7. Architecture Overview
-
-```mermaid
-graph TB
-    CLI[CLI Commands] --> Router[Model Router]
-    REPL[Chat REPL] --> Router
-    Watch[File Watcher] --> Agent[Agent Engine]
-
-    Router --> Models[Free Model Pool]
-    Router --> Cache[Response Cache]
-    Models --> OpenRouter[OpenRouter API]
-
-    Agent --> CodeGen[Code Generator]
-    Agent --> Complete[Code Completion]
-    Agent --> Diff[Diff Engine]
-
-    CodeGen --> FileIO[File I/O]
-    Complete --> FileIO
-    Diff --> FileIO
-    FileIO --> Git[Git Integration]
-    FileIO --> Test[Test Runner]
-```
-
-## 8. Tech Stack
-
-CLI:
-- Node.js ≥ 18
-- CommonJS modules with potential TypeScript migration plan
-- simple-git, native fetch (node-fetch fallback), picocolors (replaces chalk), ora, inquirer
-
-Web:
-- Next.js App Router
-- React 19
-- Tailwind CSS v4 + CSS variables
-- Radix UI primitives
-- Lucide icons
-- Embla carousel
-
-## 9. Unified Project Structure (Post-Cleanup)
-
-```
-bin/
-  vibe.cjs
-cli/
-  core/
-    apikey.cjs
-    openrouter.cjs
-    index.cjs
-  agent/
-    agent.cjs
-  code/
-    codegen.cjs
-    multiedit.cjs
-  git/
-    gittools.cjs
-  refactor/
-    refactor.cjs
-  debug/
-    debug.cjs
-  test/
-    testgen.cjs
-core/
-  placeholder-images.json
-  placeholder-images.ts
-  utils.ts
-src/
-  app/
-    layout.tsx
-    page.tsx
-  components/
-    marketing/
-      hero-section.tsx
-      features-section.tsx
-      capabilities-tabs-section.tsx
-      testimonials-section.tsx
-      pricing-section.tsx
-    quick-start-section.tsx
-    code-block.tsx
-    ui/...
-  hooks/
-    use-toast.ts
-    use-mobile.tsx
-styles/
-  globals.css
-tailwind.config.cjs
-package.json
-LICENSE
-README.md
-```
-
-(Obsolete markdown documents removed; content merged here.)
-
-## 10. Styling & Theming
-
-The project now uses a dark‑first design system centered on true black and deep neutral panels with natural accent gradients. All tokens are defined as CSS variables in [`globals.css`](src/app/globals.css:1) and consumed via Tailwind token mappings in [`tailwind.config.cjs`](tailwind.config.cjs:1). The former duplicate stylesheet (`styles/globals.css`) has been removed to eliminate style conflicts.
-
-### 10.1 Core Color Tokens (HSL components)
-
-| Token | Purpose | HSL (components) |
-|-------|---------|------------------|
-| `--background` | Base page surface | `0 0% 0%` |
-| `--foreground` | Primary text | `0 0% 98%` |
-| `--card` | Raised surfaces (cards, panels) | `220 12% 7%` |
-| `--primary` | Brand azure (buttons, active states) | `200 100% 55%` |
-| `--accent` | Teal secondary accent (gradients, highlights) | `170 82% 46%` |
-| `--secondary` | Muted panel background | `220 16% 18%` |
-| `--muted` | Low‑emphasis text | `220 10% 35%` |
-| `--border` | Standard border stroke | `220 15% 20%` |
-| `--ring` | Focus ring color | `200 100% 55%` |
-| `--destructive` | Error/destructive | `0 74% 46%` |
-
-Gradients and ambient glows are composed with these tokens (e.g. `from-primary to-accent`). Interactive components (cards, tabs, accordions, pricing blocks) apply utility classes `glow-border` and `ambient` introduced in the component layer for subtle hover illumination without adding new functional features.
-
-### 10.2 Typography Scale
-
-Base `html` font-size elevated to `17px`; heading clamps:
-- `h1`: `clamp(2.8rem, 6vw, 3.6rem)`
-- `h2`: `clamp(2.1rem, 4.5vw, 2.8rem)`
-- `h3`: `clamp(1.6rem, 3.5vw, 2.0rem)`
-
-Body copy uses ~1.05rem with 1.6 line-height for readability against true black.
-
-### 10.3 Accessibility & Contrast
-
-Contrast checks were performed against WCAG AA:
-- Foreground (`#FAFAFA` approximated from `--foreground`) vs background (`#000000`) yields ratio > 12:1.
-- Muted text (`--muted` slate tone) vs background retains > 4.5:1 for paragraph size.
-- Gradient button text uses dark foreground `primary-foreground` ensuring > 7:1 against light accents.
-- Focus indicators rely on `--ring` (bright azure) + 2px outline for clear keyboard navigation.
-
-If future light theme support is reintroduced, a parallel variable block can be added beneath `.light` with adjusted border & muted tones. Current header includes a placeholder for theme toggle.
-
-### 10.4 Removal of Redundant Stylesheet
-
-The legacy `styles/globals.css` file was deleted; all styling now consolidates into the App Router global stylesheet to prevent token drift.
-
-### 10.5 Extending the System
-
-To introduce a new semantic color:
-1. Add variable in `:root` of `globals.css`.
-2. Map via Tailwind in `tailwind.config.cjs` under `theme.extend.colors`.
-3. Use `hsl(var(--token-name))` in components for consistent merging with existing utilities.
-
-Do not hardcode hex values in components—favor token references for maintainability and future theme toggling.
-
-## 11. Web Frontend Functional Areas
-
-- Hero section: headline + install snippet
-- Quick Start accordion
-- Features + capabilities tabs
-- Pricing (Free Forever; donation tier placeholder)
-- Testimonials carousel
-- FAQ
-- Planned: MDX docs conversion & dynamic search index
-- Placeholder search (Fuse index removed; future dynamic reintroduction)
-
-## 12. Security & Privacy Principles
-
-- BYO key prevents central credential storage
-- Defensive-only operation model
-- No destructive file operations from web surface
-- Avoid exposing environment variables client-side
-- Plan for additional headers/middleware hardening
-
-## 13. Deployment Workflow (Standard)
-
-Local:
-```bash
+cd vibe-web
 npm install
-npm run typecheck
+npm run dev
+```
+
+Build & start:
+```bash
 npm run build
+npm start
 ```
-Git:
+
+Environment:
+- Set `OPENROUTER_API_KEY` in deployment for any server-side model interactions (future docs pages).
+
+### 3.3 VS Code Extension
+
+Install from source:
 ```bash
-git add .
-git commit -m "feat: update"
-git push origin main
-```
-Vercel:
-- Import repo
-- Set OPENROUTER_API_KEY (Production / Preview)
-- Deploy → verify sections render & theme toggle
-Performance:
-- Lighthouse audit
-- Trim unused UI primitives / CSS
-
-## 14. Operational Maintenance Guidelines
-
-| Task | Frequency | Notes |
-|------|-----------|-------|
-| Dependency audit | Monthly | Remove unused Radix modules |
-| README update | On release | Reflect versions & changes |
-| Model availability check | Weekly | Replace deprecated IDs |
-| Token consistency | Quarterly | Sync CSS vars & Tailwind tokens |
-| Issues triage | Weekly | Label & prioritize |
-| Env keys review | Quarterly | Rotate keys |
-
-## 15. Roadmap Snapshot
-
-- MDX docs & dynamic search indexing
-- Feature comparison matrix
-- Agent automation hardening
-- Blog section (`/blog`) + RSS
-- Session playback JSON logs
-- Donation/sponsorship tier (non-paywall)
-- Theme toggle component
-- Search implementation revival under `src/lib/search`
-
-## 16. Glossary
-
-| Term | Meaning |
-|------|--------|
-| Context Injection | Structured diffs, globs, outputs fed to models |
-| Defensive Mode | Refusal logic for harmful instructions |
-| Multi-file Diff Planning | Prepare & confirm edits across many files |
-| BYO Key | User supplies OpenRouter API key |
-| Free Model Rotation | Automatic fallback among zero-cost endpoints |
-
-## 17. Configuration Files
-
-- API keys: `~/.vibe/config.json`
-- Sessions: `sessions/`
-- Transcripts: `transcripts/`
-- Theming: CSS variables + Tailwind tokens (`globals.css`, `tailwind.config.cjs`)
-
-## 18. Environment Variables
-
-- `OPENROUTER_API_KEY` — OpenRouter key
-- `VIBE_NO_BANNER=1` — Disable startup banner
-- `EDITOR` — Preferred multi-line editor
-
-## 19. File Mutation Safety Model
-
-1. Collect candidate changes
-2. Present unified diff preview
-3. Require explicit user approval
-4. Apply atomically (abort on mismatch)
-
-## 20. Extending the Web Surface
-
-Add new UI primitives under [`src/components/ui`](src/components/ui/button.tsx:1) (avoid bloat). Marketing components under [`src/components/marketing`](src/components/marketing/hero-section.tsx:1). Update placeholder assets in [`core/placeholder-images.json`](core/placeholder-images.json:1). Adjust CSS vars in [`src/app/globals.css`](src/app/globals.css:1).
-
-## 21. Enhancement Plan Highlights
-
-Model routing (conceptual pseudo-code):
-```javascript
-function routeModel(taskType) {
-  const map = {
-    'code-generation': ['deepseek/deepseek-coder-v2-lite', 'qwen/qwen2.5-coder-7b'],
-    'chat': ['z-ai/glm-4.5-air:free', 'mistral/mistral-nemo-instruct'],
-    'debug': ['qwen/qwen3-coder-480b', 'kwaipilot/kat-coder-pro'],
-    'long-context': ['google/gemini-2.0-flash-exp:free'],
-  };
-  return map[taskType] || map['chat'];
-}
-```
-
-Priority Phases:
-1. Core: generate / complete / multiedit
-2. Agent + debug + test
-3. Git integration + review + watch + enhanced REPL
-
-Performance goals: lazy dependency loading, streaming, chunked processing, rotation on 429, local response caching.
-
-## 22. Changelog (Condensed)
-
-- v1.0.5: Agent improvements, specialized tools, integration upgrades
-- v1.0.4: V2 additions (test runner detection, AI commit messages, TUI placeholder), publish workflow
-- v1.0.3: Release permission fix (GitHub Actions)
-- v1.0.2: Release artifact fixes, smoke test step, initial scaffolding
-- v1.0.1: Initial release improvements
-
-(Full historical detail previously in CHANGELOG.md; consolidated here.)
-
-## 23. Troubleshooting
-
-1. Node.js version:
-```bash
-node --version  # Expect >=18
-```
-2. Clean reinstall:
-```bash
-npm uninstall -g vibe-cli
-rm -rf $(npm root -g)/vibe-cli
-npm i -g vibe-cli
-```
-3. API key validation:
-```bash
-echo $OPENROUTER_API_KEY
-```
-4. Rate limiting: CLI rotates free models automatically.
-
-## 24. Contributing
-
-1. Fork repository
-2. Branch: `feat/your-feature`
-3. Commit: conventional concise message
-4. Push & open PR (include rationale / before vs after)
-5. Follow defensive coding guidelines (no unsafe eval, minimal new deps)
-
-## 25. License
-
-MIT License — see [`LICENSE`](LICENSE:1)
-
-## 26. Links
-
-- Repository: https://github.com/mk-knight23/vibe-cli
-- Issues: https://github.com/mk-knight23/vibe-cli/issues
-- NPM: https://www.npmjs.com/package/vibe-cli
-- Author: mk-knight23
-
-## 27. System Requirements
-
-- Node.js ≥ 18.0.0
-- npm ≥ 8.0.0
-- ~100MB free disk
-- Internet for model API calls
-
-## 28. Success Metrics
-
-- Existing commands remain functional
-- Safe diff-confirm workflow preserves control
-- Free usage maximized with model rotation
-- Zero telemetry; privacy-first
-
-## 29. VS Code Extension (Vibe VS Code)
-
-A companion VS Code extension **“Vibe VS Code”** lives in the [`vscode-extension`](vscode-extension/README.md:1) subdirectory. It exposes Vibe’s chat/agent experience directly inside VS Code with multiple modes and personas, powered by OpenRouter.
-
-### 29.1 Install from VSIX (recommended during preview)
-
-1. Download the latest VSIX
-   - Go to the repository releases page:
-     `https://github.com/mk-knight23/vibe-cli/releases`
-   - Download the asset named like:
-     `vibe-vscode-0.0.1.vsix` (or newer).
-2. Install the VSIX in VS Code
-   - Open **Command Palette** → `Extensions: Install from VSIX...`
-   - Select the downloaded `vibe-vscode-*.vsix` file.
-3. Configure your OpenRouter API key
-   - Open **Settings** → search for `vibe`
-   - Set `vibe.openrouterApiKey` to your `sk-or-...` key.
-   - Optionally adjust:
-     - `vibe.defaultModel` (default `z-ai/glm-4.5-air:free`)
-     - `vibe.autoApproveUnsafeOps`
-     - `vibe.maxContextFiles`
-4. Open the Vibe panel in VS Code
-   - Command Palette → `Vibe: Open Chat`
-   - Or `Vibe: Open Agent Panel` for the agent-focused UI.
-   - Use:
-     - **⌘ + .** / **Ctrl + .** for next mode
-     - **⌘ + ⇧ + .** / **Ctrl + ⇧ + .** for previous mode.
-
-### 29.2 Build the extension from source
-
-If you prefer to build the VSIX yourself:
-
-```bash
-cd vscode-extension
+cd vibe-code
 npm install
 npm run compile
 npx @vscode/vsce package
+# Produces vibe-code-*.vsix
 ```
 
-This produces `vibe-vscode-*.vsix` in [`vscode-extension`](vscode-extension/README.md:1), which you can install via **“Extensions: Install from VSIX...”** as described above.
+Then in VS Code:
+- Command Palette → “Extensions: Install from VSIX...”
+- Configure settings: `vibe.openRouter.apiKey`, `vibe.model`.
 
-### 29.3 Extension source layout
+---
+ 
+### 3.4 Quick Start Summary
+ 
+| Target | One-Liner |
+|--------|-----------|
+| CLI | `npm install -g vibe-cli && vibe chat "Hello"` |
+| Web | `cd vibe-web && npm install && npm run dev` |
+| VS Code Extension | `cd vibe-code && npm install && npm run compile && npx @vscode/vsce package` |
+ 
+Smoke commands (after initial setup):
+```bash
+# CLI
+vibe model list
+# Web
+cd vibe-web && npm run smoke
+# Extension
+cd vibe-code && npm run smoke
+```
+ 
+## 4. Independent Versioning
 
-Key extension files:
+Each package maintains its own semantic version:
 
-- Backend entry: [`vscode-extension/src/extension.ts`](vscode-extension/src/extension.ts:1)
-- Extension-specific docs: [`vscode-extension/README.md`](vscode-extension/README.md:1)
-- Extension manifest: [`vscode-extension/package.json`](vscode-extension/package.json:1)
+| Package | File | Version Source |
+|---------|------|----------------|
+| Vibe CLI | [`vibe-cli/package.json`](vibe-cli/package.json:1) | `"version": "1.0.6"` |
+| Vibe Web | [`vibe-web/package.json`](vibe-web/package.json:1) | `"version": "0.1.0"` |
+| Vibe Code | [`vibe-code/package.json`](vibe-code/package.json:1) | `"version": "0.3.0"` |
 
-The extension is designed to be published to the VS Code Marketplace under the `mk-knight23` publisher once it is stable.
+Root meta file [`package.json`](package.json:1) is private and does not declare dependencies.
+
+### 4.1 Tag Naming Strategy
+
+Tags are per-package (no unified multi-package tag) using the pattern:
+
+```
+vibe-cli-vX.Y.Z      # Vibe CLI release
+vibe-web-vX.Y.Z      # Vibe Web release
+vibe-code-vX.Y.Z     # Vibe Code extension release
+```
+
+Examples:
+```
+git tag vibe-cli-v1.0.7
+git tag vibe-web-v0.1.1
+git tag vibe-code-v0.3.1
+git push origin vibe-cli-v1.0.7 vibe-web-v0.1.1 vibe-code-v0.3.1
+```
+
+### 4.2 Workflow Coupling
+
+| Tag Pattern | Triggered Workflow | Artifact / Action |
+|-------------|--------------------|-------------------|
+| `vibe-cli-v*`    | npm-publish.yml / publish.yml / release.yml | npm publish + binary release |
+| `vibe-web-v*`    | web-build.yml      | Build artifact + GitHub Release (static assets summary) |
+| `vibe-code-v*`   | extension-publish.yml | VSIX packaging + marketplace publish |
+
+### 4.3 Version Bump Checklist
+
+1. Update target package `package.json` version.
+2. Commit with prefix: `vibe-cli: bump to 1.0.7` (example).
+3. Create tag using correct prefix (e.g. `vibe-cli-v1.0.7`).
+4. Push tag to trigger workflow.
+5. Verify workflow output (npm artifact, VSIX, build artifact).
+6. Update CHANGELOG (future enhancement — per-package) if present.
+
+### 4.4 Avoiding Conflicts
+
+- Do NOT create generic `vX.Y.Z` tags; workflows are scoped by prefix.
+- Ensure only one tag per package per version.
+- Re-tag corrections: delete remote tag (`git push --delete origin vibe-cli-v1.0.7`), delete local tag (`git tag -d vibe-cli-v1.0.7`), reapply and push.
+
+For a future unified meta release, a separate `meta-vX.Y.Z` tag could be added referencing coordinated package bumps (not implemented yet).
 
 ---
 
-This single README supersedes prior documentation files (SUMMARY.md, STRUCTURE.md, ENHANCEMENT_PLAN.md, README_WEB.md, CHANGELOG.md). All removed to reduce redundancy and maintenance cost.
+## 5. Development Workflow
+
+| Task | Location | Command |
+|------|----------|---------|
+| Build CLI TypeScript core | `vibe-cli` | `npm run build` |
+| Bundle CLI binary | `vibe-cli` | `npm run build:bin` |
+| Run Web dev server | `vibe-web` | `npm run dev` |
+| Compile Extension | `vibe-code` | `npm run compile` |
+| Package Extension | `vibe-code` | `npx @vscode/vsce package` |
+
+---
+
+## 6. OpenRouter Integration
+
+Central routing & model logic lives in:
+- [`vibe-cli/core/openrouter.ts`](vibe-cli/core/openrouter.ts:1)
+- Fallback shim: [`vibe-cli/core/openrouter.cjs`](vibe-cli/core/openrouter.cjs:1)
+
+API key management:
+- [`vibe-cli/core/apikey.ts`](vibe-cli/core/apikey.ts:1)
+- Shim: [`vibe-cli/core/apikey.cjs`](vibe-cli/core/apikey.cjs:1)
+
+Model rotation: `TASK_MODEL_MAPPING` resides in TypeScript source for task-aware selection (code-gen, review, refactor, etc.)
+
+---
+
+## 7. Security & Safety Model (CLI)
+
+1. Explicit confirmation for multi-file edits.
+2. Defensive-only assistance (reject malicious prompts) implemented in REPL:
+   - Security filtering logic: see `/vibe-cli/cli.cjs` function `isDisallowedSecurityRequest`.
+3. API key never exfiltrated; stored optionally in `~/.vibe/config.json`.
+
+---
+
+## 8. File Mutation Flow
+
+High-level steps in CLI operations:
+1. Collect candidate diff(s).
+2. Present preview to user.
+3. Confirm or abort.
+4. Apply atomically; abort on mismatch.
+
+Diff and review helpers: [`vibe-cli/git/gittools.cjs`](vibe-cli/git/gittools.cjs:1), multi-edit engine: [`vibe-cli/edit/multiedit.cjs`](vibe-cli/edit/multiedit.cjs:1).
+
+---
+
+## 9. Extensibility
+
+Add new CLI domain:
+1. Create folder (e.g. `vibe-cli/metrics/`).
+2. Export functionality via an invocation path in [`vibe-cli/bin/vibe.cjs`](vibe-cli/bin/vibe.cjs:1).
+3. Document usage in future `vibe-cli/README.md` (to be added).
+
+Add new Web section:
+1. Create route under `vibe-web/src/app/<section>/page.tsx`.
+2. Add marketing component under `vibe-web/src/components/marketing/`.
+
+Add new Extension view:
+1. Update contributes -> views in [`vibe-code/package.json`](vibe-code/package.json:1).
+2. Implement corresponding provider in `src/`.
+
+---
+
+## 10. Environment Variables
+
+| Variable | Purpose | Scope |
+|----------|---------|-------|
+| OPENROUTER_API_KEY | API access | CLI / Web SSR / Extension |
+| VIBE_NO_BANNER | Disable CLI ASCII banner | CLI |
+| EDITOR | External editor for multiline prompts | CLI |
+
+---
+
+## 11. Contributing
+
+1. Fork
+2. Branch: `feat/<topic>`
+3. Separate commits per package (prefix path): `vibe-cli:`, `vibe-web:`, `vibe-code:`
+4. PR including rationale and before/after diff summary
+5. Avoid unnecessary dependencies; prefer native APIs
+
+---
+
+## 12. Release Guidelines
+
+| Package | Tag Prefix | Smoke Check | Publish Command | Notes |
+|---------|------------|-------------|-----------------|-------|
+| Vibe CLI (`vibe-cli`) | `vibe-cli-v*` | `npm run smoke` (lists models) | `npm publish` | Ensure version bumped in [`vibe-cli/package.json`](vibe-cli/package.json:1) before tagging. |
+| Vibe Web (`vibe-web`) | `vibe-web-v*` | `npm run smoke` (build + .next check) | Deploy via Vercel (auto on tag or manual) | Tag triggers [`web-build.yml`](.github/workflows/web-build.yml:1) artifact. |
+| Vibe Code (`vibe-code`) | `vibe-code-v*` | `npm run smoke` (compile dist) | `npx vsce publish --pat $VSCODE_PUBLISH_TOKEN` | Tag triggers VSIX build in [`extension-publish.yml`](.github/workflows/extension-publish.yml:1). |
+
+Release sequence example (CLI patch):
+```bash
+# Bump version in vibe-cli/package.json (e.g. 1.0.6 -> 1.0.7)
+git add vibe-cli/package.json
+git commit -m "vibe-cli: bump to 1.0.7"
+git tag vibe-cli-v1.0.7
+git push origin vibe-cli-v1.0.7
+# Workflow publishes to npm
+```
+
+Extension publish example:
+```bash
+# Bump version in vibe-code/package.json (0.3.0 -> 0.3.1)
+git add vibe-code/package.json
+git commit -m "vibe-code: bump to 0.3.1"
+git tag vibe-code-v0.3.1
+git push origin vibe-code-v0.3.1
+# Marketplace
+npx vsce publish --pat $VSCODE_PUBLISH_TOKEN
+```
+
+Web deploy (manual alternative if not auto):
+```bash
+cd vibe-web
+npm run build
+# Upload .next/static or use `vercel` CLI
+vercel deploy --prod
+```
+
+Rollback procedure (any package):
+```bash
+git push --delete origin vibe-cli-v1.0.7
+git tag -d vibe-cli-v1.0.7
+# Fix version or commit, retag
+git tag vibe-cli-v1.0.7
+git push origin vibe-cli-v1.0.7
+```
+
+Keep changelog entries inside each package’s README or future `CHANGELOG.md`. Root stays minimal.
+
+---
+
+## 13. Success Criteria After Restructure
+
+- Independent installs function (CLI / Web / Extension).
+- No broken relative require paths (updated imports inside [`vibe-cli/cli.cjs`](vibe-cli/cli.cjs:1) & [`vibe-cli/bin/vibe.cjs`](vibe-cli/bin/vibe.cjs:1)).
+- Root has no runtime dependencies.
+- Clear separation of concerns; onboarding simplified.
+
+---
+
+## 14. Future Enhancements
+
+- Add `vibe-cli/README.md` with deep usage and advanced workflow examples.
+- Introduce automated release scripts per package.
+- MDX documentation integration in `vibe-web`.
+- Extension diff visualization enhancements.
+
+---
+
+## 15. License
+
+MIT — see [`LICENSE`](LICENSE:1)
+
+---
+
+## 16. Support & Links
+
+- Issues: https://github.com/mk-knight23/vibe/issues
+- Vibe CLI Package: npm search `vibe-cli`
+- Vibe Code Extension: Marketplace (planned)
+- Vibe Web Deploy: Coming soon
+
+---
+
+This README reflects the finalized multi-package restructure. All previous consolidated single-package documentation migrated into individual package scopes.

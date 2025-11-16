@@ -1,0 +1,99 @@
+name: Build & Publish Vibe Code Extension
+
+on:
+  push:
+    tags:
+      - vibe-code-v*
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version (vibe-code-vX.Y.Z) to tag & publish (optional)'
+        required: false
+
+permissions:
+  contents: write
+
+env:
+  NODE_VERSION: 20.x
+
+defaults:
+  run:
+    working-directory: vibe-code
+
+jobs:
+  maybe-tag:
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.version != '' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Create tag
+        run: |
+          git fetch --tags
+          if git rev-parse "${{ inputs.version }}" >/dev/null 2>&1; then
+            echo "Tag already exists"; exit 0;
+          fi
+          git tag "${{ inputs.version }}"
+          git push origin "${{ inputs.version }}"
+
+  build:
+    needs: [maybe-tag]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - name: Validate VS Code publish secret
+        run: |
+          if [ -z "${{ secrets.VSCODE_PUBLISH_TOKEN }}" ]; then
+            echo "::warning title=Missing Secret::VSCODE_PUBLISH_TOKEN not set; will skip marketplace publish."
+          else
+            echo "VSCODE_PUBLISH_TOKEN present (length: ${#{{ secrets.VSCODE_PUBLISH_TOKEN }}})"
+          fi
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Typecheck (tsc)
+        run: npm run compile
+
+      - name: Bundle (webpack)
+        run: npm run bundle
+
+      - name: Package VSIX
+        run: npx vsce package
+        env:
+          VSCE_PAT: ${{ secrets.VSCODE_PUBLISH_TOKEN }}
+
+      - name: Upload VSIX Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: vibe-code-vsix
+          path: "*.vsix"
+
+      - name: Publish to Marketplace
+        if: startsWith(github.ref_name, 'vibe-code-v')
+        run: npx vsce publish --pat "$VSCE_PAT"
+        env:
+          VSCE_PAT: ${{ secrets.VSCODE_PUBLISH_TOKEN }}
+
+      - name: Create GitHub Release
+        if: startsWith(github.ref_name, 'vibe-code-v')
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: Vibe Code ${{ github.ref_name }}
+          files: |
+            *.vsix
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Summary
+        run: |
+          echo "Extension workflow complete for ref: ${{ github.ref_name }}"

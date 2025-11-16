@@ -1,0 +1,78 @@
+<!-- Kazi AI Sidebar Icon (replaces previous icon.svg)
+     Style: Rounded square neutral backdrop + inner gradient circle + minimal robot glyph + brand text.
+     Optimized for dark & light VS Code themes (monochrome fallback via currentColor where possible).
+     Size: 256x256 (VS Code scales down automatically). -->
+
+<svg width="256" height="256" viewBox="0 0 256 256" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Kazi AI Icon">
+  <defs>
+    <!-- Soft outer background -->
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#d9d9d9"/>
+      <stop offset="100%" stop-color="#c5c5c5"/>
+    </linearGradient>
+
+    <!-- Inner circle gradient (striped / depth) -->
+    <linearGradient id="innerGrad" x1="50%" y1="0%" x2="50%" y2="100%">
+      <stop offset="0%" stop-color="#0a4e84"/>
+      <stop offset="40%" stop-color="#0c5f9f"/>
+      <stop offset="70%" stop-color="#1173b9"/>
+      <stop offset="100%" stop-color="#1c85cf"/>
+    </linearGradient>
+
+    <!-- Subtle shadow for bot -->
+    <filter id="botShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#000" flood-opacity="0.3"/>
+    </filter>
+
+    <!-- Text gradient (optional subtle gleam) -->
+    <linearGradient id="textGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="60%" stop-color="#e6f4ff"/>
+      <stop offset="100%" stop-color="#cfe9ff"/>
+    </linearGradient>
+
+    <!-- Mask for subtle vertical stripes in circle -->
+    <pattern id="stripePattern" width="12" height="12" patternUnits="userSpaceOnUse">
+      <rect width="12" height="12" fill="rgba(255,255,255,0.06)"/>
+      <rect width="6" height="12" fill="rgba(0,0,0,0.06)"/>
+    </pattern>
+  </defs>
+
+  <!-- Outer rounded square -->
+  <rect x="8" y="8" width="240" height="240" rx="42" fill="url(#bgGrad)" stroke="#bdbdbd" stroke-width="2"/>
+
+  <!-- Inner circle -->
+  <circle cx="128" cy="118" r="86" fill="url(#innerGrad)"/>
+  <circle cx="128" cy="118" r="86" fill="url(#stripePattern)" style="mix-blend-mode:overlay"/>
+
+  <!-- Robot glyph -->
+  <g filter="url(#botShadow)" fill="#ffffff" stroke="#ffffff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Head outer -->
+    <rect x="90" y="78" width="76" height="56" rx="14" fill="none"/>
+    <!-- Antennae -->
+    <line x1="104" y1="70" x2="104" y2="78"/>
+    <circle cx="104" cy="66" r="6" fill="#ffffff"/>
+    <line x1="152" y1="70" x2="152" y2="78"/>
+    <circle cx="152" cy="66" r="6" fill="#ffffff"/>
+
+    <!-- Eyes -->
+    <circle cx="112" cy="102" r="8" fill="#ffffff"/>
+    <circle cx="144" cy="102" r="8" fill="#ffffff"/>
+
+    <!-- Mouth slot -->
+    <rect x="110" y="124" width="48" height="10" rx="5" fill="#ffffff"/>
+
+    <!-- Minimal body / shoulders -->
+    <path d="M100 140 L156 140 L168 160 H88 L100 140 Z" fill="#ffffff" stroke="none"/>
+  </g>
+
+  <!-- Brand Text -->
+  <text x="128" y="208" font-family="Segoe UI, system-ui, 'SF Pro Text', sans-serif"
+        font-size="38" font-weight="600" text-anchor="middle" fill="url(#textGrad)" stroke="#0a4e84" stroke-width="1">
+    Kazi AI
+  </text>
+
+  <!-- Accessibility (hidden descriptive title/desc) -->
+  <title>Kazi AI</title>
+  <desc>Rounded square icon with a blue gradient circle, a simple robot face, and the text Kazi AI.</desc>
+</svg>

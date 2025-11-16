@@ -1,4 +1,4 @@
-name: Release binaries
+name: Release vibe-cli binaries
 
 on:
   push:
@@ -8,6 +8,10 @@ on:
 permissions:
   contents: write
 
+defaults:
+  run:
+    working-directory: vibe-cli
+
 jobs:
   build-and-release:
     strategy:
@@ -16,23 +20,30 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-node@v4
         with:
           node-version: 18
-      - run: npm ci || npm i
-      - run: npm run smoke || true
-      - run: npm run build:bin
-      - name: Rename artifacts
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build binary bundle
+        run: npm run build:bin
+
+      - name: Prepare upload artifacts
         shell: bash
         run: |
           mkdir -p upload
           if [[ "$RUNNER_OS" == "Linux" ]]; then
-            mv dist/cli-linux ${GITHUB_WORKSPACE}/upload/vibe-linux-x64
+            cp dist/vibe-linux upload/vibe-linux-x64
           elif [[ "$RUNNER_OS" == "macOS" ]]; then
-            mv dist/cli-macos ${GITHUB_WORKSPACE}/upload/vibe-macos-x64
+            cp dist/vibe-macos upload/vibe-macos-x64
           else
-            mv dist/cli-win.exe ${GITHUB_WORKSPACE}/upload/vibe-win-x64.exe
+            cp dist/vibe-win.exe upload/vibe-win-x64.exe
           fi
+          ls -l upload
+
       - name: Release
         uses: softprops/action-gh-release@v2
         with:

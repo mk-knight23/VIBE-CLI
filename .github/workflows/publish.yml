@@ -1,13 +1,13 @@
-name: Build, Publish & Release
+name: Build, Publish & Release (vibe-cli)
 
 on:
   push:
     tags:
-      - 'v*'          # Tag-triggered publish/release
+      - 'vibe-cli-v*'          # Tag-triggered publish/release for CLI
   workflow_dispatch:
     inputs:
       version:
-        description: 'Version (vX.Y.Z). If provided, will tag and publish.'
+        description: 'Version (vibe-cli-vX.Y.Z). If provided, will tag and publish.'
         required: false
 
 permissions:
@@ -16,6 +16,10 @@ permissions:
 
 env:
   NODE_VERSION: 20.x
+
+defaults:
+  run:
+    working-directory: vibe-cli
 
 jobs:
   maybe-tag:
@@ -52,14 +56,20 @@ jobs:
           echo "ref=$REF" >> $GITHUB_OUTPUT
           echo "Version from tag: $REF"
 
+      - name: Validate NPM_TOKEN secret
+        run: |
+          if [ -z "${{ secrets.NPM_TOKEN }}" ]; then
+            echo "::error title=Missing Secret::NPM_TOKEN is not set; aborting publish."
+            exit 1
+          else
+            echo "NPM_TOKEN present (length: ${#{{ secrets.NPM_TOKEN }}})"
+          fi
+
       - name: Install dependencies
         run: npm ci
 
-      - name: Typecheck
-        run: npm run typecheck || echo "Typecheck skipped"
-
-      - name: Build CLI (TS compile)
-        run: npm run build:cli || echo "CLI build skipped"
+      - name: Build TypeScript
+        run: npm run build
 
       - name: Pack tarball
         run: npm pack
@@ -71,13 +81,13 @@ jobs:
           path: vibe-cli-*.tgz
 
       - name: Publish to npm
-        if: startsWith(steps.version.outputs.ref, 'v')
+        if: startsWith(steps.version.outputs.ref, 'vibe-cli-v')
         run: npm publish
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Create GitHub Release
-        if: startsWith(steps.version.outputs.ref, 'v')
+        if: startsWith(steps.version.outputs.ref, 'vibe-cli-v')
         uses: softprops/action-gh-release@v1
         with:
           tag_name: ${{ steps.version.outputs.ref }}

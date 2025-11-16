@@ -1,89 +1,24 @@
 {
-  "name": "vibe-cli",
-  "private": false,
-  "version": "1.0.6",
-  "description": "CLI to chat with OpenRouter free models and Claude Code–style tooling.",
-  "keywords": [
-    "openrouter",
-    "cli",
-    "chat",
-    "ai",
-    "llm"
-  ],
+  "name": "vibe-repo",
+  "private": true,
+  "description": "Monorepo (non-workspace) containing: vibe-cli, vibe-web, vibe-code.",
+  "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/mk-knight23/vibe-cli.git"
+    "url": "https://github.com/mk-knight23/vibe"
   },
   "bugs": {
-    "url": "https://github.com/mk-knight23/vibe-cli/issues"
+    "url": "https://github.com/mk-knight23/vibe/issues"
   },
-  "homepage": "https://github.com/mk-knight23/vibe-cli#readme",
-  "author": "mk-knight23 <noreply@users.noreply.github.com>",
-  "license": "MIT",
-  "engines": {
-    "node": ">=18"
-  },
-  "files": [
-    "bin/vibe.cjs",
-    "cli/",
-    "README.md",
-    "LICENSE",
-    "package.json"
-  ],
-  "bin": {
-    "vibe": "bin/vibe.cjs"
-  },
-  "exports": {
-    ".": "./bin/vibe.cjs",
-    "./cli/*": "./cli/*",
-    "./core/*": "./core/*"
-  },
-  "sideEffects": false,
-  "scripts": {
-    "build:bin": "pkg -t node18-linux-x64,node18-macos-x64,node18-win-x64 --out-path dist cli.cjs && mv dist/cli-linux dist/cli-linux || true && mv dist/cli-macos dist/cli-macos || true && mv dist/cli-win.exe dist/cli-win.exe || true",
-    "build:cli": "tsc -p tsconfig.cli.json",
-    "prepare": "npm run build:cli",
-    "release:check": "node -e \"console.log('Tag to release, e.g., v1.0.0')\"",
-    "test": "echo \"No tests – skipping\"",
-    "start": "node cli.cjs",
-    "dev": "node scripts/dev-port.cjs",
-    "build": "next build",
-    "typecheck": "tsc --noEmit"
-  },
-  "dependencies": {
-    "@radix-ui/react-accordion": "^1.1.2",
-    "@radix-ui/react-dialog": "^1.1.2",
-    "@radix-ui/react-progress": "*",
-    "@radix-ui/react-separator": "*",
-    "@radix-ui/react-slot": "^1.0.2",
-    "@radix-ui/react-tabs": "*",
-    "@radix-ui/react-toast": "^1.1.5",
-    "@radix-ui/react-tooltip": "*",
-    "chokidar": "^3.6.0",
-    "class-variance-authority": "^0.7.0",
-    "clsx": "^2.1.1",
-    "embla-carousel-react": "*",
-    "fast-glob": "^3.3.3",
-    "inquirer": "^12.11.1",
-    "lucide-react": "^0.469.0",
-    "next": "^16.0.2",
-    "node-fetch": "^3.3.2",
-    "ora": "^9.0.0",
-    "picocolors": "^1.1.1",
-    "react": "^19.2.0",
-    "react-dom": "^19.2.0",
-    "simple-git": "^3.27.0",
-    "tailwind-merge": "^2.5.2"
-  },
-  "devDependencies": {
-    "@tailwindcss/postcss": "^4.1.17",
-    "@types/node": "^20.11.30",
-    "@types/react": "^18.3.8",
-    "@types/react-dom": "^18.3.0",
-    "autoprefixer": "^10.4.22",
-    "pkg": "^5.8.1",
-    "postcss": "^8.5.6",
-    "tailwindcss": "^4.1.17",
-    "typescript": "^5.6.3"
-  }
+  "homepage": "https://github.com/mk-knight23/vibe#readme",
+  "keywords": [
+    "vibe",
+    "cli",
+    "nextjs",
+    "vscode",
+    "openrouter",
+    "ai-assistant",
+    "monorepo",
+    "multi-package"
+  ]
 }

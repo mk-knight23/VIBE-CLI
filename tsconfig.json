@@ -1,36 +1,20 @@
 {
+  "files": [],
   "compilerOptions": {
-    "target": "ES2020",
-    "lib": ["dom", "dom.iterable", "esnext"],
-    "allowJs": true,
+    "composite": true,
     "skipLibCheck": true,
-    "strict": true,
-    "forceConsistentCasingInFileNames": true,
-    "noEmit": true,
-    "esModuleInterop": true,
-    "module": "esnext",
-    "moduleResolution": "node",
-    "resolveJsonModule": true,
-    "isolatedModules": true,
     "jsx": "react-jsx",
-    "incremental": true,
-    "types": ["node", "react", "react-dom"],
+    "moduleResolution": "node",
+    "allowJs": true,
+    "resolveJsonModule": true,
     "baseUrl": ".",
     "paths": {
-      "@/*": ["src/*"]
-    },
-    "plugins": [
-      { "name": "next" }
-    ]
+      "@/*": ["vibe-web/src/*"]
+    }
   },
-  "include": [
-    "next-env.d.ts",
-    "src/**/*.{ts,tsx}",
-    ".next/types/**/*.ts",
-    ".next/dev/types/**/*.ts"
-  ],
-  "exclude": [
-    "node_modules",
-    "src/ai"  // Exclude removed Genkit/AI experimental flows
+  "references": [
+    { "path": "./vibe-cli/tsconfig.cli.json" },
+    { "path": "./vibe-web/tsconfig.json" },
+    { "path": "./vibe-code/tsconfig.json" }
   ]
 }

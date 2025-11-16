@@ -1,0 +1,126 @@
+name: "Build & Artifact Vibe Web"
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'vibe-web/**'
+    tags:
+      - 'vibe-web-v*'
+  pull_request:
+    paths:
+      - 'vibe-web/**'
+  workflow_dispatch:
+    inputs:
+      prodBuild:
+        description: "Run production build (true/false)"
+        required: false
+        default: "true"
+      analyze:
+        description: "Enable bundle analyzer (true/false)"
+        required: false
+        default: "false"
+
+permissions:
+  contents: read
+
+env:
+  NODE_VERSION: 20.x
+
+defaults:
+  run:
+    working-directory: vibe-web
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Lint (placeholder)
+        run: npm run lint || echo "No lint configured"
+
+      - name: Set build mode
+        id: mode
+        run: |
+          PROD="true"
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            PROD="false"
+          fi
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.prodBuild }}" != "" ]; then
+            PROD="${{ inputs.prodBuild }}"
+          fi
+          ANALYZE="${{ inputs.analyze != '' && inputs.analyze || 'false' }}"
+          echo "prodBuild=$PROD" >> $GITHUB_OUTPUT
+          echo "analyze=$ANALYZE" >> $GITHUB_OUTPUT
+
+      - name: Build
+        run: |
+          if [ "${{ steps.mode.outputs.analyze }}" = "true" ]; then
+            ANALYZE=true npm run build
+          else
+            npm run build
+          fi
+
+      - name: Export Static (optional)
+        if: ${{ steps.mode.outputs.prodBuild == 'true' }}
+        run: |
+          if grep -q "output: 'export'" next.config.mjs 2>/dev/null; then
+            echo "Detected next.config export mode - skipping explicit next export"
+          else
+            echo "Static export not configured (Next.js App Router)."
+          fi
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: vibe-web-build
+          path: |
+            .next/
+            next.config.mjs
+            package.json
+
+      - name: Bundle Size Summary
+        run: |
+          if [ -d ".next" ]; then
+            echo "=== Page size summary ==="
+            find .next/server/app -maxdepth 1 -type f -name '*.js' -exec ls -lh {} \; || true
+          fi
+
+  release:
+    if: startsWith(github.ref_name, 'vibe-web-v')
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: vibe-web-build
+          path: build-artifact
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: Vibe Web ${{ github.ref_name }}
+          body: |
+            ## Vibe Web ${{ github.ref_name }}
+            Static build artifact for deployment (attach or use Vercel import).
+          files: |
+            build-artifact/.next/**/*.json
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

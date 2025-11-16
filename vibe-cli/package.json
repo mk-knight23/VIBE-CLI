@@ -1,0 +1,84 @@
+{
+  "name": "vibe-cli",
+  "version": "1.0.6",
+  "description": "Free, privacy-first AI coding assistant CLI (chat, codegen, refactor, debug, test, git, agent).",
+  "author": "mk-knight23 <noreply@users.noreply.github.com>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mk-knight23/vibe",
+    "directory": "vibe-cli"
+  },
+  "bugs": {
+    "url": "https://github.com/mk-knight23/vibe/issues"
+  },
+  "homepage": "https://github.com/mk-knight23/vibe#readme",
+  "keywords": [
+    "vibe",
+    "cli",
+    "openrouter",
+    "ai",
+    "code",
+    "assistant",
+    "ai-assistant",
+    "developer-tools"
+  ],
+  "bin": {
+    "vibe": "bin/vibe.cjs"
+  },
+  "files": [
+    "bin/vibe.cjs",
+    "cli.cjs",
+    "core/",
+    "agent/",
+    "code/",
+    "edit/",
+    "git/",
+    "refactor/",
+    "debug/",
+    "test/",
+    "tools.cjs",
+    "LICENSE",
+    "README.md",
+    "package.json"
+  ],
+  "exports": {
+    ".": "./bin/vibe.cjs",
+    "./core/*": "./core/*",
+    "./agent/*": "./agent/*",
+    "./code/*": "./code/*",
+    "./edit/*": "./edit/*",
+    "./git/*": "./git/*",
+    "./refactor/*": "./refactor/*",
+    "./debug/*": "./debug/*",
+    "./test/*": "./test/*"
+  },
+  "type": "commonjs",
+  "sideEffects": false,
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.cli.json",
+    "prepare": "npm run build",
+    "build:bin": "pkg -t node18-linux-x64,node18-macos-x64,node18-win-x64 --out-path dist cli.cjs && mv dist/cli-linux dist/vibe-linux || true && mv dist/cli-macos dist/vibe-macos || true && mv dist/cli-win.exe dist/vibe-win.exe || true",
+    "release:check": "node -e \"console.log('Tag to release, e.g., vibe-cli-v1.0.6')\"",
+    "test": "echo \"No tests for CLI – skipping\"",
+    "smoke": "node bin/vibe.cjs model list || echo 'model list executed'",
+    "start": "node cli.cjs"
+  },
+  "dependencies": {
+    "inquirer": "^12.11.1",
+    "fast-glob": "^3.3.3",
+    "picocolors": "^1.1.1",
+    "ora": "^9.0.0",
+    "simple-git": "^3.27.0",
+    "node-fetch": "^3.3.2",
+    "chokidar": "^3.6.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.3",
+    "pkg": "^5.8.1",
+    "@types/node": "^20.11.30"
+  }
+}

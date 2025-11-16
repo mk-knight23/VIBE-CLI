@@ -1,0 +1,24 @@
+{
+  "version": "1",
+  "description": "Sample orchestrator workflow prompt for debugging an intermittent auth failure.",
+  "prompt": "Debug this function: authenticateUser(token) throwing 'Invalid signature' intermittently. Identify root cause and propose fix.",
+  "expectedSubtasks": [
+    "Review authenticateUser implementation",
+    "Trace token verification path",
+    "Inspect signature generation and timing aspects",
+    "Identify race condition or encoding issue",
+    "Propose minimal diff patch",
+    "Validate fix (outline test cases)"
+  ],
+  "assertions": {
+    "minSubtasks": 3,
+    "maxSubtasks": 10,
+    "mustContainKeywords": [
+      "token",
+      "signature",
+      "race",
+      "diff"
+    ]
+  },
+  "notes": "Feed the 'prompt' value to command 'vibe.planOrchestrator'. After plan generation, run 'vibe.executePlan'. Verify tree items match expectedSubtasks semantics and failed nodes show tooltip errors."
+}

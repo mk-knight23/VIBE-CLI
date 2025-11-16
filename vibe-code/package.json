@@ -1,0 +1,273 @@
+{
+  "name": "vibe-code",
+  "displayName": "Vibe Code",
+  "description": "Vibe Code: Lightweight VS Code AI assistant (chat + diffs + orchestrator) using ONLY OpenRouter free models.",
+  "version": "0.3.0",
+  "publisher": "mk-knight23",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mk-knight23/vibe",
+    "directory": "vibe-code"
+  },
+  "bugs": {
+    "url": "https://github.com/mk-knight23/vibe/issues"
+  },
+  "homepage": "https://github.com/mk-knight23/vibe#readme",
+  "license": "MIT",
+  "keywords": [
+    "vibe",
+    "vscode",
+    "extension",
+    "openrouter",
+    "ai-assistant",
+    "code"
+  ],
+  "engines": {
+    "vscode": "^1.90.0"
+  },
+  "categories": [
+    "Other",
+    "AI"
+  ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./dist/extension.js",
+  "scripts": {
+    "compile": "rimraf dist && tsc -p ./tsconfig.json",
+    "watch": "tsc -p ./tsconfig.json -w",
+    "package": "vsce package",
+    "lint": "echo \"No lint configured\"",
+    "build:prod": "rimraf dist && tsc -p ./tsconfig.json",
+    "bundle": "webpack --config webpack.config.js --mode production",
+    "bundle:watch": "webpack --config webpack.config.js --watch",
+    "smoke": "npm run compile && test -f dist/extension.js && echo 'extension build ok'"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.90.0",
+    "@types/node": "^20.11.30",
+    "@types/node-fetch": "^2.5.10",
+    "typescript": "^5.6.3",
+    "rimraf": "^6.0.1",
+    "vsce": "^2.15.0",
+    "webpack": "^5.95.0",
+    "webpack-cli": "^5.1.4",
+    "ts-loader": "^9.5.1"
+  },
+  "dependencies": {
+    "@vscode/webview-ui-toolkit": "^1.4.0",
+    "node-fetch": "^2.6.1"
+  },
+  "extensionDependencies": [
+    "vscode.git"
+  ],
+  "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "vibe-sidebar",
+          "title": "Kazi AI",
+          "icon": "media/icon.svg"
+        }
+      ]
+    },
+    "views": {
+      "vibe-sidebar": [
+        {
+          "type": "webview",
+          "id": "vibe.chatView",
+          "name": "Chat",
+          "icon": "media/icon.svg",
+          "contextualTitle": "Kazi AI Chat"
+        },
+        {
+          "type": "webview",
+          "id": "vibe.quickChatView",
+          "name": "Quick Chat",
+          "icon": "media/icon.svg",
+          "contextualTitle": "Quick Chat"
+        },
+        {
+          "id": "vibe.orchestratorView",
+          "name": "Orchestrator",
+          "icon": "media/icon.svg",
+          "contextualTitle": "Task Orchestrator"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "vibe.focusChat",
+        "title": "Vibe: Focus Chat View",
+        "category": "Vibe"
+      },
+      {
+        "command": "vibe.switchNextMode",
+        "title": "Vibe: Next Mode",
+        "category": "Vibe"
+      },
+      {
+        "command": "vibe.switchPrevMode",
+        "title": "Vibe: Previous Mode",
+        "category": "Vibe"
+      },
+      {
+        "command": "vibe.applyDiff",
+        "title": "Vibe: Apply Last Diff",
+        "category": "Vibe"
+      },
+      {
+        "command": "vibe.regenResponse",
+        "title": "Vibe: Regenerate Response",
+        "category": "Vibe"
+      },
+      {
+        "command": "vibe.switchToArchitect",
+        "title": "Vibe: Switch to Architect Mode",
+        "category": "Vibe"
+      },
+      {
+        "command": "vibe.reloadChat",
+        "title": "Vibe: Reload Chat View",
+        "category": "Vibe"
+      },
+      {
+        "command": "vibe.devDump",
+        "title": "Vibe: Developer Diagnostics Dump",
+        "category": "Vibe"
+      },
+      {
+        "command": "vibe.testChat",
+        "title": "Vibe: Test Chat (Hello)",
+        "category": "Vibe"
+      },
+      {
+        "command": "vibe.testOrchestrate",
+        "title": "Vibe: Test Orchestrator",
+        "category": "Vibe"
+      },
+      {
+        "command": "vibe.rollbackLast",
+        "title": "Vibe: Rollback Last Applied Diff",
+        "category": "Vibe"
+      },
+      {
+        "command": "vibe.addMemory",
+        "title": "Vibe: Add Memory Entry",
+        "category": "Vibe"
+      },
+      {
+        "command": "vibe.recallMemory",
+        "title": "Vibe: Recall Memory Context",
+        "category": "Vibe"
+      },
+      {
+        "command": "vibe.planOrchestrator",
+        "title": "Vibe: Plan Task with Orchestrator",
+        "category": "Vibe"
+      },
+      {
+        "command": "vibe.executePlan",
+        "title": "Vibe: Execute Orchestrator Plan",
+        "category": "Vibe"
+      },
+      {
+        "command": "vibe.hallucinationCheck",
+        "title": "Vibe: Grounding Check Last Response",
+        "category": "Vibe"
+      },
+      {
+        "command": "vibe.showApiKeyDebug",
+        "title": "Vibe: Show API Key Debug",
+        "category": "Vibe"
+      }
+    ],
+    "configuration": {
+      "type": "object",
+      "title": "Vibe",
+      "properties": {
+        "vibe.openRouter.apiKey": {
+          "type": "string",
+          "default": "",
+          "markdownDescription": "OpenRouter API Key (FREE models only). Required for responses."
+        },
+        "vibe.model": {
+          "type": "string",
+          "default": "z-ai/glm-4-5-air:free",
+          "enum": [
+            "z-ai/glm-4-5-air:free",
+            "deepseek/deepseek-coder-v2-lite-instruct:free",
+            "qwen/qwen2.5-coder-7b-instruct:free",
+            "microsoft/phi-3-mini-128k-instruct:free",
+            "tng/deepseek-r1t2-chimera:free"
+          ],
+          "markdownDescription": "Selected FREE model for chat & orchestration. Default: GLM-4.5-Air (top performer for agents)."
+        },
+        "vibe.maxContextFiles": {
+          "type": "number",
+          "default": 30,
+          "markdownDescription": "Maximum number of files to ground responses (hallucination checks)."
+        },
+        "vibe.memory.enabled": {
+          "type": "boolean",
+          "default": true,
+          "markdownDescription": "Enable persistent memory bank (global/workspace)."
+        },
+        "vibe.memory.maxItems": {
+          "type": "number",
+          "default": 200,
+          "markdownDescription": "Maximum memory entries stored per scope."
+        },
+        "vibe.customModes": {
+          "type": "array",
+          "default": [],
+          "items": {
+            "type": "object",
+            "required": ["name", "prompt"],
+            "properties": {
+              "name": { "type": "string" },
+              "prompt": { "type": "string" }
+            }
+          },
+          "markdownDescription": "Custom user-defined modes. Example: [{\"name\":\"Security\",\"prompt\":\"Audit for vulnerabilities with actionable fixes.\"}]"
+        },
+        "vibe.diff.autoReveal": {
+          "type": "boolean",
+          "default": true,
+          "markdownDescription": "Automatically open diff preview when model suggests edits."
+        },
+        "vibe.orchestrator.maxParallelAgents": {
+          "type": "number",
+          "default": 3,
+          "markdownDescription": "Limit concurrent agent subtasks."
+        },
+        "vibe.token.warnThreshold": {
+          "type": "number",
+          "default": 14000,
+          "markdownDescription": "Warn when approximate token usage in session exceeds threshold."
+        }
+      }
+    },
+    "keybindings": [
+      {
+        "command": "vibe.switchNextMode",
+        "key": "ctrl+.",
+        "mac": "cmd+.",
+        "when": "focusedView == 'vibe.chatView'"
+      },
+      {
+        "command": "vibe.switchPrevMode",
+        "key": "ctrl+shift+.",
+        "mac": "cmd+shift+.",
+        "when": "focusedView == 'vibe.chatView'"
+      },
+      {
+        "command": "vibe.switchToArchitect",
+        "key": "ctrl+alt+a",
+        "mac": "cmd+alt+a",
+        "when": "focusedView == 'vibe.chatView'"
+      }
+    ],
+    "icon": "media/icon.svg"
+  }
+}

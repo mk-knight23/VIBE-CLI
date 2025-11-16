@@ -1,0 +1,43 @@
+{
+  "// Note": "This is an example workspace settings file for Vibe AI extension",
+  
+  "// Override the default model": "",
+  "vibe.openRouter.model": "qwen/qwen2.5-coder-7b-instruct:free",
+
+  "// Add a custom mode to the default list": "",
+  "vibe.modes": [
+    {
+      "name": "Code",
+      "prompt": "You are a code assistant. Provide clean, well-documented code solutions."
+    },
+    {
+      "name": "Architect",
+      "prompt": "You are a system architect. Plan high-level architecture with clear subtasks."
+    },
+    {
+      "name": "Ask",
+      "prompt": "You are a helpful explainer. Answer questions clearly and concisely."
+    },
+    {
+      "name": "Debug",
+      "prompt": "You are a debugging specialist. Identify root causes and propose fixes."
+    },
+    {
+      "name": "Security",
+      "prompt": "You are a security auditor. Identify vulnerabilities and propose secure solutions with actionable fixes."
+    }
+  ],
+
+  "// API Key Configuration": "",
+  "// WARNING: Never commit API keys to version control!": "",
+  "// Use environment variable OPENROUTER_API_KEY or VS Code secrets instead": "",
+  "vibe.openRouter.apiKey": "",
+
+  "// Additional Configuration": "",
+  "vibe.maxContextFiles": 30,
+  "vibe.memory.enabled": true,
+  "vibe.memory.maxItems": 200,
+  "vibe.diff.autoReveal": true,
+  "vibe.orchestrator.maxParallelAgents": 3,
+  "vibe.token.warnThreshold": 14000
+}

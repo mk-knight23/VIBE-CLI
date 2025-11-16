@@ -1,0 +1,5 @@
+<![CDATA[<svg width="16" height="16" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
+  <rect width="16" height="16" rx="2" fill="#007ACC"/>
+  <circle cx="8" cy="8" r="4" fill="white"/>
+  <path d="M6 8L8 6L10 8L8 10Z" fill="#007ACC"/>
+</svg>]]>

@@ -1,23 +1,51 @@
-name: Publish to npm
+name: Publish vibe-cli to npm
 
 on:
   push:
     tags:
-      - 'v*'
+      - 'vibe-cli-v*'
 
 permissions:
   contents: read
+  packages: write
+
+defaults:
+  run:
+    working-directory: vibe-cli
 
 jobs:
   publish:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
         with:
           node-version: 18
           registry-url: 'https://registry.npmjs.org'
-      - run: npm ci || npm i
-      - run: npm publish --access public
+          cache: 'npm'
+
+      - name: Validate NPM_TOKEN secret
+        run: |
+          if [ -z "${{ secrets.NPM_TOKEN }}" ]; then
+            echo "::error title=Missing Secret::NPM_TOKEN is not set; publish will fail."
+            exit 1
+          else
+            echo "NPM_TOKEN present (length: ${#{{ secrets.NPM_TOKEN }}})"
+          fi
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build TypeScript
+        run: npm run build
+
+      - name: Verify CLI starts
+        run: node cli.cjs --help || true
+
+      - name: Publish package
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: npm publish --access public
