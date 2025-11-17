@@ -2,11 +2,57 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Unified dark-first design tokens.
-   Emphasis on true black surfaces with natural accent tones (cyan/blue/amber/green)
-   while keeping existing variable names for component compatibility. */
+/* Light theme colors */
 @layer base {
-  :root,
+  :root {
+    /* Core surfaces */
+    --background: 0 0% 100%;            /* white */
+    --foreground: 222 47% 11%;          /* dark gray */
+    --card: 0 0% 98%;                   /* light gray */
+    --card-foreground: 222 47% 11%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
+
+    /* Brand / accents */
+    --primary: 200 100% 45%;            /* blue */
+    --primary-foreground: 0 0% 100%;
+    --secondary: 210 40% 96%;           /* light blue-gray */
+    --secondary-foreground: 222 47% 11%;
+    --accent: 170 82% 40%;              /* teal */
+    --accent-foreground: 0 0% 100%;
+
+    /* Supporting tokens */
+    --muted: 210 40% 96%;
+    --muted-foreground: 215 16% 47%;
+    --destructive: 0 84% 60%;           /* red */
+    --destructive-foreground: 0 0% 100%;
+
+    /* Borders / inputs / rings */
+    --border: 214 32% 91%;
+    --input: 214 32% 91%;
+    --ring: 200 100% 45%;
+
+    /* Data visualization palette */
+    --chart-1: 200 100% 45%;            /* blue */
+    --chart-2: 170 82% 40%;             /* teal */
+    --chart-3: 42 94% 58%;              /* amber */
+    --chart-4: 132 70% 45%;             /* green */
+    --chart-5: 256 68% 60%;             /* violet */
+
+    /* Radius */
+    --radius: 0.75rem;
+
+    /* Sidebar tokens for light theme */
+    --sidebar-background: 0 0% 98%;
+    --sidebar-foreground: 222 47% 11%;
+    --sidebar-primary: 200 100% 45%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 170 82% 40%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 214 32% 91%;
+    --sidebar-ring: 200 100% 45%;
+  }
+
   .dark {
     /* Core surfaces */
     --background: 0 0% 0%;            /* pure black */
@@ -41,9 +87,6 @@
     --chart-3: 42 94% 58%;            /* amber */
     --chart-4: 132 70% 45%;           /* green */
     --chart-5: 256 68% 60%;           /* violet */
-
-    /* Radius */
-    --radius: 0.75rem;
 
     /* Sidebar tokens aligned to dark scheme */
     --sidebar-background: 220 18% 10%;
@@ -165,4 +208,27 @@
   .ease-smooth {
     transition: all .35s cubic-bezier(.4,.02,.2,1);
   }
+}
+
+/* Light theme adjustments */
+.light body {
+  background:
+    linear-gradient(145deg, rgba(255,255,255,1) 0%, rgba(248,250,252,1) 35%),
+    radial-gradient(1200px 800px at 85% -10%, rgba(34,211,238,0.08), transparent 45%),
+    radial-gradient(900px 700px at -10% 30%, rgba(59,130,246,0.06), transparent 50%),
+    hsl(var(--background));
+  background-blend-mode: overlay, normal;
+}
+
+.light ::-webkit-scrollbar-track {
+  background: rgba(0,0,0,0.03);
+}
+
+.light .glow-border::before {
+  background: linear-gradient(135deg, rgba(34,211,238,0.35), rgba(59,130,246,0.35));
+}
+
+.light .ambient::after {
+  background: radial-gradient(circle at 30% 20%, rgba(34,211,238,0.10), transparent 60%),
+              radial-gradient(circle at 70% 80%, rgba(59,130,246,0.08), transparent 65%);
 }

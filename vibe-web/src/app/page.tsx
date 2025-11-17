@@ -1,5 +1,5 @@
 import Link from "next/link";
-import HeroSection from "../components/marketing/hero-section";
+import AnimatedHero from "../components/animated-hero";
 import TestimonialsSection from "../components/marketing/testimonials-section";
 
 /**
@@ -20,11 +20,17 @@ const hubLinks = [
 export default function Home() {
   return (
     <div className="mx-auto max-w-6xl px-5 pt-12 md:pt-16 space-y-28">
-      <HeroSection />
+      <AnimatedHero />
 
       <section className="relative">
         <div className="mx-auto max-w-3xl text-center mb-12">
-          <h2 className="font-headline font-semibold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-primary via-accent to-primary text-[2.4rem] md:text-[3rem]">
+          <h2 className="font-headline font-semibold tracking-tight text-[2.4rem] md:text-[3rem]" style={{ 
+            background: 'linear-gradient(to right, hsl(var(--primary)), hsl(var(--accent)))',
+            backgroundClip: 'text',
+            WebkitBackgroundClip: 'text',
+            color: 'transparent',
+            display: 'block'
+          }}>
             Explore VIBE
           </h2>
           <p className="mt-6 text-lg leading-relaxed text-muted-foreground">

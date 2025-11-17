@@ -7,15 +7,31 @@ import { Button } from './ui/button';
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from './ui/sheet';
 import { useState } from 'react';
 import { ThemeToggle } from './theme-toggle';
+import { NavigationDropdown } from './navigation-dropdown';
 
-const navLinks = [
-  { href: '/installation', label: 'Install' },
-  { href: '/quick-start', label: 'Quick Start' },
-  { href: '/commands', label: 'Commands' },
-  { href: '/features', label: 'Features' },
-  { href: '/pricing', label: 'Pricing' },
-  { href: '/docs', label: 'Docs' },
-  { href: '/faq', label: 'FAQ' },
+const navSections = [
+  {
+    title: 'Getting Started',
+    items: [
+      { href: '/installation', label: 'Install', description: 'Curl, npm, Windows binary methods' },
+      { href: '/quick-start', label: 'Quick Start', description: 'Onboarding steps & progress tracker' },
+    ]
+  },
+  {
+    title: 'Features',
+    items: [
+      { href: '/commands', label: 'Commands', description: 'Chat, agent, refactor, test, model ops' },
+      { href: '/features', label: 'Features', description: 'Core ergonomics & capability overview' },
+    ]
+  },
+  {
+    title: 'Resources',
+    items: [
+      { href: '/pricing', label: 'Pricing', description: 'Free usage model + future tiers' },
+      { href: '/docs', label: 'Docs', description: 'Capabilities & integration surfaces' },
+      { href: '/faq', label: 'FAQ', description: 'Common questions & security stance' },
+    ]
+  },
 ];
 
 const Header = () => {
@@ -28,15 +44,13 @@ const Header = () => {
           <Link href="/" className="mr-6 flex items-center space-x-2">
             <Logo />
           </Link>
-          <nav className="flex items-center space-x-6 text-sm font-medium">
-            {navLinks.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className="transition-colors hover:text-primary"
-              >
-                {link.label}
-              </Link>
+          <nav className="flex items-center space-x-8 text-sm font-medium">
+            {navSections.map((section) => (
+              <NavigationDropdown
+                key={section.title}
+                title={section.title}
+                items={section.items}
+              />
             ))}
           </nav>
         </div>
@@ -55,25 +69,25 @@ const Header = () => {
                 <Link href="/" className="mb-6 flex items-center" onClick={() => setIsMobileMenuOpen(false)}>
                   <Logo />
                 </Link>
-                <nav className="flex flex-col gap-4">
-                  {navLinks.map((link) => (
-                    <Link
-                      key={link.href}
-                      href={link.href}
-                      className="text-lg font-medium transition-colors hover:text-primary"
-                      onClick={() => setIsMobileMenuOpen(false)}
-                    >
-                      {link.label}
-                    </Link>
+                <nav className="flex flex-col gap-6">
+                  {navSections.map((section) => (
+                    <div key={section.title}>
+                      <h3 className="text-sm font-semibold text-muted-foreground mb-3">{section.title}</h3>
+                      <div className="flex flex-col gap-2">
+                        {section.items.map((item) => (
+                          <Link
+                            key={item.href}
+                            href={item.href}
+                            className="text-lg font-medium transition-colors hover:text-primary"
+                            onClick={() => setIsMobileMenuOpen(false)}
+                          >
+                            {item.label}
+                          </Link>
+                        ))}
+                      </div>
+                    </div>
                   ))}
                 </nav>
-                <div className="mt-6 rounded-lg border border-border/40 bg-card/60 p-4 text-xs text-muted-foreground">
-                  <p className="font-medium mb-2">Sections</p>
-                  <p className="leading-relaxed">
-                    Pages are now separated for faster access and clearer structure. Use the links above to
-                    browse installation, quick start, command reference, pricing, docs, and FAQ.
-                  </p>
-                </div>
               </div>
             </SheetContent>
           </Sheet>
