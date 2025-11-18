@@ -1,6 +1,6 @@
 {
   "name": "vibe-ai-cli",
-  "version": "2.1.0",
+  "version": "2.1.3",
   "description": "Free, privacy-first AI coding assistant CLI (chat, codegen, refactor, debug, test, git, agent).",
   "author": "mk-knight23 <noreply@users.noreply.github.com>",
   "license": "MIT",
@@ -24,11 +24,10 @@
     "developer-tools"
   ],
   "bin": {
-    "vibe": "bin/vibe.cjs"
+    "vibe": "bin/cli.cjs"
   },
   "files": [
-    "bin/vibe.cjs",
-    "cli.cjs",
+    "bin/cli.cjs",
     "core/",
     "agent/",
     "code/",
@@ -68,17 +67,18 @@
     "start": "node cli.cjs"
   },
   "dependencies": {
-    "inquirer": "^12.11.1",
+    "chokidar": "^3.6.0",
     "fast-glob": "^3.3.3",
-    "picocolors": "^1.1.1",
-    "ora": "^9.0.0",
-    "simple-git": "^3.27.0",
+    "inquirer": "^12.11.1",
     "node-fetch": "^3.3.2",
-    "chokidar": "^3.6.0"
+    "ora": "^9.0.0",
+    "picocolors": "^1.1.1",
+    "simple-git": "^3.27.0",
+    "vibe-ai-cli": "^2.1.1"
   },
   "devDependencies": {
-    "typescript": "^5.6.3",
+    "@types/node": "^20.11.30",
     "pkg": "^5.8.1",
-    "@types/node": "^20.11.30"
+    "typescript": "^5.6.3"
   }
 }

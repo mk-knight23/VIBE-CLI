@@ -10,8 +10,8 @@ const pc = require('picocolors');
 const oraModule = require('ora');
 const ora = oraModule.default || oraModule;
 const { exec } = require('child_process');
-const { webSearch, webFetchDocs } = require('./tools.cjs');
-const { getApiKey } = require('./core/apikey.cjs');
+const { webSearch, webFetchDocs } = require(path.join(__dirname, '..', 'tools.cjs'));
+const { getApiKey } = require(path.join(__dirname, '..', 'core', 'apikey.cjs'));
 const fg = require('fast-glob');
 
 // HTTP helpers using native fetch with timeout and axios-compatible errors
@@ -499,7 +499,7 @@ async function startChat(initialModel) {
       
       console.log(pc.cyan('Generating code...'));
       try {
-        const { generateCode } = require('./code/codegen.cjs');
+        const { generateCode } = require(path.join(__dirname, '..', 'code', 'codegen.cjs'));
         const result = await generateCode(prompt);
         console.log(pc.green(`Generated ${result.language} code:`));
         console.log(result.code);
@@ -523,7 +523,7 @@ async function startChat(initialModel) {
       
       console.log(pc.cyan(`Getting completion for: ${filePath}`));
       try {
-        const { generateCompletion } = require('./code/codegen.cjs');
+        const { generateCompletion } = require(path.join(__dirname, '..', 'code', 'codegen.cjs'));
         const result = await generateCompletion(filePath);
         console.log(pc.green(`Found ${result.suggestions.length} suggestions:`));
         result.suggestions.forEach((suggestion, index) => {
@@ -542,7 +542,7 @@ async function startChat(initialModel) {
       
       console.log(pc.cyan(`Refactoring: ${pattern}`));
       try {
-        const { quickRefactor } = require('./refactor/refactor.cjs');
+        const { quickRefactor } = require(path.join(__dirname, '..', 'refactor', 'refactor.cjs'));
         const result = await quickRefactor(pattern, 'clean');
         if (result.success) {
           console.log(pc.green('Refactoring completed successfully!'));
@@ -561,7 +561,7 @@ async function startChat(initialModel) {
       
       console.log(pc.cyan('Debugging...'));
       try {
-        const { quickDebug } = require('./debug/debug.cjs');
+        const { quickDebug } = require(path.join(__dirname, '..', 'debug', 'debug.cjs'));
         const result = await quickDebug(error);
         console.log(pc.green('Debug analysis completed'));
       } catch (e) {
@@ -576,7 +576,7 @@ async function startChat(initialModel) {
       
       console.log(pc.cyan(`Generating tests for: ${filePath}`));
       try {
-        const { quickTestGeneration } = require('./test/testgen.cjs');
+        const { quickTestGeneration } = require(path.join(__dirname, '..', 'test', 'testgen.cjs'));
         const result = await quickTestGeneration(filePath);
         console.log(pc.green('Test generation completed'));
       } catch (e) {
@@ -591,7 +591,7 @@ async function startChat(initialModel) {
       
       console.log(pc.cyan(`Reviewing: ${target}`));
       try {
-        const { reviewChanges } = require('./git/gittools.cjs');
+        const { reviewChanges } = require(path.join(__dirname, '..', 'git', 'gittools.cjs'));
         const result = await reviewChanges({
           file: target === 'git' ? null : target,
           focus: 'all'
@@ -644,7 +644,7 @@ async function startChat(initialModel) {
       
       console.log(pc.cyan(`Running agent task: ${task}`));
       try {
-        const { runAutonomousAgent } = require('./agent/agent.cjs');
+        const { runAutonomousAgent } = require(path.join(__dirname, '..', 'agent', 'agent.cjs'));
         const result = await runAutonomousAgent(task, { auto: false });
         if (result.success) {
           console.log(pc.green('Agent task completed successfully!'));
@@ -701,7 +701,7 @@ async function startChat(initialModel) {
 }
 
 function printAsciiWelcome() {
-  if (process.env.VIBE_NO_BANNER === '1' || !process.stdout.isTTY) return;
+  if (process.env.VIBE_NO_BANNER === '1') return;
   try {
     const os = require('os');
     const username = (os.userInfo && os.userInfo().username) || process.env.USER || process.env.USERNAME || 'User';
@@ -732,20 +732,21 @@ function printAsciiWelcome() {
       return str.length > n ? str.slice(0, n-1) + '…' : str.padEnd(n);
     };
 
-    const box = String.raw`╭─── Vibe-CLI ${version} ────────────────────────────────────────────────────────────────╮
-│                                   │ Tips for getting started                    │
-│          Welcome back ${username}!${' '.repeat(Math.max(0, 10 - String(username).length))} │ - Type /help to see all commands            │
-│                                   │ - Use /models to select a free model       │
-│   ▐▛███▜▌                          │ - /save [name] to save a transcript        │
-│  ▝▜█████▛▘ ← Initializing…         │ ─────────────────────────────────────────── │
-│    ▘▘ ▝▝   ← Boot Sequence OK      │ Recent activity                             │
-│                                   │ ${fit(recent,41)} │
-│                                   │                                              │
-│   Vibe AI · Free Model Access     │                                              │
-│       ${fit(cwd,42)} │
-╰───────────────────────────────────────────────────────────────────────────────────╯`;
+    const box = String.raw`+-------------------------------- Vibe-CLI ${version} ---------------------------------+
+|                                   | Tips for getting started                    |
+|          Welcome back ${username}!${' '.repeat(Math.max(0, 10 - String(username).length))} | - Type /help to see all commands            |
+|                                   | - Use /models to select a free model       |
+|   | |█████| |                          | - /save [name] to save a transcript        |
+|  | |█████| | ← Initializing…         | ------------------------------------------- |
+|    | | | |   ← Boot Sequence OK      | Recent activity                             |
+|                                   | ${fit(recent,41)} |
+|                                   |                                              |
+|   Vibe AI · Free Model Access     |                                              |
+|       ${fit(cwd,42)} |
++---------------------------------------------------------------------------------------------+`;
 
-    console.log('\n' + pc.cyan(box) + '\n');
+    process.stdout.write('\n' + box + '\n\n');
+    process.stdout.flush();
   } catch (e) {
     // Fallback: ignore banner errors
   }
@@ -784,8 +785,6 @@ async function main() {
   }
 }
 
-if (require.main === module) {
-  main();
-}
+main();
 
 module.exports = { fetchModels, selectModel, startChat, setupToolAccess };
