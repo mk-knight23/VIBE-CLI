@@ -2,8 +2,8 @@
   "name": "vibe-vscode",
   "displayName": "Vibe VS Code",
   "description": "VS Code extension for Vibe: a terminal-centric AI coding assistant with chat, agent modes, and OpenRouter integration.",
-  "version": "1.0.3",
-  "publisher": "mk-knight23",
+  "version": "1.0.4",
+  "publisher": "mktech",
   "repository": {
     "type": "git",
     "url": "https://github.com/mk-knight23/vibe"

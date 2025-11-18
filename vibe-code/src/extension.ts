@@ -330,7 +330,7 @@ class VibeView implements vscode.WebviewViewProvider {
       }
     } catch (err: any) {
       const msgText =
-        err?.message || "Unexpected error calling OpenRouter API.";
+        (err && err.message) || "Unexpected error calling OpenRouter API.";
       void vscode.window.showErrorMessage(`Vibe: ${msgText}`);
     } finally {
       progress.dispose();
