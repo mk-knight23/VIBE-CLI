@@ -42,7 +42,7 @@
     "package.json"
   ],
   "exports": {
-    ".": "./bin/vibe.cjs",
+    ".": "./bin/cli.cjs",
     "./core/*": "./core/*",
     "./agent/*": "./agent/*",
     "./code/*": "./code/*",
@@ -60,11 +60,11 @@
   "scripts": {
     "build": "tsc -p tsconfig.cli.json",
     "prepare": "npm run build",
-    "build:bin": "pkg -t node18-linux-x64,node18-macos-x64,node18-win-x64 --out-path dist cli.cjs && mv dist/cli-linux dist/vibe-linux || true && mv dist/cli-macos dist/vibe-macos || true && mv dist/cli-win.exe dist/vibe-win.exe || true",
+    "build:bin": "pkg -t node18-linux-x64,node18-macos-x64,node18-win-x64 --out-path dist bin/cli.cjs && mv dist/cli-linux dist/vibe-linux || true && mv dist/cli-macos dist/vibe-macos || true && mv dist/cli-win.exe dist/vibe-win.exe || true",
     "release:check": "node -e \"console.log('Tag to release, e.g., vibe-cli-v1.0.6')\"",
     "test": "echo \"No tests for CLI – skipping\"",
-    "smoke": "node bin/vibe.cjs model list || echo 'model list executed'",
-    "start": "node cli.cjs"
+    "smoke": "node bin/cli.cjs model list || echo 'model list executed'",
+    "start": "node bin/cli.cjs"
   },
   "dependencies": {
     "chokidar": "^3.6.0",
