@@ -3,13 +3,20 @@
 [![npm version](https://img.shields.io/npm/v/vibe-ai-cli.svg)](https://www.npmjs.com/package/vibe-ai-cli)
 [![License](https://img.shields.io/npm/l/vibe-ai-cli.svg)](LICENSE)
 [![Downloads](https://img.shields.io/npm/dm/vibe-ai-cli.svg)](https://www.npmjs.com/package/vibe-ai-cli)
-[![Homebrew](https://img.shields.io/badge/homebrew-2.1.6-orange)](https://github.com/mk-knight23/homebrew-tap)
-[![Chocolatey](https://img.shields.io/badge/chocolatey-2.1.6-purple)](https://chocolatey.org/packages/vibe-ai-cli)
-[![Scoop](https://img.shields.io/badge/scoop-2.1.6-blue)](https://github.com/mk-knight23/scoop-manifest)
+[![Homebrew](https://img.shields.io/badge/homebrew-2.1.7-orange)](https://github.com/mk-knight23/homebrew-tap)
+[![Chocolatey](https://img.shields.io/badge/chocolatey-2.1.7-purple)](https://chocolatey.org/packages/vibe-ai-cli)
+[![Scoop](https://img.shields.io/badge/scoop-2.1.7-blue)](https://github.com/mk-knight23/scoop-manifest)
 
 🤖 **Free, privacy-first AI coding assistant for the terminal** with enhanced interactive features. Advanced chat, code generation, refactoring, debugging, test authoring, git automation, and autonomous agent workflows powered by OpenRouter's free models.
 
-## ✨ What's New in v2.1.6
+## ✨ What's New in v2.1.7
+
+### 🚀 Multi-Platform Installation Support
+- 🍺 **Homebrew Support**: Install on macOS/Linux with `brew install vibe-ai-cli`
+- 🟪 **Chocolatey Support**: Install on Windows with `choco install vibe-ai-cli`
+- 🌊 **Scoop Support**: Install on Windows with `scoop install vibe-ai-cli`
+- 📦 **Direct Binary Downloads**: Pre-built binaries for Linux, macOS, and Windows available on GitHub
+- 🏷️ **Enhanced Documentation**: Installation badges and comprehensive install guides
 
 ### 🌟 Interactive Enhancements
 - 🔄 **Visual Feedback**: Spinner animations for all long-running operations (model fetching, code generation, file operations, AI responses)
@@ -19,6 +26,14 @@
 - 🛡️ **Safety Prompts**: Confirmation dialogs for file overwrite, move, and delete operations
 - 🎨 **Better Visual Design**: Improved color coding, success/failure indicators, and context information
 - 💬 **Interactive Session Management**: Better export functionality and context tracking
+
+### 🔧 Core Improvements (v2.1.0+)
+- 🚀 **Enhanced Agent Mode**: Autonomous multi-step task execution with checkpoints
+- 🔧 **Improved Code Generation**: Multi-file project creation with better context awareness
+- 🛡️ **Enhanced Security**: Advanced filtering and privacy protections
+- ⚡ **Performance Boost**: Reduced memory usage and faster response times
+- 🎯 **Smart Model Selection**: Task-aware model routing for optimal results
+- 📊 **Better Error Handling**: Improved debugging and recovery mechanisms
 
 ### 🔧 Core Improvements (v2.1.0+)
 - 🚀 **Enhanced Agent Mode**: Autonomous multi-step task execution with checkpoints
@@ -208,7 +223,7 @@ Agent core: [`vibe-cli/agent/agent.cjs`](vibe-cli/agent/agent.cjs:1).
 ## 🚀 Versioning & Release Management
 
 ### Current Version
-- **Version**: v2.1.6 (2025-11-19)
+- **Version**: v2.1.7 (2025-11-19)
 - **Tag Prefix**: `vibe-cli-vX.Y.Z`
 - **Release Type**: Independent semantic versioning
 
@@ -236,7 +251,14 @@ git push origin vibe-cli-v2.1.1
 
 ### Version History Highlights
 
-#### v2.1.6 (Current)
+#### v2.1.7 (Current)
+- 🍺 **Homebrew Support**: Install on macOS/Linux with `brew install vibe-ai-cli`
+- 🟪 **Chocolatey Support**: Install on Windows with `choco install vibe-ai-cli`
+- 🌊 **Scoop Support**: Install on Windows with `scoop install vibe-ai-cli`
+- 📦 **Direct Binary Downloads**: Pre-built binaries for all platforms
+- 🏷️ **Enhanced Documentation**: Installation badges and comprehensive guides
+
+#### v2.1.6 (Previous)
 - 🌟 **Interactive Enhancements**: Visual feedback, file browser, command history
 - 🔄 **Visual Feedback**: Spinner animations for all operations
 - 📁 **Visual File Browser**: Tree structure display with icons

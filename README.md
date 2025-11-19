@@ -380,7 +380,7 @@ code --install-extension vibe-vscode-*.vsix
 
 | Platform | Installation Command | First Steps |
 |----------|-------------------|-------------|
-| **CLI** | `npm install -g vibe-ai-cli` or `brew install vibe-ai-cli` or `choco install vibe-ai-cli` | `vibe chat "Hello, Vibe!"` |
+| **CLI** | `npm install -g vibe-ai-cli` or `brew install vibe-ai-cli` or `choco install vibe-ai-cli` or `scoop install vibe-ai-cli` | `vibe chat "Hello, Vibe!"` |
 | **Web** | `cd vibe-web && npm install` | `npm run dev` → http://localhost:3000 |
 | **Extension** | Install from VS Code Marketplace | `Ctrl+Shift+P` → "Vibe: Open Chat" |
 
