@@ -8,7 +8,7 @@ A comprehensive AI-powered development ecosystem consisting of three integrated 
 
 1. **Vibe CLI** (v2.1.0) — Advanced terminal assistant with chat, code generation, refactoring, debugging, testing, git automation, and autonomous agent capabilities
 2. **Vibe Web** (v1.2.0) — Modern marketing and documentation platform built with Next.js 16, featuring interactive guides and comprehensive onboarding
-3. **Vibe Code** (v1.0.0) — Feature-rich VS Code extension providing in-editor AI assistance with multiple modes and personas
+3. **Vibe Code** (v2.0.0) — Feature-rich VS Code extension providing in-editor AI assistance with multiple modes, multi-provider support, and enhanced UI with copyable messages and clear chat functionality
 
 Each package maintains independent versioning and release cycles while sharing a unified design philosophy and OpenRouter integration for free AI model access.
 
@@ -105,7 +105,7 @@ graph TB
         UI[Interactive UI]
     end
     
-    subgraph "Vibe Code v1.0.0"
+    subgraph "Vibe Code v2.0.0"
         EXT[VS Code Extension]
         PANEL[Chat Panel]
         CONTEXT[Context Engine]
@@ -216,7 +216,7 @@ vibe-ecosystem/
 |---------|---------|---------|--------------|-------------|
 | **Vibe CLI** | v2.1.0 | Terminal-based AI assistant | npm Registry | [`vibe-cli/bin/vibe.cjs`](vibe-cli/bin/vibe.cjs:1) |
 | **Vibe Web** | v1.2.0 | Documentation & marketing platform | Vercel/Static Hosting | [`vibe-web/src/app/page.tsx`](vibe-web/src/app/page.tsx:1) |
-| **Vibe Code** | v1.0.0 | VS Code extension with AI integration | VS Code Marketplace | [`vibe-code/src/extension.ts`](vibe-code/src/extension.ts:1) |
+| **Vibe Code** | v2.0.0 | VS Code extension with multi-provider AI integration | VS Code Marketplace | [`vibe-code/src/extension.ts`](vibe-code/src/extension.ts:1) |
 
 ### 🚀 Key Capabilities by Package
 
@@ -236,12 +236,13 @@ vibe-ecosystem/
 - **Responsive Design**: Mobile-first, accessible interface
 - **Performance Optimized**: Fast loading with Next.js 16
 
-#### Vibe Code (v1.0.0) - IDE Integration
+#### Vibe Code (v2.0.0) - IDE Integration
 - **In-Editor Chat**: AI assistance without leaving your code
 - **Multiple Modes**: Specialized personas for different tasks
 - **Context Awareness**: Understands your project structure
 - **Keyboard Shortcuts**: Quick mode switching and actions
-- **Diff Preview**: Safe code modifications with review
+- **Multi-Provider Support**: OpenRouter and MegaLLM integration
+- **Enhanced UI**: Copyable messages, clear chat, better scrolling
 
 ---
 
@@ -404,7 +405,7 @@ cd vibe-code && npm run compile
 |---------|---------|-------------|--------|
 | **Vibe CLI** | v2.1.0 | 2024-11-18 | ✅ Production Ready |
 | **Vibe Web** | v1.2.0 | 2024-11-18 | ✅ Production Ready |
-| **Vibe Code** | v1.0.0 | 2024-11-18 | ✅ Production Ready |
+| **Vibe Code** | v2.0.0 | 2025-11-20 | ✅ Production Ready |
 
 ### Versioning Strategy
 
@@ -447,10 +448,11 @@ git push origin --tags
 - 🔍 Enhanced search and navigation
 - ⚡ Optimized build pipeline with Next.js 16
 
-#### Vibe Code v1.0.0 (Current)
-- 🚀 Initial stable release
-- 💬 In-editor chat with multiple AI modes
-- 🎯 Context-aware code assistance
+#### Vibe Code v2.0.0 (Current)
+- 🎉 Major update with multi-provider support
+- 💬 In-editor chat with multiple AI modes and providers
+- 🎯 Context-aware code assistance with OpenRouter & MegaLLM
+- 🖱️ Enhanced UI with copyable messages and clear chat
 - ⌨️ Keyboard shortcuts for productivity
 
 ### 4.2 Workflow Coupling
@@ -596,7 +598,7 @@ Add new Extension view:
 |---------|------------|-------------|-----------------|---------------|
 | **Vibe CLI** | `vibe-cli-v*` | `npm run smoke` (lists models) | `npm publish` | v2.1.0 |
 | **Vibe Web** | `vibe-web-v*` | `npm run smoke` (build + .next check) | Deploy via Vercel | v1.2.0 |
-| **Vibe Code** | `vibe-code-v*` | `npm run smoke` (compile dist) | `npx vsce publish --pat $VSCODE_PUBLISH_TOKEN` | v1.0.0 |
+| **Vibe Code** | `vibe-code-v*` | `npm run smoke` (compile dist) | `npx vsce publish --pat $VSCODE_PUBLISH_TOKEN` | v2.0.0 |
 
 ### Release Examples
 

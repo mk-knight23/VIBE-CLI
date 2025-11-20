@@ -10,3 +10,4 @@ vsc-extension-quickstart.md
 **/tsconfig.*.json
 **/*.spec.ts
 **/test/**
+PUBLISHING.md

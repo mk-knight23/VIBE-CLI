@@ -1,23 +1,27 @@
 # Vibe VS Code
 
-**Publisher:** Mk tech  
-**Version:** 1.0.4 | **Status:** Production Ready | **License:** MIT
+**Publisher:** Mk tech
+**Version:** 2.0.0 | **Status:** Production Ready | **License:** MIT
 
-🔌 Feature-rich VS Code extension that brings the power of Vibe AI directly into your editor. Provides intelligent code assistance, multiple AI modes, and seamless workflow integration.
+🔌 Feature-rich VS Code extension that brings the power of Vibe AI directly into your editor. Provides intelligent code assistance, multiple AI modes, and seamless workflow integration with support for multiple AI providers.
 
-## 🎉 What's New in v1.0.4
+## 🎉 What's New in v2.0.0
 
-🐛 **Bug Fix:** Fixed null reference error in error handling
-🔧 **Publisher Update:** Updated publisher to mktech
-⚡ **Performance:** Improved error handling reliability
+⭐ **Major Update:** Added MegaLLM provider support alongside OpenRouter
+✨ **Enhanced UI:** Improved scrolling, copyable messages, and clear chat functionality
+🔧 **Better UX:** Message copying by clicking, clear chat button, improved layout
+🚀 **Updated Dependencies:** Latest VS Code engine support and type definitions
+📊 **Expanded Models:** Support for 70+ AI models from multiple providers
 
 ## 🌟 Key Features
 
 ### 💬 Intelligent Chat System
-- **Multi-Model Support:** Access to OpenRouter's free and premium models
+- **Multi-Provider Support:** Access to both OpenRouter and MegaLLM AI models
 - **Context-Aware Responses:** Understands your open files and project structure
 - **Conversation History:** Persistent chat sessions across editor restarts
 - **Code Snippet Integration:** Direct code insertion and application
+- **Copyable Messages:** Click on any message to copy its content to clipboard
+- **Clear Chat History:** Easily clear conversation history with one click
 
 ### 🎭 Specialized AI Modes
 - 🏗️ **Architect Mode:** System design and planning
@@ -69,21 +73,35 @@ Agent/tab selection is handled fully in the webview script and included in the m
 
 ## 🔧 Technical Details
 
-### OpenRouter Integration
-- Uses fetch from Node 18+ to call `https://openrouter.ai/api/v1/chat/completions`
+### AI Provider Integration
+- Supports both OpenRouter and MegaLLM APIs
+- OpenRouter: Uses fetch to call `https://openrouter.ai/api/v1/chat/completions`
+- MegaLLM: Uses fetch to call `https://ai.megallm.io/v1/chat/completions`
 - Default model: `z-ai/glm-4.5-air:free`
-- Several top free models are exposed in a dropdown for quick switching (see `TOP_FREE_MODELS` in `src/extension.ts`)
-- The request wrapper lives in `callOpenRouter(...)` in `src/extension.ts`
+- Several top models from both providers are exposed in a dropdown for quick switching (see `TOP_FREE_MODELS` in `src/extension.ts`)
+- The API calling wrappers live in `callOpenRouter(...)` and `callMegaLLM(...)` in `src/extension.ts`
 
 ### Settings
 Extension settings (via VS Code Settings UI or `settings.json`):
 
+- `vibe.provider` (string) — AI provider to use (options: "openrouter", "megallm")
 - `vibe.openrouterApiKey` (string) — your OpenRouter API key
+- `vibe.megallmApiKey` (string) — your MegaLLM API key
 - `vibe.defaultModel` (string) — default model id (defaults to `z-ai/glm-4.5-air:free`)
 - `vibe.autoApproveUnsafeOps` (boolean) — future toggle for auto-approving risky operations
 - `vibe.maxContextFiles` (number) — maximum files considered for context collection
 
 Configuration schema is defined in `package.json`.
+
+### Provider Selection
+The extension now supports both OpenRouter and MegaLLM providers. You can switch between providers in the settings panel or using the provider dropdown in the sidebar. Each provider requires its own API key.
+
+### UI & UX Improvements
+- **Enhanced Scrolling:** Smooth scrolling with custom-styled scrollbars
+- **Message Copying:** Click on any message to copy its content
+- **Clear Chat:** One-click button to clear conversation history
+- **Responsive Design:** Better layout and spacing for improved readability
+- **Auto-scroll Control:** Smart auto-scroll that respects manual scrolling
 
 ### Context Button
 Context button collects snippets from visible editors (URI, language, first 4k chars) and surfaces them in the sidebar.
@@ -141,7 +159,7 @@ That will produce `vibe-vscode-*.vsix`, which you can:
 ## 🚀 Versioning & Release
 
 ### Current Version
-- **Version:** v1.0.4 (2025-11-18)
+- **Version:** v2.0.0 (2025-11-20)
 - **Tag Prefix:** `vibe-code-vX.Y.Z`
 - **Release Type:** Independent semantic versioning
 
