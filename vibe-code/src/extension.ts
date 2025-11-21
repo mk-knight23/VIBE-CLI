@@ -1,5 +1,7 @@
 
 import * as vscode from "vscode";
+import * as fs from 'fs';
+import * as path from 'path';
 
 type VibeModeId =
   | "architect"
@@ -35,6 +37,44 @@ interface VibeConfig {
   defaultModel: string;
   autoApproveUnsafeOps: boolean;
   maxContextFiles: number;
+}
+
+// Default API keys for fallback use
+const DEFAULT_OPENROUTER_KEY = "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";
+const DEFAULT_MEGALLM_KEY = "sk-mega-0eaa0b2c2bae3ced6afca8651cfbbce07927e231e4119068f7f7867c20cdc820";
+
+// Kilo Code Tools interfaces
+interface ReadFileParams {
+  path: string;
+  start_line?: number;
+  end_line?: number;
+  auto_truncate?: boolean;
+}
+
+interface SearchFilesParams {
+  path: string;
+  regex: string;
+  file_pattern?: string;
+}
+
+interface ListFilesParams {
+  path: string;
+  recursive?: boolean;
+}
+
+interface ListCodeDefinitionNamesParams {
+  path: string;
+}
+
+interface ApplyDiffParams {
+  path: string;
+  diff: string;
+}
+
+interface WriteToFileParams {
+  path: string;
+  content: string;
+  line_count: number;
 }
 
 interface OpenRouterResponse {
@@ -114,11 +154,11 @@ const PERSONAS: Persona[] = [
 ];
 
 const TOP_FREE_MODELS: string[] = [
-  "z-ai/glm-4.5-air:free",
   "gpt-4o-mini",
-  "claude-3.5-sonnet",
   "gemini-2.0-flash",
   "llama-3.3-70b-instruct",
+  "claude-3.5-sonnet",
+  "z-ai/glm-4.5-air:free",
   "openai-gpt-oss-20b",
   "llama3.3-70b-instruct",
   "deepseek-r1-distill-llama-70b",
@@ -324,14 +364,6 @@ class VibeView implements vscode.WebviewViewProvider {
     }
 
     const cfg = getExtensionConfig();
-    const apiKey = cfg.provider === 'openrouter' ? cfg.openrouterApiKey : cfg.megallmApiKey;
-
-    if (!apiKey) {
-      void vscode.window.showWarningMessage(
-        `Vibe: Please set your ${cfg.provider === 'openrouter' ? 'OpenRouter' : 'MegaLLM'} API key in settings (vibe.${cfg.provider}ApiKey).`
-      );
-      return;
-    }
 
     const persona =
       PERSONAS.find((p) => p.id === this.currentPersonaId) ?? PERSONAS[0];
@@ -347,40 +379,356 @@ class VibeView implements vscode.WebviewViewProvider {
 
     this.messages.push({ role: "user", content: text });
 
+    // Create thinking status messages with cycling indicators
+    const thinkingMessages = [
+      "Vibe: Thinking... 🤔",
+      "Vibe: Generating response... ✨",
+      "Vibe: Processing request... 🧠",
+      "Vibe: Please wait... ⏳",
+      "Vibe: Almost there... 🚀",
+      "Vibe: Cooking up a response... 🍳",
+      "Vibe: Analyzing... 🔍",
+      "Vibe: Working on it... ⚡"
+    ];
+    let currentMessageIndex = 0;
+
     const progress = vscode.window.createStatusBarItem(
       vscode.StatusBarAlignment.Left,
       1000
     );
-    progress.text = "Vibe: Thinking...";
+    progress.text = thinkingMessages[0];
     progress.show();
 
+    // Set up interval to cycle through messages
+    const thinkingInterval = setInterval(() => {
+      currentMessageIndex = (currentMessageIndex + 1) % thinkingMessages.length;
+      progress.text = thinkingMessages[currentMessageIndex];
+    }, 2000); // Change message every 2 seconds
+
     try {
-      const resp = cfg.provider === 'openrouter'
-        ? await callOpenRouter({
-            apiKey: apiKey,
-            model: this.currentModelId,
-            messages,
-            taskType,
-          })
-        : await callMegaLLM({
-            apiKey: apiKey,
+      // Try selected provider first, then fall back to other provider if needed
+      let resp: OpenRouterResponse | MegaLLMResponse | null = null;
+      let finalProvider: 'openrouter' | 'megallm' = cfg.provider;
+
+      // First, try the currently selected provider with the selected model
+      if (cfg.provider === 'openrouter') {
+        resp = await callOpenRouterWithFallback({
+          apiKey: cfg.openrouterApiKey,
+          model: this.currentModelId,
+          messages,
+          taskType,
+        });
+        finalProvider = 'openrouter';
+      } else {
+        resp = await callMegaLLMWithFallback({
+          apiKey: cfg.megallmApiKey,
+          model: this.currentModelId,
+          messages,
+          taskType,
+        });
+        finalProvider = 'megallm';
+      }
+
+      // If the selected provider fails, try the other provider
+      if (!resp || !resp.content || resp.content.includes("No content returned") || resp.content.includes("All available models failed")) {
+        if (cfg.provider === 'openrouter') {
+          // Try MegaLLM as fallback
+          resp = await callMegaLLMWithFallback({
+            apiKey: cfg.megallmApiKey,
             model: this.currentModelId,
             messages,
             taskType,
           });
+          finalProvider = 'megallm';
+        } else {
+          // Try OpenRouter as fallback
+          resp = await callOpenRouterWithFallback({
+            apiKey: cfg.openrouterApiKey,
+            model: this.currentModelId,
+            messages,
+            taskType,
+          });
+          finalProvider = 'openrouter';
+        }
+      }
 
-      this.messages.push({ role: "assistant", content: resp.content });
-      if (this.view) {
-        this.view.webview.postMessage({
-          type: "assistantMessage",
-          content: resp.content,
-        });
+      // If both providers fail, try with the first available model from our list
+      if (!resp || !resp.content || resp.content.includes("No content returned") || resp.content.includes("All available models failed")) {
+        // Try with the first working model from the supported model list
+        for (const model of TOP_FREE_MODELS) {
+          if (cfg.provider === 'openrouter') {
+            resp = await callOpenRouterWithFallback({
+              apiKey: cfg.openrouterApiKey,
+              model: model,
+              messages,
+              taskType,
+            });
+            finalProvider = 'openrouter';
+          } else {
+            resp = await callMegaLLMWithFallback({
+              apiKey: cfg.megallmApiKey,
+              model: model,
+              messages,
+              taskType,
+            });
+            finalProvider = 'megallm';
+          }
+
+          if (resp && resp.content && !resp.content.includes("No content returned") && !resp.content.includes("All available models failed")) {
+            break;
+          }
+
+          // Also try the other provider with this model
+          if (cfg.provider === 'openrouter') {
+            resp = await callMegaLLMWithFallback({
+              apiKey: cfg.megallmApiKey,
+              model: model,
+              messages,
+              taskType,
+            });
+            finalProvider = 'megallm';
+          } else {
+            resp = await callOpenRouterWithFallback({
+              apiKey: cfg.openrouterApiKey,
+              model: model,
+              messages,
+              taskType,
+            });
+            finalProvider = 'openrouter';
+          }
+
+          if (resp && resp.content && !resp.content.includes("No content returned") && !resp.content.includes("All available models failed")) {
+            break;
+          }
+        }
+      }
+
+      // Final check if we have a valid response
+      if (!resp || !resp.content || resp.content.includes("No content returned") || resp.content.includes("All available models failed")) {
+        void vscode.window.showWarningMessage(`Vibe: Unable to get response from any provider. Please verify your API keys.`);
+        return;
+      }
+
+      // Check if the response contains tool calls
+      if (this.containsToolCall(resp.content)) {
+        // Process the tool calls
+        const toolResults = await this.processToolCalls(resp.content);
+        // Add the tool results to the messages and send them to the UI
+        this.messages.push({ role: "assistant", content: resp.content });
+        if (this.view) {
+          this.view.webview.postMessage({
+            type: "assistantMessage",
+            content: resp.content,
+          });
+        }
+
+        // Send tool results back to the AI for further processing
+        const toolResultMessage: ChatMessage = {
+          role: "user",
+          content: `Tool results:\n${toolResults}`
+        };
+        this.messages.push(toolResultMessage);
+
+        // Get the final response from the AI after tool results with thinking indicator
+        const finalMessages: ChatMessage[] = [];
+        finalMessages.push({ role: "system", content: systemPrompt });
+        this.messages.forEach((m) => finalMessages.push(m));
+
+        // Update thinking status for second response
+        const toolThinkingMessages = [
+          "Vibe: Processing tool results... 🔧",
+          "Vibe: Analyzing output... 🧠",
+          "Vibe: Generating follow-up... ✨",
+          "Vibe: Almost ready... 🚀",
+          "Vibe: Finalizing response... 📝"
+        ];
+        let toolCurrentMessageIndex = 0;
+
+        const toolProgress = vscode.window.createStatusBarItem(
+          vscode.StatusBarAlignment.Left,
+          1001  // Different priority to avoid conflicts
+        );
+        toolProgress.text = toolThinkingMessages[0];
+        toolProgress.show();
+
+        // Set up interval to cycle through tool messages
+        const toolThinkingInterval = setInterval(() => {
+          toolCurrentMessageIndex = (toolCurrentMessageIndex + 1) % toolThinkingMessages.length;
+          toolProgress.text = toolThinkingMessages[toolCurrentMessageIndex];
+        }, 2000); // Change message every 2 seconds
+
+        // Use the provider that worked for the first response
+        let finalResp: OpenRouterResponse | MegaLLMResponse | null = null;
+        if (finalProvider === 'openrouter') {
+          finalResp = await callOpenRouterWithFallback({
+            apiKey: cfg.openrouterApiKey,
+            model: this.currentModelId,
+            messages: finalMessages,
+            taskType,
+          });
+        } else {
+          finalResp = await callMegaLLMWithFallback({
+            apiKey: cfg.megallmApiKey,
+            model: this.currentModelId,
+            messages: finalMessages,
+            taskType,
+          });
+        }
+
+        // Clear the tool thinking interval
+        clearInterval(toolThinkingInterval);
+        toolProgress.dispose();
+
+        // Apply the same fallback logic for the second response
+        if (!finalResp || !finalResp.content || finalResp.content.includes("No content returned") || finalResp.content.includes("All available models failed")) {
+          // Try the other provider
+          if (finalProvider === 'openrouter') {
+            finalResp = await callMegaLLMWithFallback({
+              apiKey: cfg.megallmApiKey,
+              model: this.currentModelId,
+              messages: finalMessages,
+              taskType,
+            });
+          } else {
+            finalResp = await callOpenRouterWithFallback({
+              apiKey: cfg.openrouterApiKey,
+              model: this.currentModelId,
+              messages: finalMessages,
+              taskType,
+            });
+          }
+        }
+
+        if (finalResp && finalResp.content && !finalResp.content.includes("No content returned") && !finalResp.content.includes("All available models failed")) {
+          this.messages.push({ role: "assistant", content: finalResp.content });
+          if (this.view) {
+            this.view.webview.postMessage({
+              type: "assistantMessage",
+              content: finalResp.content,
+            });
+          }
+        } else {
+          // If second response fails, at least send the first response
+          void vscode.window.showWarningMessage(`Vibe: Tool processing response failed, but here's the initial response.`);
+        }
+      } else {
+        // No tool calls, send response as usual
+        this.messages.push({ role: "assistant", content: resp.content });
+        if (this.view) {
+          this.view.webview.postMessage({
+            type: "assistantMessage",
+            content: resp.content,
+          });
+        }
       }
     } catch (err: any) {
-      const msgText = (err && err.message) || `Unexpected error calling ${cfg.provider === 'openrouter' ? 'OpenRouter' : 'MegaLLM'} API.`;
+      const msgText = (err && err.message) || `Unexpected error occurred.`;
       void vscode.window.showErrorMessage(`Vibe: ${msgText}`);
     } finally {
+      // Clear the thinking interval and dispose of the progress item
+      clearInterval(thinkingInterval);
       progress.dispose();
+    }
+  }
+
+  private containsToolCall(content: string): boolean {
+    const toolPatterns = [
+      /<read_file>/,
+      /<search_files>/,
+      /<list_files>/,
+      /<list_code_definition_names>/,
+      /<apply_diff>/,
+      /<write_to_file>/
+    ];
+
+    return toolPatterns.some(pattern => pattern.test(content));
+  }
+
+  private async processToolCalls(content: string): Promise<string> {
+    let result = '';
+    const toolCalls = this.extractToolCalls(content);
+
+    for (const toolCall of toolCalls) {
+      try {
+        const toolResult = await this.executeTool(toolCall);
+        result += `Tool: ${toolCall.type}\nParameters: ${JSON.stringify(toolCall.params)}\nResult: ${toolResult}\n\n`;
+      } catch (error) {
+        result += `Tool: ${toolCall.type}\nParameters: ${JSON.stringify(toolCall.params)}\nError: ${(error as Error).message}\n\n`;
+      }
+    }
+
+    return result;
+  }
+
+  private extractToolCalls(content: string) {
+    const toolCalls = [];
+
+    // Match tool call patterns
+    const toolPatterns = [
+      { type: 'read_file', pattern: /<read_file>([\s\S]*?)<\/read_file>/g },
+      { type: 'search_files', pattern: /<search_files>([\s\S]*?)<\/search_files>/g },
+      { type: 'list_files', pattern: /<list_files>([\s\S]*?)<\/list_files>/g },
+      { type: 'list_code_definition_names', pattern: /<list_code_definition_names>([\s\S]*?)<\/list_code_definition_names>/g },
+      { type: 'apply_diff', pattern: /<apply_diff>([\s\S]*?)<\/apply_diff>/g },
+      { type: 'write_to_file', pattern: /<write_to_file>([\s\S]*?)<\/write_to_file>/g }
+    ];
+
+    for (const toolPattern of toolPatterns) {
+      let match;
+      while ((match = toolPattern.pattern.exec(content)) !== null) {
+        const toolParams = this.parseToolParams(match[1]);
+        toolCalls.push({
+          type: toolPattern.type,
+          params: toolParams
+        });
+      }
+    }
+
+    return toolCalls;
+  }
+
+  private parseToolParams(paramString: string): Record<string, any> {
+    // Parse attributes from the parameter string
+    const params: Record<string, any> = {};
+
+    // Extract attributes in the format attr="value" or attr='value'
+    const attrPattern = /(\w+)=(["'])(.*?)(\2)/g;
+    let attrMatch;
+
+    while ((attrMatch = attrPattern.exec(paramString)) !== null) {
+      const key = attrMatch[1];
+      const value = attrMatch[3];
+      // Try to parse as a number if it looks like one
+      if (/^\d+$/.test(value)) {
+        params[key] = parseInt(value);
+      } else if (value.toLowerCase() === 'true') {
+        params[key] = true;
+      } else if (value.toLowerCase() === 'false') {
+        params[key] = false;
+      } else {
+        params[key] = value;
+      }
+    }
+
+    return params;
+  }
+
+  private async executeTool(toolCall: { type: string; params: any }): Promise<string> {
+    switch(toolCall.type) {
+      case 'read_file':
+        return await handleReadFile(toolCall.params as ReadFileParams);
+      case 'search_files':
+        return await handleSearchFiles(toolCall.params as SearchFilesParams);
+      case 'list_files':
+        return await handleListFiles(toolCall.params as ListFilesParams);
+      case 'list_code_definition_names':
+        return await handleListCodeDefinitionNames(toolCall.params as ListCodeDefinitionNamesParams);
+      case 'apply_diff':
+        return await handleApplyDiff(toolCall.params as ApplyDiffParams);
+      case 'write_to_file':
+        return await handleWriteToFile(toolCall.params as WriteToFileParams);
+      default:
+        throw new Error(`Unknown tool type: ${toolCall.type}`);
     }
   }
 
@@ -442,6 +790,14 @@ class VibeView implements vscode.WebviewViewProvider {
 
     const contextLimitLine = `You can reference at most ${cfg.maxContextFiles} project files when reasoning about context. Prefer focusing on files the user or context has provided.`;
 
+    const toolsLine = `You have access to the following tools that can be used by wrapping the parameters in specific XML-like tags:
+- <read_file> with required "path" attribute and optional "start_line", "end_line", and "auto_truncate" attributes
+- <search_files> with required "path" and "regex" attributes and optional "file_pattern" attribute
+- <list_files> with required "path" attribute and optional "recursive" attribute
+- <list_code_definition_names> with required "path" attribute
+- <apply_diff> with required "path" and "diff" attributes
+- <write_to_file> with required "path", "content", and "line_count" attributes`;
+
     return [
       base,
       personaLine,
@@ -450,6 +806,7 @@ class VibeView implements vscode.WebviewViewProvider {
       taskTypeLine,
       autoApproveLine,
       contextLimitLine,
+      toolsLine,
     ]
       .filter(Boolean)
       .join("\n\n");
@@ -487,6 +844,7 @@ class VibeView implements vscode.WebviewViewProvider {
         font-family: var(--vscode-font-family);
         background-color: var(--vscode-editor-background);
         color: var(--vscode-editor-foreground);
+        transition: all 0.3s ease;
       }
       .root {
         display: flex;
@@ -500,20 +858,24 @@ class VibeView implements vscode.WebviewViewProvider {
         justify-content: space-between;
         padding: 4px 8px;
         border-bottom: 1px solid var(--vscode-panel-border);
+        transition: all 0.3s ease;
       }
       .brand {
         display: flex;
         align-items: center;
         gap: 6px;
         font-weight: 600;
+        transition: all 0.3s ease;
       }
       .brand span.icon {
         font-size: 16px;
+        transition: all 0.3s ease;
       }
       .modes {
         display: flex;
         align-items: center;
         gap: 4px;
+        transition: all 0.3s ease;
       }
       .toolbar-right {
         display: flex;
@@ -522,6 +884,26 @@ class VibeView implements vscode.WebviewViewProvider {
       }
       select, button.small {
         font-size: 11px;
+        transition: all 0.3s ease;
+        border-radius: 4px;
+        position: relative;
+        overflow: hidden;
+      }
+
+      /* Glossy effect for select elements */
+      select {
+        background: linear-gradient(135deg,
+          color-mix(in srgb, var(--vscode-dropdown-background, #3c3c3c) 95%, white 5%) 0%,
+          color-mix(in srgb, var(--vscode-dropdown-background, #3c3c3c) 80%, white 20%) 100%);
+        box-shadow: inset 0 1px 0 color-mix(in srgb, var(--vscode-dropdown-foreground, #cccccc) 20%, white 80%);
+      }
+      select:hover {
+        background: linear-gradient(135deg,
+          color-mix(in srgb, var(--vscode-dropdown-background, #3c3c3c) 90%, white 10%) 0%,
+          color-mix(in srgb, var(--vscode-dropdown-background, #3c3c3c) 70%, white 30%) 100%);
+        box-shadow: inset 0 1px 0 color-mix(in srgb, var(--vscode-dropdown-foreground, #cccccc) 30%, white 70%),
+                    0 0 8px rgba(100, 150, 255, 0.3);
+        transform: translateY(-1px);
       }
       .main {
         flex: 1;
@@ -534,28 +916,72 @@ class VibeView implements vscode.WebviewViewProvider {
         gap: 4px;
         padding: 4px 8px;
         border-bottom: 1px solid var(--vscode-panel-border);
+        background: linear-gradient(to bottom,
+          color-mix(in srgb, var(--vscode-editor-background) 95%, white 5%) 0%,
+          color-mix(in srgb, var(--vscode-editor-background) 100%, black 5%) 100%);
       }
       .tab {
         padding: 6px;
         cursor: pointer;
-        border-radius: 4px;
+        border-radius: 6px;
         font-weight: 500;
-        transition: all 0.2s ease;
+        transition: all 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94);
         display: flex;
         align-items: center;
         justify-content: center;
         width: 36px;
         height: 36px;
+        position: relative;
+        overflow: hidden;
+        background: linear-gradient(135deg,
+          color-mix(in srgb, var(--vscode-button-background, #007acc) 30%, white 70%) 0%,
+          color-mix(in srgb, var(--vscode-button-background, #007acc) 10%, white 90%) 100%);
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+      }
+      .tab::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: linear-gradient(45deg,
+          transparent 0%,
+          rgba(255, 255, 255, 0.1) 20%,
+          rgba(255, 255, 255, 0.3) 30%,
+          rgba(255, 255, 255, 0.1) 40%,
+          transparent 50%);
+        transform: rotate(25deg) translateX(-100%);
+        transition: all 0.5s ease;
       }
       .tab:hover {
-        background: var(--vscode-toolbar-hoverBackground, var(--vscode-sideBarSectionHeader-border));
+        background: linear-gradient(135deg,
+          color-mix(in srgb, var(--vscode-toolbar-hoverBackground, #005a9e) 20%, white 80%) 0%,
+          color-mix(in srgb, var(--vscode-toolbar-hoverBackground, #005a9e) 5%, white 95%) 100%);
+        transform: translateY(-2px) scale(1.05);
+        box-shadow: 0 4px 12px rgba(0, 122, 204, 0.4), 0 0 15px rgba(100, 150, 255, 0.5);
+      }
+      .tab:hover::before {
+        transform: rotate(25deg) translateX(100%);
       }
       .tab.active {
-        background: var(--vscode-button-background);
+        background: linear-gradient(135deg,
+          color-mix(in srgb, var(--vscode-button-background, #007acc) 80%, white 20%) 0%,
+          color-mix(in srgb, var(--vscode-button-background, #007acc) 50%, white 50%) 100%);
         color: var(--vscode-button-foreground);
+        transform: translateY(-1px);
+        box-shadow: 0 3px 8px rgba(0, 122, 204, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+      }
+      .tab.active:hover {
+        transform: translateY(-2px) scale(1.05);
+        box-shadow: 0 4px 12px rgba(0, 122, 204, 0.7), 0 0 15px rgba(100, 150, 255, 0.6);
       }
       .tab-icon {
         font-size: 16px;
+        transition: all 0.3s ease;
+      }
+      .tab:hover .tab-icon {
+        transform: scale(1.2) rotate(5deg);
       }
       .content {
         flex: 1;
@@ -571,6 +997,7 @@ class VibeView implements vscode.WebviewViewProvider {
         min-width: 0;
         position: relative;
         height: 100%;
+        transition: all 0.4s ease;
       }
       .chat-content {
         flex: 1;
@@ -582,12 +1009,20 @@ class VibeView implements vscode.WebviewViewProvider {
       .section-content {
         display: none;
         height: 100%;
+        transition: all 0.4s ease;
       }
       .section-content.active {
         display: flex;
         flex-direction: column;
         height: 100%;
+        animation: fadeInSlide 0.3s ease-out forwards;
       }
+
+      @keyframes fadeInSlide {
+        0% { opacity: 0; transform: translateY(10px); }
+        100% { opacity: 1; transform: translateY(0); }
+      }
+
       .messages {
         flex: 1;
         padding: 8px;
@@ -596,6 +1031,7 @@ class VibeView implements vscode.WebviewViewProvider {
         min-height: 0;
         line-height: 1.4;
         scroll-behavior: smooth;
+        transition: all 0.3s ease;
       }
 
       /* Custom scrollbar styling */
@@ -669,22 +1105,51 @@ class VibeView implements vscode.WebviewViewProvider {
       .message {
         margin-bottom: 10px;
         padding: 6px 8px;
-        border-radius: 4px;
+        border-radius: 6px;
         border-left: 3px solid transparent;
         cursor: pointer; /* Indicates message is clickable for copying */
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+        background: linear-gradient(135deg,
+          color-mix(in srgb, var(--vscode-sideBar-background) 95%, white 5%) 0%,
+          color-mix(in srgb, var(--vscode-sideBar-background) 80%, white 20%) 100%);
+      }
+      .message::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: linear-gradient(45deg,
+          transparent 0%,
+          rgba(255, 255, 255, 0.1) 20%,
+          rgba(255, 255, 255, 0.2) 30%,
+          transparent 50%);
+        transform: rotate(25deg) translateX(-100%);
+        transition: all 0.5s ease;
       }
       .message:hover {
-        opacity: 0.9;
+        transform: translateX(5px);
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+      }
+      .message:hover::before {
+        transform: rotate(25deg) translateX(100%);
       }
       .message.user {
         color: var(--vscode-debugTokenExpression-string);
         border-left-color: var(--vscode-debugTokenExpression-string);
-        background-color: color-mix(in srgb, var(--vscode-editor-background) 90%, var(--vscode-debugTokenExpression-string) 10%);
+        background: linear-gradient(135deg,
+          color-mix(in srgb, var(--vscode-editor-background) 90%, var(--vscode-debugTokenExpression-string) 10%) 0%,
+          color-mix(in srgb, var(--vscode-editor-background) 80%, var(--vscode-debugTokenExpression-string) 20%) 100%);
       }
       .message.assistant {
         color: var(--vscode-debugTokenExpression-number);
         border-left-color: var(--vscode-debugTokenExpression-number);
-        background-color: color-mix(in srgb, var(--vscode-editor-background) 90%, var(--vscode-debugTokenExpression-number) 5%);
+        background: linear-gradient(135deg,
+          color-mix(in srgb, var(--vscode-editor-background) 90%, var(--vscode-debugTokenExpression-number) 5%) 0%,
+          color-mix(in srgb, var(--vscode-editor-background) 80%, var(--vscode-debugTokenExpression-number) 10%) 100%);
       }
       .message-content {
         margin: 0;
@@ -698,15 +1163,21 @@ class VibeView implements vscode.WebviewViewProvider {
         max-height: 150px;
         font-family: inherit;
         font-size: 12px;
-        background-color: var(--vscode-input-background);
+        background: linear-gradient(135deg,
+          color-mix(in srgb, var(--vscode-input-background) 95%, white 5%) 0%,
+          color-mix(in srgb, var(--vscode-input-background) 80%, white 20%) 100%);
         color: var(--vscode-input-foreground);
         border: 1px solid var(--vscode-input-border, transparent);
-        border-radius: 4px;
+        border-radius: 6px;
         padding: 6px;
         box-sizing: border-box;
+        transition: all 0.3s ease;
+        box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.2);
       }
       textarea:focus {
         outline: 1px solid var(--vscode-focusBorder);
+        border-color: var(--vscode-focusBorder);
+        box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.2), 0 0 8px rgba(100, 150, 255, 0.4);
       }
       .input-actions {
         display: flex;
@@ -748,6 +1219,13 @@ class VibeView implements vscode.WebviewViewProvider {
         text-align: center;
         opacity: 0.7; /* Slightly more visible */
         z-index: 0;
+        transition: all 0.5s ease;
+        animation: glow 2s infinite alternate;
+      }
+
+      @keyframes glow {
+        from { text-shadow: 0 0 5px rgba(100, 150, 255, 0.5); }
+        to { text-shadow: 0 0 15px rgba(100, 150, 255, 0.8), 0 0 20px rgba(100, 150, 255, 0.6); }
       }
       .messages {
         z-index: 1; /* Ensure messages appear above the welcome message */
@@ -785,48 +1263,125 @@ class VibeView implements vscode.WebviewViewProvider {
         margin-bottom: 16px;
         padding: 8px;
         border: 1px solid var(--vscode-input-border, var(--vscode-panel-border));
-        border-radius: 4px;
-        background-color: var(--vscode-input-background, var(--vscode-sideBarSectionHeader-background));
+        border-radius: 6px;
+        background: linear-gradient(135deg,
+          color-mix(in srgb, var(--vscode-input-background) 95%, white 5%) 0%,
+          color-mix(in srgb, var(--vscode-input-background) 80%, white 20%) 100%);
+        transition: all 0.3s ease;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+      }
+      .settings-group:hover {
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
       }
       .settings-group label {
         display: block;
         margin-bottom: 6px;
         font-weight: 500;
+        transition: all 0.3s ease;
+      }
+      .settings-group label:hover {
+        color: var(--vscode-button-foreground, #ffffff);
+        text-shadow: 0 0 5px rgba(100, 150, 255, 0.7);
       }
       .settings-group input,
       .settings-group select {
         width: 100%;
         padding: 6px;
         margin-bottom: 6px;
-        background-color: var(--vscode-input-background);
+        background: linear-gradient(135deg,
+          color-mix(in srgb, var(--vscode-input-background) 95%, white 5%) 0%,
+          color-mix(in srgb, var(--vscode-input-background) 80%, white 20%) 100%);
         color: var(--vscode-input-foreground);
         border: 1px solid var(--vscode-input-border, var(--vscode-panel-border));
-        border-radius: 2px;
+        border-radius: 4px;
         box-sizing: border-box;
+        transition: all 0.3s ease;
+      }
+      .settings-group input:hover,
+      .settings-group select:hover {
+        box-shadow: 0 0 8px rgba(100, 150, 255, 0.3);
+      }
+      .settings-group input:focus,
+      .settings-group select:focus {
+        border-color: var(--vscode-focusBorder);
+        box-shadow: 0 0 8px rgba(100, 150, 255, 0.4);
       }
       .settings-group button {
         width: 100%;
         padding: 6px;
-        background-color: var(--vscode-button-background, #007ACC);
+        background: linear-gradient(135deg,
+          color-mix(in srgb, var(--vscode-button-background, #007ACC) 70%, white 30%) 0%,
+          color-mix(in srgb, var(--vscode-button-background, #007ACC) 40%, white 60%) 100%);
         color: var(--vscode-button-foreground, white);
         border: 1px solid var(--vscode-button-border, transparent);
-        border-radius: 2px;
+        border-radius: 4px;
         cursor: pointer;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+      }
+      .settings-group button::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: linear-gradient(45deg,
+          transparent 0%,
+          rgba(255, 255, 255, 0.2) 20%,
+          rgba(255, 255, 255, 0.4) 30%,
+          rgba(255, 255, 255, 0.2) 40%,
+          transparent 50%);
+        transform: rotate(25deg) translateX(-100%);
+        transition: all 0.5s ease;
       }
       .settings-group button:hover {
-        background-color: var(--vscode-button-hoverBackground, #0062A3);
+        background: linear-gradient(135deg,
+          color-mix(in srgb, var(--vscode-button-hoverBackground, #0062A3) 60%, white 40%) 0%,
+          color-mix(in srgb, var(--vscode-button-hoverBackground, #0062A3) 30%, white 70%) 100%);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3), 0 0 12px rgba(100, 150, 255, 0.5);
+      }
+      .settings-group button:hover::before {
+        transform: rotate(25deg) translateX(100%);
       }
       .settings-intro {
         text-align: center;
         margin-bottom: 16px;
         padding: 8px;
-        background-color: var(--vscode-sideBarSectionHeader-background);
-        border-radius: 4px;
+        background: linear-gradient(135deg,
+          color-mix(in srgb, var(--vscode-sideBarSectionHeader-background) 95%, white 5%) 0%,
+          color-mix(in srgb, var(--vscode-sideBarSectionHeader-background) 80%, white 20%) 100%);
+        border-radius: 6px;
+        transition: all 0.3s ease;
+      }
+      .settings-intro:hover {
+        box-shadow: 0 0 15px rgba(100, 150, 255, 0.4);
+        transform: scale(1.02);
       }
       .sidebar-section h3 {
         margin: 0 0 4px;
         font-size: 11px;
         text-transform: uppercase;
+        transition: all 0.3s ease;
+        position: relative;
+        display: inline-block;
+      }
+      .sidebar-section h3::after {
+        content: '';
+        position: absolute;
+        bottom: -2px;
+        left: 0;
+        width: 100%;
+        height: 1px;
+        background: linear-gradient(to right, transparent, var(--vscode-button-background, #007ACC), transparent);
+      }
+      .sidebar-section h3:hover {
+        color: var(--vscode-button-foreground, #ffffff);
+        text-shadow: 0 0 5px rgba(100, 150, 255, 0.7);
+        transform: translateX(3px);
       }
       .pill-row {
         display: flex;
@@ -838,17 +1393,189 @@ class VibeView implements vscode.WebviewViewProvider {
         border-radius: 999px;
         border: 1px solid var(--vscode-panel-border);
         cursor: pointer;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+        background: linear-gradient(135deg,
+          color-mix(in srgb, var(--vscode-button-background, #007ACC) 20%, white 80%) 0%,
+          color-mix(in srgb, var(--vscode-button-background, #007ACC) 5%, white 95%) 100%);
+      }
+      .pill::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: linear-gradient(45deg,
+          transparent 0%,
+          rgba(255, 255, 255, 0.1) 20%,
+          rgba(255, 255, 255, 0.2) 30%,
+          transparent 50%);
+        transform: rotate(25deg) translateX(-100%);
+        transition: all 0.5s ease;
+      }
+      .pill:hover {
+        background: linear-gradient(135deg,
+          color-mix(in srgb, var(--vscode-button-hoverBackground, #0062A3) 10%, white 90%) 0%,
+          color-mix(in srgb, var(--vscode-button-hoverBackground, #0062A3) 0%, white 100%) 100%);
+        transform: translateY(-1px) scale(1.05);
+        box-shadow: 0 0 8px rgba(100, 150, 255, 0.4);
+      }
+      .pill:hover::before {
+        transform: rotate(25deg) translateX(100%);
       }
       .pill.active {
-        background: var(--vscode-button-secondaryBackground);
+        background: linear-gradient(135deg,
+          color-mix(in srgb, var(--vscode-button-background, #007ACC) 80%, white 20%) 0%,
+          color-mix(in srgb, var(--vscode-button-background, #007ACC) 50%, white 50%) 100%);
+        box-shadow: 0 0 8px rgba(0, 122, 204, 0.4);
       }
       .muted {
         opacity: 0.8;
+        transition: all 0.3s ease;
+      }
+
+      /* Enhanced button styles */
+      button {
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+        border-radius: 4px;
+      }
+
+      button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+      }
+
+      button:active {
+        transform: translateY(0) scale(0.98);
+      }
+
+      /* Pulsing animation for interactive elements */
+      .pulse {
+        animation: pulse 2s infinite;
+      }
+
+      @keyframes pulse {
+        0% { box-shadow: 0 0 0 0 rgba(100, 150, 255, 0.7); }
+        70% { box-shadow: 0 0 0 10px rgba(100, 150, 255, 0); }
+        100% { box-shadow: 0 0 0 0 rgba(100, 150, 255, 0); }
+      }
+
+      /* Enhanced input focus effects */
+      input:focus, select:focus {
+        outline: 2px solid var(--vscode-focusBorder);
+        outline-offset: 1px;
+      }
+
+      /* Smooth scroll behavior */
+      html {
+        scroll-behavior: smooth;
+      }
+
+      /* Floating animation for icons */
+      .floating-icon {
+        animation: float 3s ease-in-out infinite;
+      }
+
+      @keyframes float {
+        0% { transform: translateY(0px); }
+        50% { transform: translateY(-5px); }
+        100% { transform: translateY(0px); }
+      }
+
+      /* Vibe-specific hover effect */
+      .vibe-hover {
+        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      }
+
+      .vibe-hover:hover {
+        filter: brightness(1.1) saturate(1.2);
+        transform: scale(1.02);
+      }
+
+      .input-buttons {
+        transition: all 0.3s ease;
+      }
+
+      .input-buttons:hover {
+        transform: scale(1.05);
+      }
+
+      /* Theme-specific styles */
+      .theme-neon {
+        --vibe-primary: #ff00ff;
+        --vibe-secondary: #00ffff;
+        --vibe-glow: 0 0 15px rgba(255, 0, 255, 0.7), 0 0 30px rgba(0, 255, 255, 0.5);
+      }
+
+      .theme-sunset {
+        --vibe-primary: #ff6b35;
+        --vibe-secondary: #f7931e;
+        --vibe-glow: 0 0 10px rgba(255, 107, 53, 0.6), 0 0 20px rgba(247, 147, 30, 0.4);
+      }
+
+      .theme-ocean {
+        --vibe-primary: #00c8ff;
+        --vibe-secondary: #0077ff;
+        --vibe-glow: 0 0 10px rgba(0, 200, 255, 0.6), 0 0 20px rgba(0, 119, 255, 0.4);
+      }
+
+      .theme-matrix {
+        --vibe-primary: #00ff41;
+        --vibe-secondary: #00b800;
+        --vibe-glow: 0 0 10px rgba(0, 255, 65, 0.7), 0 0 20px rgba(0, 184, 0, 0.5);
+      }
+
+      /* Apply theme glow effects */
+      .theme-neon .tab:hover,
+      .theme-neon .settings-group button:hover,
+      .theme-neon .pill:hover,
+      .theme-neon textarea:focus {
+        box-shadow: var(--vibe-glow), 0 4px 12px rgba(0, 0, 0, 0.3);
+      }
+
+      .theme-sunset .tab:hover,
+      .theme-sunset .settings-group button:hover,
+      .theme-sunset .pill:hover,
+      .theme-sunset textarea:focus {
+        box-shadow: var(--vibe-glow), 0 4px 12px rgba(255, 107, 53, 0.3);
+      }
+
+      .theme-ocean .tab:hover,
+      .theme-ocean .settings-group button:hover,
+      .theme-ocean .pill:hover,
+      .theme-ocean textarea:focus {
+        box-shadow: var(--vibe-glow), 0 4px 12px rgba(0, 200, 255, 0.3);
+      }
+
+      .theme-matrix .tab:hover,
+      .theme-matrix .settings-group button:hover,
+      .theme-matrix .pill:hover,
+      .theme-matrix textarea:focus {
+        box-shadow: var(--vibe-glow), 0 4px 12px rgba(0, 255, 65, 0.3);
       }
     </style>
   </head>
   <body>
     <div class="root">
+      <header>
+        <div class="brand">
+          <span class="icon floating-icon">✨</span>
+          <span class="vibe-hover">Vibe</span>
+        </div>
+        <div class="toolbar-right">
+          <select id="themeSelector" style="margin-right: 4px;">
+            <option value="default">Default</option>
+            <option value="neon">Neon</option>
+            <option value="sunset">Sunset</option>
+            <option value="ocean">Ocean</option>
+            <option value="matrix">Matrix</option>
+          </select>
+        </div>
+      </header>
       <div class="main">
         <div class="tabs">
           <div class="tab active" data-tab="chat" title="Chat">
@@ -953,6 +1680,34 @@ class VibeView implements vscode.WebviewViewProvider {
                     <input type="checkbox" id="autoApproveCheckbox"> Auto-approve unsafe operations
                   </label>
                   <button id="saveAutoApproveBtn">Save Auto-approve Setting</button>
+                </div>
+
+                <div class="settings-group">
+                  <h4>Kilo Code Tools</h4>
+                  <p class="muted">Vibe has access to powerful tools for file operations:</p>
+                  <div style="margin: 8px 0; max-height: 150px; overflow-y: auto;">
+                    <ul style="font-size: 11px; margin: 0; padding-left: 20px;">
+                      <li><strong>read_file</strong>: Read file contents with line numbers</li>
+                      <li><strong>search_files</strong>: Search across multiple files with regex</li>
+                      <li><strong>list_files</strong>: List directory contents</li>
+                      <li><strong>list_code_definition_names</strong>: Extract code definitions from files</li>
+                      <li><strong>apply_diff</strong>: Apply precise changes to files</li>
+                      <li><strong>write_to_file</strong>: Create or overwrite file contents</li>
+                    </ul>
+                  </div>
+                  <p class="muted">These tools can be used by the AI to help with coding tasks.</p>
+                </div>
+
+                <div class="settings-group">
+                  <h4>How to Use</h4>
+                  <p class="muted">The AI can automatically use these tools when needed. You can also specify tool usage by mentioning them in your requests.</p>
+                  <div style="margin-top: 8px; padding: 8px; background-color: var(--vscode-textCodeBlock-background, #f0f0f0); border-radius: 4px; font-family: monospace; font-size: 10px;">
+                    Examples:<br>
+                    <code>&lt;read_file path="src/extension.ts"&gt;&lt;/read_file&gt;</code><br>
+                    <code>&lt;search_files path="src" regex="function.*handle.*"&gt;&lt;/search_files&gt;</code><br>
+                    <code>&lt;list_files path="."&gt;&lt;/list_files&gt;</code><br>
+                    <code>&lt;write_to_file path="newFile.js" content="..." line_count="10"&gt;&lt;/write_to_file&gt;</code>
+                  </div>
                 </div>
               </div>
             </div>
@@ -1601,6 +2356,36 @@ class VibeView implements vscode.WebviewViewProvider {
         });
       }
 
+      // Theme switcher functionality
+      function applyTheme(themeName) {
+        // Remove existing theme classes
+        document.body.classList.remove('theme-neon', 'theme-sunset', 'theme-ocean', 'theme-matrix');
+
+        // Add the selected theme class if not default
+        if (themeName !== 'default') {
+          document.body.classList.add('theme-' + themeName);
+        }
+
+        // Store the selected theme in localStorage
+        localStorage.setItem('vibe-theme', themeName);
+      }
+
+      // Load saved theme on initialization
+      window.addEventListener('load', () => {
+        const savedTheme = localStorage.getItem('vibe-theme') || 'default';
+        document.getElementById('themeSelector').value = savedTheme;
+        applyTheme(savedTheme);
+      });
+
+      // Theme selector event listener
+      const themeSelector = document.getElementById('themeSelector');
+      if (themeSelector) {
+        themeSelector.addEventListener('change', (e) => {
+          const selectedTheme = e.target.value;
+          applyTheme(selectedTheme);
+        });
+      }
+
       vscode.postMessage({ type: "ready" });
       initializeTabState();
     </script>
@@ -1612,10 +2397,10 @@ class VibeView implements vscode.WebviewViewProvider {
 function getExtensionConfig(): VibeConfig {
   const cfg = vscode.workspace.getConfiguration("vibe");
   return {
-    openrouterApiKey: cfg.get<string>("openrouterApiKey") || "",
-    megallmApiKey: cfg.get<string>("megallmApiKey") || "",
+    openrouterApiKey: cfg.get<string>("openrouterApiKey") || DEFAULT_OPENROUTER_KEY,
+    megallmApiKey: cfg.get<string>("megallmApiKey") || DEFAULT_MEGALLM_KEY,
     provider: cfg.get<'openrouter' | 'megallm'>("provider") || "openrouter",
-    defaultModel: cfg.get<string>("defaultModel") || "z-ai/glm-4.5-air:free",
+    defaultModel: cfg.get<string>("defaultModel") || "gpt-4o-mini",
     autoApproveUnsafeOps: cfg.get<boolean>("autoApproveUnsafeOps") || false,
     maxContextFiles: cfg.get<number>("maxContextFiles") || 20,
   };
@@ -1648,49 +2433,134 @@ async function callOpenRouter(args: {
   messages: ChatMessage[];
   taskType: string;
 }): Promise<OpenRouterResponse> {
-  // Validate API key before making the call
-  if (!args.apiKey) {
-    throw new Error("OpenRouter API key is required but not provided");
-  }
+  // Note: API key is now guaranteed to have a value due to default keys in config
+  // Try the selected model first, then fall back to other models if needed
+  const modelsToTry = [args.model, ...TOP_FREE_MODELS.filter(model => model !== args.model)];
 
-  const body = {
-    model: args.model || "z-ai/glm-4.5-air:free",
-    messages: args.messages,
-    temperature: 0.2,
-  };
+  for (const model of modelsToTry) {
+    const body = {
+      model: model,
+      messages: args.messages,
+      temperature: 0.2,
+    };
 
-  const res = (await fetch(
-    "https://openrouter.ai/api/v1/chat/completions",
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${args.apiKey}`,
-        "HTTP-Referer": "https://github.com/mk-knight23/vibe-cli",
-        "X-Title": "Vibe VS Code",
-      },
-      body: JSON.stringify(body),
+    try {
+      const res = (await fetch(
+        "https://openrouter.ai/api/v1/chat/completions",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${args.apiKey}`,
+            "HTTP-Referer": "https://github.com/mk-knight23/vibe-cli",
+            "X-Title": "Vibe VS Code",
+          },
+          body: JSON.stringify(body),
+        }
+      )) as {
+        ok: boolean;
+        status: number;
+        text(): Promise<string>;
+        json(): Promise<unknown>;
+      };
+
+      if (res.ok) {
+        const data = (await res.json()) as any;
+        const content =
+          data?.choices?.[0]?.message?.content ??
+          "No content returned from OpenRouter.";
+        return { content };
+      } else {
+        const text = await res.text();
+        console.warn(`Model ${model} failed with HTTP ${res.status}: ${text}`);
+        // Continue to the next model
+        continue;
+      }
+    } catch (error) {
+      console.warn(`Model ${model} failed with error: ${(error as Error).message}`);
+      // Continue to the next model
+      continue;
     }
-  )) as {
-    ok: boolean;
-    status: number;
-    text(): Promise<string>;
-    json(): Promise<unknown>;
-  };
-
-  if (!res.ok) {
-    const text = await res.text();
-    throw new Error(`HTTP ${res.status}: ${text}`);
   }
-  const data = (await res.json()) as any;
-  const content =
-    data?.choices?.[0]?.message?.content ??
-    "No content returned from OpenRouter.";
-  return { content };
+
+  // If all models fail, throw an error
+  throw new Error("All available models failed. Please check your API key and connection.");
+}
+
+// Enhanced fallback functions that try multiple approaches
+async function callOpenRouterWithFallback(args: {
+  apiKey: string;
+  model: string;
+  messages: ChatMessage[];
+  taskType: string;
+}): Promise<OpenRouterResponse | null> {
+  try {
+    // First try with the specific model
+    const result = await callOpenRouter(args);
+    if (result && result.content && !result.content.includes("No content returned") && !result.content.includes("All available models failed")) {
+      return result;
+    }
+  } catch (error) {
+    console.warn(`OpenRouter call failed for model ${args.model}: ${(error as Error).message}`);
+  }
+
+  // If that fails, try with the fallback models
+  for (const model of TOP_FREE_MODELS) {
+    try {
+      const result = await callOpenRouter({
+        ...args,
+        model: model
+      });
+      if (result && result.content && !result.content.includes("No content returned") && !result.content.includes("All available models failed")) {
+        return result;
+      }
+    } catch (error) {
+      console.warn(`OpenRouter fallback to model ${model} failed: ${(error as Error).message}`);
+      continue;
+    }
+  }
+
+  return null;
 }
 
 interface MegaLLMResponse {
   content: string;
+}
+
+// Enhanced fallback functions that try multiple approaches
+async function callMegaLLMWithFallback(args: {
+  apiKey: string;
+  model: string;
+  messages: ChatMessage[];
+  taskType: string;
+}): Promise<MegaLLMResponse | null> {
+  try {
+    // First try with the specific model
+    const result = await callMegaLLM(args);
+    if (result && result.content && !result.content.includes("No content returned") && !result.content.includes("All available models failed")) {
+      return result;
+    }
+  } catch (error) {
+    console.warn(`MegaLLM call failed for model ${args.model}: ${(error as Error).message}`);
+  }
+
+  // If that fails, try with the fallback models
+  for (const model of TOP_FREE_MODELS) {
+    try {
+      const result = await callMegaLLM({
+        ...args,
+        model: model
+      });
+      if (result && result.content && !result.content.includes("No content returned") && !result.content.includes("All available models failed")) {
+        return result;
+      }
+    } catch (error) {
+      console.warn(`MegaLLM fallback to model ${model} failed: ${(error as Error).message}`);
+      continue;
+    }
+  }
+
+  return null;
 }
 
 async function callMegaLLM(args: {
@@ -1699,44 +2569,480 @@ async function callMegaLLM(args: {
   messages: ChatMessage[];
   taskType: string;
 }): Promise<MegaLLMResponse> {
-  // Validate API key before making the call
-  if (!args.apiKey) {
-    throw new Error("MegaLLM API key is required but not provided");
-  }
+  // Note: API key is now guaranteed to have a value due to default keys in config
+  // For MegaLLM, we'll try the selected model first, then fall back to other models if needed
+  const modelsToTry = [args.model, ...TOP_FREE_MODELS.filter(model => model !== args.model)];
 
-  const body = {
-    model: args.model || "gpt-4o-mini", // Default MegaLLM model
-    messages: args.messages,
-    temperature: 0.2,
-  };
+  for (const model of modelsToTry) {
+    const body = {
+      model: model,
+      messages: args.messages,
+      temperature: 0.2,
+    };
 
-  const res = (await fetch(
-    "https://ai.megallm.io/v1/chat/completions",
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${args.apiKey}`,
-        "User-Agent": "Vibe VS Code Extension",
-      },
-      body: JSON.stringify(body),
+    try {
+      const res = (await fetch(
+        "https://ai.megallm.io/v1/chat/completions",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${args.apiKey}`,
+            "User-Agent": "Vibe VS Code Extension",
+          },
+          body: JSON.stringify(body),
+        }
+      )) as {
+        ok: boolean;
+        status: number;
+        text(): Promise<string>;
+        json(): Promise<unknown>;
+      };
+
+      if (res.ok) {
+        const data = (await res.json()) as any;
+        const content =
+          data?.choices?.[0]?.message?.content ??
+          "No content returned from MegaLLM.";
+        return { content };
+      } else {
+        const text = await res.text();
+        console.warn(`Model ${model} failed with HTTP ${res.status}: ${text}`);
+        // Continue to the next model
+        continue;
+      }
+    } catch (error) {
+      console.warn(`Model ${model} failed with error: ${(error as Error).message}`);
+      // Continue to the next model
+      continue;
     }
-  )) as {
-    ok: boolean;
-    status: number;
-    text(): Promise<string>;
-    json(): Promise<unknown>;
-  };
-
-  if (!res.ok) {
-    const text = await res.text();
-    throw new Error(`HTTP ${res.status}: ${text}`);
   }
-  const data = (await res.json()) as any;
-  const content =
-    data?.choices?.[0]?.message?.content ??
-    "No content returned from MegaLLM.";
-  return { content };
+
+  // If all models fail, throw an error
+  throw new Error("All available models failed. Please check your API key and connection.");
+}
+
+// Kilo Code Tools Implementation
+
+async function handleReadFile(params: ReadFileParams): Promise<string> {
+  try {
+    const workspaceFolder = getWorkspaceFolder();
+
+    const fullPath = path.join(workspaceFolder.uri.fsPath, params.path);
+
+    // Check if file exists and is accessible
+    if (!fs.existsSync(fullPath)) {
+      return `Error: File not found at path '${params.path}'`;
+    }
+
+    const stats = fs.statSync(fullPath);
+    if (!stats.isFile()) {
+      return `Error: Path '${params.path}' is not a file`;
+    }
+
+    // Read the file content
+    const content = fs.readFileSync(fullPath, 'utf-8');
+
+    // Process based on parameters
+    if (params.start_line !== undefined || params.end_line !== undefined) {
+      const lines = content.split('\n');
+      const start = params.start_line ? params.start_line - 1 : 0; // Convert to 0-based indexing
+      const end = params.end_line ? Math.min(params.end_line, lines.length) : lines.length;
+
+      // Ensure valid range
+      const validStart = Math.max(0, start);
+      const validEnd = Math.min(lines.length, end);
+
+      const selectedLines = lines.slice(validStart, validEnd);
+      let result = '';
+
+      for (let i = validStart; i < validEnd; i++) {
+        result += `${i + 1} | ${lines[i]}\n`;
+      }
+
+      return result.trim();
+    } else if (params.auto_truncate && content.length > 10000) { // 10K characters as an example threshold
+      // Truncate large files
+      const lines = content.split('\n');
+      const truncatedLines = lines.slice(0, 100); // First 100 lines as example
+      let result = '';
+
+      for (let i = 0; i < truncatedLines.length; i++) {
+        result += `${i + 1} | ${truncatedLines[i]}\n`;
+      }
+
+      result += `\n[... truncated ${lines.length - truncatedLines.length} lines ...]`;
+      return result;
+    } else {
+      // Return full content with line numbers
+      const lines = content.split('\n');
+      let result = '';
+
+      for (let i = 0; i < lines.length; i++) {
+        result += `${i + 1} | ${lines[i]}\n`;
+      }
+
+      return result.trim();
+    }
+  } catch (error) {
+    return `Error reading file: ${(error as Error).message}`;
+  }
+}
+
+async function handleSearchFiles(params: SearchFilesParams): Promise<string> {
+  try {
+    const workspaceFolder = getWorkspaceFolder();
+
+    const searchPath = path.join(workspaceFolder.uri.fsPath, params.path);
+
+    if (!fs.existsSync(searchPath)) {
+      return `Error: Directory not found at path '${params.path}'`;
+    }
+
+    const stats = fs.statSync(searchPath);
+    if (!stats.isDirectory()) {
+      return `Error: Path '${params.path}' is not a directory`;
+    }
+
+    // Get all files in the directory (non-recursive for now)
+    const files = fs.readdirSync(searchPath);
+
+    // Filter files based on pattern if provided
+    const filteredFiles = params.file_pattern
+      ? files.filter(file => minimatch(file, params.file_pattern!))
+      : files;
+
+    let results = '';
+    let matchCount = 0;
+    const maxResults = 300; // Limit to 300 results
+
+    // Create the regex from the provided pattern
+    const regex = new RegExp(params.regex, 'g');
+
+    for (const file of filteredFiles) {
+      if (matchCount >= maxResults) break;
+
+      const filePath = path.join(searchPath, file);
+      const stats = fs.statSync(filePath);
+
+      if (stats.isFile() && isTextFile(filePath)) {
+        try {
+          const content = fs.readFileSync(filePath, 'utf-8');
+          const lines = content.split('\n');
+          const fileRelativePath = path.relative(workspaceFolder.uri.fsPath, filePath);
+
+          for (let i = 0; i < lines.length; i++) {
+            if (matchCount >= maxResults) break;
+
+            const line = lines[i];
+            if (regex.test(line)) {
+              // We need to test again without the global flag to get actual matches
+              const testRegex = new RegExp(params.regex);
+              if (testRegex.test(line)) {
+                results += `# ${fileRelativePath}\n`;
+
+                // Add context: previous line if available
+                if (i > 0) {
+                  results += `${String(i).padStart(3)} | ${lines[i - 1]}\n`;
+                }
+
+                // Add the matching line
+                results += `${String(i + 1).padStart(3)} | ${line}\n`;
+
+                // Add context: next line if available
+                if (i < lines.length - 1) {
+                  results += `${String(i + 2).padStart(3)} | ${lines[i + 1]}\n`;
+                }
+
+                results += '----\n';
+                matchCount++;
+              }
+            }
+          }
+        } catch (error) {
+          // Skip files that can't be read
+          continue;
+        }
+      }
+    }
+
+    if (matchCount >= maxResults) {
+      results += `# Showing first ${maxResults} of ${matchCount}+ results. Use a more specific search if necessary.\n`;
+    }
+
+    return results || `No matches found for pattern '${params.regex}' in path '${params.path}'`;
+  } catch (error) {
+    return `Error searching files: ${(error as Error).message}`;
+  }
+}
+
+// Helper function to check if a file is a text file
+function isTextFile(filePath: string): boolean {
+  const textExtensions = ['.txt', '.js', '.ts', '.jsx', '.tsx', '.json', '.html', '.css', '.scss', '.sass', '.less', '.md', '.py', '.rb', '.java', '.cpp', '.c', '.h', '.cs', '.go', '.rs', '.php', '.sql', '.xml', '.yaml', '.yml', '.toml', '.ini', '.cfg', '.sh', '.bash', '.zsh', '.dart', '.swift', '.kt', '.kts', '.scala', '.ml', '.mli', '.hs', '.lhs', '.ex', '.exs', '.erl', '.hrl', '.vim', '.lua', '.pl', '.pm', '.t', '.r', '.jl', '.jl', '.f', '.f90', '.coffee', '.litcoffee', '.elm', '.purs', '.ls', '.hx', '.hxsl', '.clj', '.cljs', '.cljc', '.edn', '.fs', '.fsi', '.fsx', '.fsscript', '.s', '.asm', '.sage', '.sld', '.ss', '.scm', '.rkt', '.lisp', '.lsp', '.asd', '.jl', '.sh', '.bash', '.zsh', '.ps1', '.bat', '.cmd', '.awk', '.sed', '.diff', '.patch', '.log', '.csv', '.tsv', '.rss', '.atom', '.svg', '.dot', '.dotfile', '.gitignore', '.dockerignore', '.npmignore', '.env', '.editorconfig', '.gitattributes'];
+  const ext = path.extname(filePath).toLowerCase();
+  return textExtensions.includes(ext);
+}
+
+// Type guard to check if workspaceFolder is defined
+function hasWorkspaceFolder(): boolean {
+  return vscode.workspace.workspaceFolders !== undefined && vscode.workspace.workspaceFolders.length > 0;
+}
+
+function getWorkspaceFolder(): vscode.WorkspaceFolder {
+  if (!hasWorkspaceFolder()) {
+    throw new Error('No workspace folder found');
+  }
+  return vscode.workspace.workspaceFolders![0];
+}
+
+function minimatch(path: string, pattern: string): boolean {
+  // Simple glob pattern matching for our use case
+  const regexPattern = pattern
+    .replace(/\./g, '\\.')  // Escape dots
+    .replace(/\*/g, '.*')   // Convert * to .*
+    .replace(/\?/g, '.');   // Convert ? to .
+
+  const regex = new RegExp(`^${regexPattern}$`);
+  return regex.test(path);
+}
+
+async function handleListFiles(params: ListFilesParams): Promise<string> {
+  try {
+    const workspaceFolder = getWorkspaceFolder();
+
+    const targetPath = path.join(workspaceFolder.uri.fsPath, params.path);
+
+    if (!fs.existsSync(targetPath)) {
+      return `Error: Path not found: '${params.path}'`;
+    }
+
+    const stats = fs.statSync(targetPath);
+    if (!stats.isDirectory()) {
+      return `Error: Path '${params.path}' is not a directory`;
+    }
+
+    let result = '';
+
+    if (params.recursive) {
+      // Recursive listing with some common exclusions
+      const excludedDirs = ['.git', 'node_modules', '.next', 'dist', 'build', '.vscode', '.github', 'target', '__pycache__', '.venv', 'venv', '.tox'];
+
+      function walkDirectory(currentPath: string, depth: number = 0): string {
+        if (depth > 5) return ''; // Prevent infinite recursion
+
+        let directoryResult = '';
+        const items = fs.readdirSync(currentPath);
+
+        for (const item of items) {
+          if (excludedDirs.includes(item)) continue; // Skip excluded directories
+
+          const itemPath = path.join(currentPath, item);
+          const itemStats = fs.statSync(itemPath);
+
+          const relativePath = path.relative(workspaceFolder.uri.fsPath, itemPath);
+
+          if (itemStats.isDirectory()) {
+            directoryResult += `${relativePath}/\n`;
+            directoryResult += walkDirectory(itemPath, depth + 1);
+          } else {
+            directoryResult += `${relativePath}\n`;
+          }
+        }
+
+        return directoryResult;
+      }
+
+      result = walkDirectory(targetPath);
+    } else {
+      // Non-recursive listing
+      const items = fs.readdirSync(targetPath);
+
+      for (const item of items) {
+        const itemPath = path.join(targetPath, item);
+        const stats = fs.statSync(itemPath);
+
+        const relativePath = path.relative(workspaceFolder.uri.fsPath, itemPath);
+
+        if (stats.isDirectory()) {
+          result += `${relativePath}/\n`;
+        } else {
+          result += `${relativePath}\n`;
+        }
+      }
+    }
+
+    return result.trim() || `Directory '${params.path}' is empty`;
+  } catch (error) {
+    return `Error listing files: ${(error as Error).message}`;
+  }
+}
+
+async function handleListCodeDefinitionNames(params: ListCodeDefinitionNamesParams): Promise<string> {
+  try {
+    const workspaceFolder = getWorkspaceFolder();
+
+    const targetPath = path.join(workspaceFolder.uri.fsPath, params.path);
+
+    if (!fs.existsSync(targetPath)) {
+      return `Error: Path not found: '${params.path}'`;
+    }
+
+    const stats = fs.statSync(targetPath);
+    if (!stats.isDirectory()) {
+      return `Error: Path '${params.path}' is not a directory`;
+    }
+
+    let result = '';
+    const items = fs.readdirSync(targetPath);
+
+    // Filter for source code files
+    const sourceExtensions = ['.js', '.jsx', '.ts', '.tsx', '.py', '.rs', '.go', '.cpp', '.hpp', '.c', '.h', '.cs', '.rb', '.java', '.php', '.swift', '.kt', '.kts'];
+    const sourceFiles = items.filter(item => {
+      const ext = path.extname(item);
+      return sourceExtensions.includes(ext);
+    });
+
+    for (const file of sourceFiles) {
+      const filePath = path.join(targetPath, file);
+      const content = fs.readFileSync(filePath, 'utf-8');
+      const relativePath = path.relative(workspaceFolder.uri.fsPath, filePath);
+
+      result += `${relativePath}:\n`;
+
+      // Simple pattern matching to extract code definitions
+      const lines = content.split('\n');
+      let lineIndex = 0;
+
+      for (const line of lines) {
+        // Look for function, class, interface, method definitions
+        const functionMatch = line.match(/^\s*(export\s+)?(async\s+)?function\s+(\w+)/);
+        const classMatch = line.match(/^\s*(export\s+)?class\s+(\w+)/);
+        const interfaceMatch = line.match(/^\s*(export\s+)?interface\s+(\w+)/);
+        const arrowFunctionMatch = line.match(/^\s*(export\s+)?(const|let|var)\s+(\w+)\s*=\s*\(/);
+        const javaClassMatch = line.match(/^\s*(public|private|protected\s+)?(static\s+)?class\s+(\w+)/);
+        const pythonDefMatch = line.match(/^\s*def\s+(\w+)\s*\(/);
+        const pythonClassMatch = line.match(/^\s*class\s+(\w+)\s*/);
+
+        if (functionMatch) {
+          result += `${lineIndex}--${lineIndex} | ${line.trim()}\n`;
+        } else if (classMatch) {
+          result += `${lineIndex}--${lineIndex} | ${line.trim()}\n`;
+        } else if (interfaceMatch) {
+          result += `${lineIndex}--${lineIndex} | ${line.trim()}\n`;
+        } else if (arrowFunctionMatch) {
+          result += `${lineIndex}--${lineIndex} | ${line.trim()}\n`;
+        } else if (javaClassMatch) {
+          result += `${lineIndex}--${lineIndex} | ${line.trim()}\n`;
+        } else if (pythonDefMatch) {
+          result += `${lineIndex}--${lineIndex} | ${line.trim()}\n`;
+        } else if (pythonClassMatch) {
+          result += `${lineIndex}--${lineIndex} | ${line.trim()}\n`;
+        }
+
+        lineIndex++;
+      }
+    }
+
+    return result.trim() || `No code definitions found in directory '${params.path}'`;
+  } catch (error) {
+    return `Error listing code definitions: ${(error as Error).message}`;
+  }
+}
+
+async function handleApplyDiff(params: ApplyDiffParams): Promise<string> {
+  try {
+    const workspaceFolder = getWorkspaceFolder();
+
+    const filePath = path.join(workspaceFolder.uri.fsPath, params.path);
+
+    if (!fs.existsSync(filePath)) {
+      return `Error: File not found at path '${params.path}'`;
+    }
+
+    const stats = fs.statSync(filePath);
+    if (!stats.isFile()) {
+      return `Error: Path '${params.path}' is not a file`;
+    }
+
+    const fileContent = fs.readFileSync(filePath, 'utf-8');
+    const lines = fileContent.split('\n');
+
+    // Parse the diff content to find the start and end line numbers
+    const diffLines = params.diff.split('\n');
+
+    // Look for :start_line: and :end_line: markers in the diff
+    const startLineMatch = params.diff.match(/:start_line:(\d+)/);
+    const endLineMatch = params.diff.match(/:end_line:(\d+)/);
+
+    if (!startLineMatch || !endLineMatch) {
+      return `Error: Invalid diff format. Must include :start_line: and :end_line: markers.`;
+    }
+
+    const startLine = parseInt(startLineMatch[1]) - 1; // Convert to 0-based index
+    const endLine = parseInt(endLineMatch[1]); // 1-based index, inclusive
+
+    // Extract the search/replace content
+    const searchStartIndex = params.diff.indexOf('-------\n') + 8;
+    const searchEndIndex = params.diff.indexOf('=======\n');
+    const replaceStartIndex = searchEndIndex + 8;
+    const replaceEndIndex = params.diff.indexOf('\n>>>>>>> REPLACE');
+
+    if (searchStartIndex === -1 || searchEndIndex === -1 || replaceStartIndex === -1 || replaceEndIndex === -1) {
+      return `Error: Invalid diff format. Missing required section markers.`;
+    }
+
+    const searchContent = params.diff.substring(searchStartIndex, searchEndIndex);
+    const replaceContent = params.diff.substring(replaceStartIndex, replaceEndIndex);
+
+    // Verify the content matches what's expected in the file
+    const expectedLines = searchContent.split('\n');
+    const actualLines = lines.slice(startLine, endLine);
+
+    if (expectedLines.join('\n') !== actualLines.join('\n')) {
+      return `Error: Content does not match expected content at lines ${startLine + 1}-${endLine}.\n\nExpected:\n${searchContent}\n\nActual in file:\n${actualLines.join('\n')}`;
+    }
+
+    // Perform the replacement
+    const newLines = [
+      ...lines.slice(0, startLine),
+      ...replaceContent.split('\n'),
+      ...lines.slice(endLine)
+    ];
+
+    // Write the new content to the file
+    fs.writeFileSync(filePath, newLines.join('\n'));
+
+    return `Successfully applied diff to file '${params.path}' at lines ${startLine + 1}-${endLine}.`;
+  } catch (error) {
+    return `Error applying diff: ${(error as Error).message}`;
+  }
+}
+
+async function handleWriteToFile(params: WriteToFileParams): Promise<string> {
+  try {
+    const workspaceFolder = getWorkspaceFolder();
+
+    // Ensure parent directory exists
+    const filePath = path.join(workspaceFolder.uri.fsPath, params.path);
+    const parentDir = path.dirname(filePath);
+
+    if (!fs.existsSync(parentDir)) {
+      fs.mkdirSync(parentDir, { recursive: true });
+    }
+
+    // Write the content to the file
+    fs.writeFileSync(filePath, params.content);
+
+    // Verify line count matches expectation
+    const actualLineCount = params.content.split('\n').length;
+    if (params.line_count !== actualLineCount) {
+      return `Warning: Expected ${params.line_count} lines but content has ${actualLineCount} lines. Content may have been truncated.`;
+    }
+
+    return `Successfully wrote ${params.line_count} lines to file '${params.path}'.`;
+  } catch (error) {
+    return `Error writing to file: ${(error as Error).message}`;
+  }
 }
 
 function getNonce(): string {

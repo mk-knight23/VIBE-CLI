@@ -2,7 +2,7 @@
   "name": "vibe-vscode",
   "displayName": "Vibe VS Code",
   "description": "VS Code extension for Vibe: a modern AI coding assistant with multiple tabs (Chat, Settings, History, New Chat, Profile), enhanced UI, and OpenRouter integration.",
-  "version": "2.1.0",
+  "version": "2.2.0",
   "publisher": "mktech",
   "repository": {
     "type": "git",
