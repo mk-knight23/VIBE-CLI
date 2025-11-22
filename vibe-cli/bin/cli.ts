@@ -7,7 +7,7 @@ import pc from 'picocolors';
 import ora from 'ora';
 import { exec } from 'child_process';
 import fg from 'fast-glob';
-import { webSearch, webFetchDocs, getApiKey, chatCompletion, quickRefactor, quickDebug, quickTestGeneration, smartCommit, runAutonomousAgent, generateCode, generateCompletion, reviewChanges, createPR, smartStatus } from '../core/index';
+import { webSearch, webFetchDocs, getApiKey, chatCompletion, quickRefactor, quickDebug, quickTestGeneration, smartCommit, runAutonomousAgent, generateCode, generateCompletion, reviewChanges, createPR, smartStatus, getApiKeyStatus, clearApiKey, loadConfig, saveConfig } from '../core/index';
 
 // HTTP helpers using native fetch with timeout and axios-compatible errors
 async function fetchWithTimeout(resource: string, options: { timeout?: number; [key: string]: any } = {}) {
@@ -48,10 +48,11 @@ async function httpPostJson(url: string, body: any, { headers = {}, timeout = 30
 }
 
 const OPENROUTER_BASE = 'https://openrouter.ai/api/v1';
+const MEGALLM_BASE = 'https://ai.megallm.io/v1';
 const TRANSCRIPTS_DIR = path.join(process.cwd(), 'transcripts');
 
 // Defaults requested by user
-const DEFAULT_MODEL_ID = 'z-ai/glm-4.5-air:free';
+const DEFAULT_MODEL_ID = 'qwen/qwen3-next-80b-a3b-instruct';
 const DEFAULT_SYSTEM_PROMPT = 'You are an interactive CLI assistant for software engineering. Be concise and direct. Only assist with defensive security tasks; refuse to create, modify, or improve code that may be used maliciously. Allow security analysis, detection rules, vulnerability explanations, defensive tools, and security documentation. Never guess URLs; only use user-provided or known programming docs URLs. Minimize output.';
 
 // Enhanced command history
@@ -83,25 +84,55 @@ function isFreeModel(model: any): boolean {
   }
 }
 
-async function fetchModels(apiKey: string) {
-  const res = await httpGetJson(`${OPENROUTER_BASE}/models`, {
-    headers: { Authorization: `Bearer ${apiKey}` },
-    timeout: 30000,
-  });
-  const models = res.data?.data || res.data || [];
-  const freeModels = models.filter(isFreeModel);
-  if (!freeModels.length) {
-    throw new Error('No free models available from OpenRouter at this time.');
+async function fetchModels(apiKey: string, provider: 'openrouter' | 'megallm' = 'openrouter') {
+  if (provider === 'openrouter') {
+    const res = await httpGetJson(`${OPENROUTER_BASE}/models`, {
+      headers: { Authorization: `Bearer ${apiKey}` },
+      timeout: 30000,
+    });
+    const models = res.data?.data || res.data || [];
+    const freeModels = models.filter(isFreeModel);
+    if (!freeModels.length) {
+      throw new Error('No free models available from OpenRouter at this time.');
+    }
+    return freeModels;
+  } else if (provider === 'megallm') {
+    // For MegaLLM, return the premium models from core/index.ts
+    // We need to import the MEGALLM_MODELS array
+    // Since we can't import directly in this file, we'll use a workaround
+    // by returning the hardcoded list of MegaLLM premium models
+    return [
+      { id: 'openai-gpt-oss-20b', name: 'OpenAI GPT OSS 20B', ctx: 128000, note: 'Advanced language model with superior reasoning capabilities', provider: 'OpenAI' },
+      { id: 'llama3.3-70b-instruct', name: 'Llama 3.3 70B Instruct', ctx: 131072, note: 'Open-source large language model', provider: 'Meta' },
+      { id: 'deepseek-r1-distill-llama-70b', name: 'DeepSeek R1 Distill Llama 70B', ctx: 128000, note: 'Open-source large language model', provider: 'Meta' },
+      { id: 'alibaba-qwen3-32b', name: 'Alibaba Qwen3 32B', ctx: 131072, note: 'Qwen3 32B - Advanced AI model', provider: 'Alibaba' },
+      { id: 'openai-gpt-oss-120b', name: 'OpenAI GPT OSS 120B', ctx: 128000, note: 'Advanced language model with superior reasoning capabilities', provider: 'OpenAI' },
+      { id: 'llama3-8b-instruct', name: 'Llama 3 8B Instruct', ctx: 8192, note: 'Open-source large language model', provider: 'Meta' },
+      { id: 'moonshotai/kimi-k2-instruct-0905', name: 'MoonshotAI Kimi K2 Instruct 0905', ctx: 256000, note: 'MoonshotAI Kimi K2 Instruct 0905 - Advanced AI model', provider: 'moonshotai' },
+      { id: 'deepseek-ai/deepseek-v3.1-terminus', name: 'DeepSeek AI DeepSeek V3.1 Terminus', ctx: 163840, note: 'DeepSeek AI DeepSeek V3.1 Terminus - Advanced AI model', provider: 'DeepSeek' },
+      { id: 'qwen/qwen3-next-80b-a3b-instruct', name: 'Qwen Qwen3 Next 80B A3B Instruct', ctx: 262144, note: 'Qwen Qwen3 Next 80B A3B Instruct - Advanced AI model', provider: 'Alibaba' },
+      { id: 'deepseek-ai/deepseek-v3.1', name: 'DeepSeek AI DeepSeek V3.1', ctx: 128000, note: 'DeepSeek AI DeepSeek V3.1 - Advanced AI model', provider: 'DeepSeek' },
+      { id: 'mistralai/mistral-nemotron', name: 'Mistral AI Mistral Nemotron', ctx: 128000, note: 'High-performance open-source language model', provider: 'Mistral AI' },
+      { id: 'minimaxai/minimax-m2', name: 'MinimaxAI Minimax M2', ctx: 128000, note: 'MinimaxAI Minimax M2 - Advanced AI model', provider: 'minimaxai/minimax-m2' }
+    ];
   }
-  return freeModels;
+  throw new Error('Invalid provider');
 }
 
-async function selectModel(models: any[]) {
+async function selectModel(models: any[], provider: 'openrouter' | 'megallm' = 'openrouter') {
   if (!models || models.length === 0) throw new Error('No models available.');
-  const choices = models.map((m) => ({
-    name: `${m.name || m.id} ${isFreeModel(m) ? '(free)' : ''}`.trim(),
-    value: m.id || m.slug || m.name,
-  }));
+  const choices = models.map((m) => {
+    let name = m.name || m.id;
+    if (provider === 'openrouter') {
+      name += isFreeModel(m) ? ' (free)' : '';
+    } else if (provider === 'megallm') {
+      name += ' (premium)';
+    }
+    return {
+      name: name.trim(),
+      value: m.id || m.slug || m.name,
+    };
+  });
   const { modelId } = await inquirer.prompt([
     {
       type: 'list',
@@ -158,6 +189,7 @@ function printHelp() {
   console.log('  ' + pc.yellow('/help') + '                 Show this help');
   console.log('  ' + pc.yellow('/models') + '               List and select from free models');
   console.log('  ' + pc.yellow('/model') + '                Change the current model (opens picker)');
+  console.log('  ' + pc.yellow('/provider') + '             Switch between OpenRouter and MegaLLM');
   console.log('  ' + pc.yellow('/system') + '               Edit system prompt');
   console.log('  ' + pc.yellow('/clear') + '                Clear chat context');
   console.log('  ' + pc.yellow('/context') + '              Show context info and token usage');
@@ -421,14 +453,62 @@ async function startChat(initialModel: string) {
 
     if (lower === '/models' || lower === '/model') {
       try {
-        const listSpinner = ora('Fetching free models...').start();
-        const models = await fetchModels(apiKey);
-        listSpinner.succeed('Free models loaded');
-        const selectedModel = await selectModel(models);
+        const apiKeyStatus = getApiKeyStatus();
+        const provider = apiKeyStatus.provider || 'openrouter';
+        const listSpinner = ora(`Fetching ${provider === 'openrouter' ? 'free' : 'premium'} models...`).start();
+        const models = await fetchModels(apiKey, provider);
+        listSpinner.succeed(`${provider === 'openrouter' ? 'Free' : 'Premium'} models loaded`);
+        const selectedModel = await selectModel(models, provider);
         model = selectedModel;
         console.log(pc.green(`Switched to model: ${model}`));
       } catch (e: any) {
         console.error('Failed to switch model:', e?.message || e);
+      }
+      continue;
+    }
+
+    if (lower === '/provider') {
+      try {
+        const apiKeyStatus = getApiKeyStatus();
+        const currentProvider = apiKeyStatus.provider || 'openrouter';
+        const newProvider = currentProvider === 'openrouter' ? 'megallm' : 'openrouter';
+        
+        // Get the appropriate hardcoded key for the new provider
+        const DEFAULT_OPENROUTER_KEY = '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';
+        const DEFAULT_MEGALLM_KEY = 'sk-mega-0eaa0b2c2bae3ced6afca8651cfbbce07927e231e4119068f7f7867c20cdc820';
+        
+        // Update config directly
+        const cfg = loadConfig();
+        
+        // Clear any existing provider config
+        if (cfg.openrouter) {
+          delete cfg.openrouter.apiKey;
+        }
+        if (cfg.megallm) {
+          delete cfg.megallm.apiKey;
+        }
+        
+        // Set the new provider's API key
+        cfg[newProvider] = cfg[newProvider] || {};
+        cfg[newProvider].apiKey = newProvider === 'openrouter' ? DEFAULT_OPENROUTER_KEY : DEFAULT_MEGALLM_KEY;
+        if (newProvider === 'megallm') {
+          cfg[newProvider].baseUrl = 'https://ai.megallm.io/v1';
+        }
+        
+        saveConfig(cfg);
+        
+        // Clear the in-memory key to force reload
+        clearApiKey();
+        
+        console.log(pc.green(`Switched from ${currentProvider} to ${newProvider}`));
+        console.log(pc.gray(`New API key has been set automatically for ${newProvider}`));
+        
+        // Show current provider status
+        const newStatus = getApiKeyStatus();
+        console.log(pc.cyan(`Current provider: ${newStatus.provider}`));
+        
+      } catch (e: any) {
+        console.error('Failed to switch provider:', e?.message || e);
       }
       continue;
     }
@@ -669,8 +749,26 @@ async function startChat(initialModel: string) {
         const result = await generateCode(prompt);
         spinner.succeed('Code generation completed');
         console.log(pc.green(`Generated ${result.language} code:`));
-        console.log(result.code);
-
+        
+        // Display code in a plain, simple box
+        const codeLines = (result.code as string).split('\n');
+        const maxLineLength = Math.max(...codeLines.map(line => line.length));
+        const boxWidth = Math.max(80, maxLineLength + 2);
+        
+        // Top border
+        console.log('+' + '-'.repeat(boxWidth - 2) + '+');
+        
+        // Code lines
+        codeLines.forEach(line => {
+          console.log('|' + line + '|');
+        });
+        
+        // Bottom border
+        console.log('+' + '-'.repeat(boxWidth - 2) + '+');
+        
+        // Simple copy instruction
+        console.log('\nCopy code: Select the code above and press Cmd+C (Mac) or Ctrl+C (Windows/Linux)');
+        
         const injected = `Generated code:\n\`\`\`${result.language}\n${result.code}\n\`\`\``;
         messages.push({ role: 'system', content: injected });
       } catch (e: any) {
@@ -697,7 +795,25 @@ async function startChat(initialModel: string) {
         console.log(pc.green(`Found ${result.suggestions.length} suggestions:`));
         result.suggestions.forEach((suggestion: string, index: number) => {
           console.log(`\n${pc.cyan(`Suggestion ${index + 1}:`)}`);
-          console.log(suggestion);
+          
+          // Display suggestion in a plain, simple box
+          const codeLines = suggestion.split('\n');
+          const maxLineLength = Math.max(...codeLines.map(line => line.length));
+          const boxWidth = Math.max(80, maxLineLength + 2);
+          
+          // Top border
+          console.log('+' + '-'.repeat(boxWidth - 2) + '+');
+          
+          // Code lines
+          codeLines.forEach(line => {
+            console.log('|' + line + '|');
+          });
+          
+          // Bottom border
+          console.log('+' + '-'.repeat(boxWidth - 2) + '+');
+          
+          // Simple copy instruction
+          console.log('\nCopy code: Select the code above and press Cmd+C (Mac) or Ctrl+C (Windows/Linux)');
         });
       } catch (e: any) {
         spinner.fail('Code completion failed');
@@ -717,6 +833,21 @@ async function startChat(initialModel: string) {
         spinner.succeed('Refactoring completed');
         if (result.success) {
           console.log(pc.green('Refactoring completed successfully!'));
+          
+          // Display refactored code in a box with copy indicator
+          const codeLines = (result.refactoredCode as string).split('\n');
+          const maxLineLength = Math.max(...codeLines.map(line => line.length));
+          const boxWidth = Math.max(80, maxLineLength + 4);
+          
+          console.log(pc.cyan('┌' + '─'.repeat(boxWidth - 2) + '┐'));
+          console.log(pc.cyan('│') + pc.yellow(' COPY ').padEnd(boxWidth - 3) + pc.cyan('│'));
+          console.log(pc.cyan('│') + ' '.repeat(boxWidth - 2) + pc.cyan('│'));
+          codeLines.forEach(line => {
+            console.log(pc.cyan('│') + pc.yellow('  ') + line + pc.yellow('  ').repeat(Math.max(0, boxWidth - 4 - line.length)) + pc.cyan('│'));
+          });
+          console.log(pc.cyan('│') + ' '.repeat(boxWidth - 2) + pc.cyan('│'));
+          console.log(pc.cyan('└' + '─'.repeat(boxWidth - 2) + '┘'));
+          console.log(pc.gray(`\nTo copy: Select the code above and press Cmd+C (Mac) or Ctrl+C (Windows/Linux)`));
         } else {
           console.log(pc.yellow(result.message));
         }
@@ -737,6 +868,21 @@ async function startChat(initialModel: string) {
         const result = await quickDebug(error);
         spinner.succeed('Debug analysis completed');
         console.log(pc.green('Debug analysis completed'));
+        
+        // Display debug analysis in a box with copy indicator
+        const analysisLines = (result.analysis as string).split('\n');
+        const maxLineLength = Math.max(...analysisLines.map(line => line.length));
+        const boxWidth = Math.max(80, maxLineLength + 4);
+        
+        console.log(pc.cyan('┌' + '─'.repeat(boxWidth - 2) + '┐'));
+        console.log(pc.cyan('│') + pc.yellow(' COPY ').padEnd(boxWidth - 3) + pc.cyan('│'));
+        console.log(pc.cyan('│') + ' '.repeat(boxWidth - 2) + pc.cyan('│'));
+        analysisLines.forEach(line => {
+          console.log(pc.cyan('│') + pc.yellow('  ') + line + pc.yellow('  ').repeat(Math.max(0, boxWidth - 4 - line.length)) + pc.cyan('│'));
+        });
+        console.log(pc.cyan('│') + ' '.repeat(boxWidth - 2) + pc.cyan('│'));
+        console.log(pc.cyan('└' + '─'.repeat(boxWidth - 2) + '┘'));
+        console.log(pc.gray(`\nTo copy: Select the code above and press Cmd+C (Mac) or Ctrl+C (Windows/Linux)`));
       } catch (e: any) {
         spinner.fail('Debug analysis failed');
         console.error(pc.red('Debug analysis failed:'), e.message);
@@ -754,6 +900,21 @@ async function startChat(initialModel: string) {
         const result = await quickTestGeneration(filePath);
         spinner.succeed('Test generation completed');
         console.log(pc.green('Test generation completed'));
+        
+        // Display test code in a box with copy indicator
+        const testLines = (result.tests as string).split('\n');
+        const maxLineLength = Math.max(...testLines.map(line => line.length));
+        const boxWidth = Math.max(80, maxLineLength + 4);
+        
+        console.log(pc.cyan('┌' + '─'.repeat(boxWidth - 2) + '┐'));
+        console.log(pc.cyan('│') + pc.yellow(' COPY ').padEnd(boxWidth - 3) + pc.cyan('│'));
+        console.log(pc.cyan('│') + ' '.repeat(boxWidth - 2) + pc.cyan('│'));
+        testLines.forEach(line => {
+          console.log(pc.cyan('│') + pc.yellow('  ') + line + pc.yellow('  ').repeat(Math.max(0, boxWidth - 4 - line.length)) + pc.cyan('│'));
+        });
+        console.log(pc.cyan('│') + ' '.repeat(boxWidth - 2) + pc.cyan('│'));
+        console.log(pc.cyan('└' + '─'.repeat(boxWidth - 2) + '┘'));
+        console.log(pc.gray(`\nTo copy: Select the code above and press Cmd+C (Mac) or Ctrl+C (Windows/Linux)`));
       } catch (e: any) {
         spinner.fail('Test generation failed');
         console.error(pc.red('Test generation failed:'), e.message);
@@ -869,15 +1030,24 @@ async function startChat(initialModel: string) {
     // Spinner for model call
     const spinner = ora('Thinking...').start();
     try {
+      const apiKeyStatus = getApiKeyStatus();
+      const baseUrl = apiKeyStatus.provider === 'megallm' ? MEGALLM_BASE : OPENROUTER_BASE;
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${apiKey}`,
+      };
+
+      // For MegaLLM, we don't need the additional headers
+      if (apiKeyStatus.provider !== 'megallm') {
+        headers['HTTP-Referer'] = 'https://openrouter.ai';
+        headers['X-Title'] = 'Vibe CLI';
+      }
+
       const completion = await httpPostJson(
-        `${OPENROUTER_BASE}/chat/completions`,
+        `${baseUrl}/chat/completions`,
         { model, messages },
         {
-          headers: {
-            Authorization: `Bearer ${apiKey}`,
-            'HTTP-Referer': 'http://localhost',
-            'X-Title': 'vibe-cli',
-          },
+          headers,
           timeout: 60000,
         }
       );
@@ -894,7 +1064,7 @@ async function startChat(initialModel: string) {
       spinner.fail('Request failed');
       const status = err?.response?.status;
       const data = err?.response?.data;
-      console.error('Error calling OpenRouter:', status || '', data || err.message || err);
+      console.error('Error calling API:', status || '', data || err.message || err);
       if (status === 401) {
         console.error('Authentication failed. Check your API key.');
       }
@@ -934,7 +1104,7 @@ function printAsciiWelcome() {
       return str.length > n ? str.slice(0, n-1) + '…' : str.padEnd(n);
     };
 
-    const box = String.raw`+-------------------------------- Vibe-CLI ${version} ---------------------------------+
+    const box = String.raw`+-------------------------------- VIBE-CLI ${version} ---------------------------------+
 |                                   | Tips for getting started                    |
 |          Welcome back ${username}!${' '.repeat(Math.max(0, 10 - String(username).length))} | - Type /help to see all commands            |
 |                                   | - Use /models to select a free model       |
@@ -943,7 +1113,7 @@ function printAsciiWelcome() {
 |    | | | |   ← Boot Sequence OK      | Recent activity                             |
 |                                   | ${fit(recent,41)} |
 |                                   |                                              |
-|   Vibe AI · Free Model Access     |                                              |
+|   VIBE AI · Free Model Access     |                                              |
 |       ${fit(cwd,42)} |
 +---------------------------------------------------------------------------------------------+`;
 

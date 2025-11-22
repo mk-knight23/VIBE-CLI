@@ -192,6 +192,7 @@ export const DEFAULT_HEADERS: Record<string, string> = {
 };
 
 export const TOP_FREE_MODELS = [
+  { id: 'qwen/qwen3-next-80b-a3b-instruct', ctx: 262144, note: 'Qwen Qwen3 Next 80B A3B Instruct - Advanced AI model', provider: 'Alibaba' },
   { id: 'tng/deepseek-r1t2-chimera:free', ctx: 164000, note: 'long-context reasoning' },
   { id: 'z-ai/glm-4.5-air:free', ctx: 131000, note: 'default, agentic coding' },
   { id: 'tng/deepseek-r1t-chimera:free', ctx: 164000, note: 'balanced reasoning' },
@@ -219,17 +220,17 @@ export const MEGALLM_MODELS = [
 ];
 
 export const TASK_MODEL_MAPPING: Record<string, string[]> = {
-  'code-generation': ['deepseek/deepseek-coder-v2-lite', 'qwen/qwen2.5-coder-7b'],
-  chat: ['z-ai/glm-4.5-air:free', 'mistral/mistral-nemo-instruct'],
-  debug: ['qwen/qwen3-coder-480b', 'kwaipilot/kat-coder-pro'],
+  'code-generation': ['qwen/qwen3-next-80b-a3b-instruct', 'deepseek/deepseek-coder-v2-lite'],
+  chat: ['qwen/qwen3-next-80b-a3b-instruct', 'mistral/mistral-nemo-instruct'],
+  debug: ['qwen/qwen3-next-80b-a3b-instruct', 'kwaipilot/kat-coder-pro'],
   'long-context': ['google/gemini-2.0-flash-exp:free'],
-  refactor: ['kwaipilot/kat-coder-pro-v1:free', 'deepseek/deepseek-coder-v2-lite'],
-  'test-generation': ['qwen/qwen3-coder-480b-a35b:free', 'deepseek/deepseek-coder-v2-lite'],
-  completion: ['deepseek/deepseek-coder-v2-lite', 'qwen/qwen2.5-coder-7b'],
-  'multi-edit': ['kwaipilot/kat-coder-pro-v1:free', 'z-ai/glm-4.5-air:free'],
-  'git-analysis': ['z-ai/glm-4.5-air:free', 'mistral/mistral-nemo-instruct'],
-  'code-review': ['kwaipilot/kat-coder-pro-v1:free', 'qwen/qwen3-coder-480b-a35b:free'],
-  agent: ['z-ai/glm-4.5-air:free', 'deepseek/deepseek-coder-v2-lite'],
+  refactor: ['qwen/qwen3-next-80b-a3b-instruct', 'deepseek/deepseek-coder-v2-lite'],
+  'test-generation': ['qwen/qwen3-next-80b-a3b-instruct', 'deepseek/deepseek-coder-v2-lite'],
+  completion: ['qwen/qwen3-next-80b-a3b-instruct', 'qwen/qwen2.5-coder-7b'],
+  'multi-edit': ['qwen/qwen3-next-80b-a3b-instruct', 'z-ai/glm-4.5-air:free'],
+  'git-analysis': ['qwen/qwen3-next-80b-a3b-instruct', 'mistral/mistral-nemo-instruct'],
+  'code-review': ['qwen/qwen3-next-80b-a3b-instruct', 'qwen/qwen3-coder-480b-a35b:free'],
+  agent: ['qwen/qwen3-next-80b-a3b-instruct', 'deepseek/deepseek-coder-v2-lite'],
 };
 
 // Prefer built-in fetch (Node 18+). Fallback dynamic import if missing.
@@ -293,7 +294,7 @@ export function getApiKeyFromConfig(): string {
 
 export function getModelDefaults(): { defaultModel: string; topFreeModels: any[] } {
   const cfg = loadConfig();
-  const def = cfg?.openrouter?.defaultModel || 'z-ai/glm-4.5-air:free';
+  const def = cfg?.openrouter?.defaultModel || 'qwen/qwen3-next-80b-a3b-instruct';
   const list = cfg?.openrouter?.topFreeModels || TOP_FREE_MODELS;
   const normalized = Array.isArray(list)
     ? list.map((m: any) => (typeof m === 'string' ? { id: m } : m))
@@ -322,7 +323,8 @@ export async function chatCompletion({
 }): Promise<{ model: string; message: Record<string, unknown>; data: any }> {
   try {
     const key = apiKey || (await getApiKey());
-    const provider = globalApiProvider || 'openrouter';
+    const apiKeyStatus = getApiKeyStatus();
+    const provider = apiKeyStatus.provider || 'openrouter';
 
     let modelOrder: string[];
     if (taskType || prompt) {
@@ -427,7 +429,7 @@ export function ensureDefaults(): void {
   const cfg = loadConfig();
   if (!cfg.openrouter) {
     cfg.openrouter = {
-      defaultModel: 'z-ai/glm-4.5-air:free',
+      defaultModel: 'qwen/qwen3-next-80b-a3b-instruct',
       topFreeModels: TOP_FREE_MODELS,
     };
     saveConfig(cfg);

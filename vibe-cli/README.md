@@ -8,6 +8,12 @@ Free, privacy-first AI coding assistant CLI (chat, codegen, refactor, debug, tes
 npm install -g vibe-ai-cli@3.0.0
 ```
 
+## Default Model
+
+The default AI model for Vibe CLI has been updated to **Qwen Qwen3 Next 80B A3B Instruct** (`qwen/qwen3-next-80b-a3b-instruct`), a high-performance model from Alibaba with 262,144 context tokens. This model is now selected as the default for all AI operations including chat, code generation, debugging, and agent tasks.
+
+This change improves reasoning capabilities, code generation quality, and long-context understanding across all Vibe CLI features.
+
 ## Usage
 
 Simply run:
@@ -67,6 +73,7 @@ You can then use all Vibe CLI commands:
 - **Automatic Configuration**: Keys saved to config for future use
 - **100+ Free Models**: Access to OpenRouter's extensive model catalog
 - **High-Performance Models**: MegaLLM's 128K context window
+- **Default Model**: Qwen Qwen3 Next 80B A3B Instruct (262K context) for superior reasoning and code generation
 - **Full CLI Features**: Chat, code generation, debugging, testing, git integration
 
 ## Configuration
