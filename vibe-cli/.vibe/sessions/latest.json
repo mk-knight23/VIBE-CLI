@@ -1,4 +1,0 @@
-{
-  "type": "fix",
-  "out": "I'd be happy to help you fix failing tests, but I need more information to provide specific diffs. Please provide:\n\n1. The repository structure or a link to the repository\n2. Details about which tests are failing\n3. The error messages or test failures you're seeing\n4. Any relevant code snippets or test files\n\nOnce you provide this information, I can analyze the failing tests and propose minimal diffs to fix them."
-}

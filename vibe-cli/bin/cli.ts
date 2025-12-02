@@ -8,6 +8,7 @@ import ora from 'ora';
 import { exec } from 'child_process';
 import fg from 'fast-glob';
 import { webSearch, webFetchDocs, getApiKey, chatCompletion, quickRefactor, quickDebug, quickTestGeneration, smartCommit, runAutonomousAgent, generateCode, generateCompletion, reviewChanges, createPR, smartStatus, getApiKeyStatus, clearApiKey, loadConfig, saveConfig } from '../core/index';
+import { extractFileOperations, executeOperations, shouldAutoExecute } from '../core/auto-executor';
 
 // HTTP helpers using native fetch with timeout and axios-compatible errors
 async function fetchWithTimeout(resource: string, options: { timeout?: number; [key: string]: any } = {}) {
@@ -53,7 +54,7 @@ const TRANSCRIPTS_DIR = path.join(process.cwd(), 'transcripts');
 
 // Defaults requested by user
 const DEFAULT_MODEL_ID = 'qwen/qwen3-next-80b-a3b-instruct';
-const DEFAULT_SYSTEM_PROMPT = 'You are an interactive CLI assistant for software engineering. Be concise and direct. Only assist with defensive security tasks; refuse to create, modify, or improve code that may be used maliciously. Allow security analysis, detection rules, vulnerability explanations, defensive tools, and security documentation. Never guess URLs; only use user-provided or known programming docs URLs. Minimize output.';
+const DEFAULT_SYSTEM_PROMPT = 'You are an interactive CLI assistant for software engineering. When creating files, ALWAYS format them as:\n\n**filename.ext**:\n```language\ncode here\n```\n\nFor projects, create a project folder first, then all files inside it. Example:\n\nCreate folder: project-name\n\n**project-name/index.html**:\n```html\ncode\n```\n\n**project-name/style.css**:\n```css\ncode\n```\n\n**project-name/script.js**:\n```javascript\ncode\n```\n\nBe concise and direct. Only assist with defensive security tasks.';
 
 // Enhanced command history
 const COMMAND_HISTORY: string[] = [];
@@ -268,38 +269,30 @@ function createFileTree(dir: string, prefix = '', maxDepth = 2, currentDepth = 0
   return tree;
 }
 
-async function startChat(initialModel: string) {
+async function startChat(initialModel: string, selectedProvider: string = 'megallm') {
   let model = initialModel || DEFAULT_MODEL_ID;
-  console.log(pc.green(`\nStarting chat with model: ${model}`));
+  console.log(pc.green(`Starting chat with ${selectedProvider}/${model}`));
   console.log('Type ' + pc.yellow('"/help"') + ' for available commands.');
   console.log(pc.gray('💡 Tip: Press Tab for command suggestions, use ↑/↓ to navigate command history'));
 
   // Get API key using centralized management
   const apiKey = await getApiKey();
+  
+  // Use selected provider
+  const providerBaseUrls: Record<string, string> = {
+    'openrouter': 'https://openrouter.ai/api/v1',
+    'megallm': 'https://ai.megallm.io/v1',
+    'agentrouter': 'https://agentrouter.org/v1',
+    'routeway': 'https://api.routeway.ai/v1'
+  };
+  
+  const baseUrl = providerBaseUrls[selectedProvider] || OPENROUTER_BASE;
 
   const tools = setupToolAccess();
   const messages = [
-    { role: 'system', content: 'You are an interactive CLI assistant for software engineering. Be concise and direct. Only assist with defensive security tasks; refuse to create, modify, or improve code that may be used maliciously. Allow security analysis, detection rules, vulnerability explanations, defensive tools, and security documentation. Never guess URLs; only use user-provided or known programming docs URLs. Minimize output.' },
+    { role: 'system', content: 'You are Vibe CLI assistant. Help users with code, answer questions, and create files when needed. Be concise and helpful.' },
   ];
   let systemIndex = 0;
-  // Optional system prompt (defaults to user-specified default)
-  let sysPrompt = '';
-  try {
-    const ans = await inquirer.prompt([
-      {
-        type: 'input',
-        name: 'sysPrompt',
-        message: 'Optional: Provide a system prompt (or leave blank):',
-        default: DEFAULT_SYSTEM_PROMPT,
-      },
-    ]);
-    sysPrompt = ans.sysPrompt;
-  } catch {}
-  if ((sysPrompt && sysPrompt.trim()) || DEFAULT_SYSTEM_PROMPT) {
-    const val = (sysPrompt && sysPrompt.trim()) || DEFAULT_SYSTEM_PROMPT;
-    messages.push({ role: 'system', content: val });
-    systemIndex = messages.length - 1;
-  }
 
   let multiline = false;
 
@@ -1030,35 +1023,40 @@ async function startChat(initialModel: string) {
     // Spinner for model call
     const spinner = ora('Thinking...').start();
     try {
-      const apiKeyStatus = getApiKeyStatus();
-      const baseUrl = apiKeyStatus.provider === 'megallm' ? MEGALLM_BASE : OPENROUTER_BASE;
-      const headers: Record<string, string> = {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${apiKey}`,
-      };
-
-      // For MegaLLM, we don't need the additional headers
-      if (apiKeyStatus.provider !== 'megallm') {
-        headers['HTTP-Referer'] = 'https://openrouter.ai';
-        headers['X-Title'] = 'Vibe CLI';
-      }
-
-      const completion = await httpPostJson(
-        `${baseUrl}/chat/completions`,
-        { model, messages },
-        {
-          headers,
-          timeout: 60000,
+      // Use ProviderManager for automatic fallback
+      const { ProviderManager } = await import('../src/core/providerManager');
+      const manager = new ProviderManager();
+      
+      let content = '';
+      try {
+        for await (const chunk of manager.chatWithFallback(selectedProvider, model, messages as any)) {
+          if (chunk.type === 'token' && chunk.content) {
+            content += chunk.content;
+          } else if (chunk.type === 'error') {
+            throw new Error(chunk.error);
+          }
         }
-      );
+      } catch (error: any) {
+        spinner.fail('All providers failed');
+        console.error(pc.red(`Error: ${error.message}`));
+        continue;
+      }
+      
       spinner.succeed('Response received');
 
-      const content = completion.data?.choices?.[0]?.message?.content || '';
       if (!content) {
         console.log(pc.gray('(No content returned)'));
       } else {
         console.log('\n' + pc.bold('Assistant:') + ' ' + content + '\n');
         messages.push({ role: 'assistant', content });
+        
+        // Auto-execute file operations if detected
+        if (shouldAutoExecute(trimmed)) {
+          const operations = extractFileOperations(content);
+          if (operations.length > 0) {
+            await executeOperations(operations);
+          }
+        }
       }
     } catch (err: any) {
       spinner.fail('Request failed');
@@ -1137,7 +1135,79 @@ async function main() {
         const command = args[0];
         const rest = args.slice(1).join(' ');
 
-        if (command === 'chat' && rest) {
+        // File system commands
+        if (command === 'create' || command === 'write') {
+          const [filePath, ...contentParts] = rest.split(' ');
+          const content = contentParts.join(' ');
+          if (!filePath) {
+            console.error(pc.red('Usage: vibe create <file> <content>'));
+            return;
+          }
+          const dir = path.dirname(filePath);
+          if (dir !== '.' && !fs.existsSync(dir)) {
+            fs.mkdirSync(dir, { recursive: true });
+          }
+          fs.writeFileSync(filePath, content || '', 'utf8');
+          console.log(pc.green(`✓ Created ${filePath}`));
+          return;
+        } else if (command === 'mkdir') {
+          const dirPath = rest.trim();
+          if (!dirPath) {
+            console.error(pc.red('Usage: vibe mkdir <directory>'));
+            return;
+          }
+          fs.mkdirSync(dirPath, { recursive: true });
+          console.log(pc.green(`✓ Created directory ${dirPath}`));
+          return;
+        } else if (command === 'read') {
+          const filePath = rest.trim();
+          if (!filePath || !fs.existsSync(filePath)) {
+            console.error(pc.red('File not found'));
+            return;
+          }
+          console.log(fs.readFileSync(filePath, 'utf8'));
+          return;
+        } else if (command === 'ls') {
+          const dirPath = rest.trim() || '.';
+          const files = fs.readdirSync(dirPath);
+          files.forEach(f => console.log(f));
+          return;
+        } else if (command === 'edit') {
+          const [filePath, ...instructionParts] = rest.split(' ');
+          const instruction = instructionParts.join(' ');
+          if (!filePath || !fs.existsSync(filePath)) {
+            console.error(pc.red('File not found'));
+            return;
+          }
+          const currentContent = fs.readFileSync(filePath, 'utf8');
+          const apiKey = await getApiKey();
+          const spinner = ora('Generating changes...').start();
+          const completion = await httpPostJson(
+            `${OPENROUTER_BASE}/chat/completions`,
+            {
+              model: DEFAULT_MODEL_ID,
+              messages: [
+                { role: 'system', content: 'You are a code editor. Return ONLY the complete modified file content, no explanations.' },
+                { role: 'user', content: `File: ${filePath}\n\nCurrent content:\n${currentContent}\n\nInstruction: ${instruction}\n\nReturn the complete modified file:` }
+              ]
+            },
+            {
+              headers: {
+                Authorization: `Bearer ${apiKey}`,
+                'HTTP-Referer': 'http://localhost',
+                'X-Title': 'vibe-cli',
+              },
+              timeout: 60000,
+            }
+          );
+          spinner.stop();
+          const newContent = completion.data?.choices?.[0]?.message?.content || '';
+          if (newContent) {
+            fs.writeFileSync(filePath, newContent, 'utf8');
+            console.log(pc.green(`✓ Updated ${filePath}`));
+          }
+          return;
+        } else if (command === 'chat' && rest) {
           // Handle simple chat command
           const apiKey = await getApiKey();
           const completion = await httpPostJson(
@@ -1182,16 +1252,11 @@ async function main() {
       return; // Do not proceed to interactive chat loop
     }
 
-    let selectedModel = DEFAULT_MODEL_ID;
-    try {
-      const apiKey = await getApiKey();
-      const models = await fetchModels(apiKey);
-      selectedModel = (models.find((m: any) => (m.id||m.slug||m.name) === DEFAULT_MODEL_ID)?.id) || (await selectModel(models));
-    } catch (e) {
-      // If fetching free models fails, continue with default model
-      selectedModel = DEFAULT_MODEL_ID;
-    }
-    await startChat(selectedModel);
+    // Show welcome and select provider + model
+    const { showWelcomeAndSelect } = await import('../core/startup-selector');
+    const { provider, model } = await showWelcomeAndSelect();
+    
+    await startChat(model, provider);
   } catch (e: any) {
     console.error('Fatal:', e?.message || e);
     process.exitCode = 1;
