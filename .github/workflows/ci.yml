@@ -1,0 +1,51 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  build-cli:
+    name: Build CLI
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+      - name: Install dependencies
+        run: cd vibe-cli && npm ci
+      - name: Build
+        run: cd vibe-cli && npm run build
+      - name: Test
+        run: cd vibe-cli && npm test
+
+  build-web:
+    name: Build Web
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+      - name: Install dependencies
+        run: cd vibe-web && npm ci
+      - name: Build
+        run: cd vibe-web && npm run build
+
+  build-extension:
+    name: Build VS Code Extension
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+      - name: Install dependencies
+        run: cd vibe-code && npm ci
+      - name: Compile
+        run: cd vibe-code && npm run compile
+      - name: Package
+        run: cd vibe-code && npx vsce package

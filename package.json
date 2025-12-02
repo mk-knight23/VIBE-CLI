@@ -1,30 +1,50 @@
 {
-  "name": "vibe-repo",
+  "name": "vibe",
+  "version": "2.0.0",
+  "description": "Multi-Provider AI Development Platform - CLI, Web, and VS Code Extension",
   "private": true,
-  "description": "Monorepo (non-workspace) containing: vibe-cli, vibe-web, vibe-code.",
-  "license": "MIT",
+  "workspaces": [
+    "vibe-cli",
+    "vibe-web",
+    "vibe-code"
+  ],
+  "scripts": {
+    "build": "npm run build:cli && npm run build:web && npm run build:code",
+    "build:cli": "cd vibe-cli && npm run build",
+    "build:web": "cd vibe-web && npm run build",
+    "build:code": "cd vibe-code && npm run compile",
+    "dev:web": "cd vibe-web && npm run dev",
+    "test": "npm run test:cli && npm run test:web",
+    "test:cli": "cd vibe-cli && npm test",
+    "test:web": "cd vibe-web && npm test",
+    "clean": "rm -rf vibe-cli/dist vibe-web/.next vibe-code/out",
+    "install:all": "npm install && cd vibe-cli && npm install && cd ../vibe-web && npm install && cd ../vibe-code && npm install"
+  },
   "repository": {
     "type": "git",
-    "url": "https://github.com/mk-knight23/vibe"
+    "url": "https://github.com/mk-knight23/vibe.git"
   },
+  "keywords": [
+    "ai",
+    "cli",
+    "vscode",
+    "web",
+    "openrouter",
+    "megallm",
+    "agentrouter",
+    "routeway",
+    "multi-provider",
+    "code-generation",
+    "assistant"
+  ],
+  "author": "VIBE Team",
+  "license": "MIT",
   "bugs": {
     "url": "https://github.com/mk-knight23/vibe/issues"
   },
-  "homepage": "https://github.com/mk-knight23/vibe#readme",
-  "keywords": [
-    "vibe",
-    "cli",
-    "nextjs",
-    "vscode",
-    "openrouter",
-    "ai-assistant",
-    "monorepo",
-    "multi-package"
-  ],
-  "dependencies": {
-    "vibe-ai-cli": "^2.1.5"
-  },
-  "devDependencies": {
-    "vibe-cli": "^0.14.54"
+  "homepage": "https://vibe-ai.vercel.app",
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
   }
 }
