@@ -56,3 +56,16 @@ Thumbs.db
 # Lock files (keep package-lock.json)
 yarn.lock
 pnpm-lock.yaml
+
+# Build artifacts
+*.vsix
+*.tgz
+
+# Backup files
+*-backup.*
+*.backup
+*.orig
+
+# Logs
+*.log
+
