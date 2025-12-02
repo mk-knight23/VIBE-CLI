@@ -1,6 +1,6 @@
 {
   "name": "vibe-ai-cli",
-  "version": "3.1.0",
+  "version": "3.2.0",
   "description": "Free, privacy-first AI coding assistant CLI (chat, codegen, refactor, debug, test, git, agent) with dual-provider support (OpenRouter & MegaLLM).",
   "author": "mk-knight23 <noreply@users.noreply.github.com>",
   "license": "MIT",
