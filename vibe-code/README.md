@@ -1,232 +1,246 @@
-# Vibe VS Code
+# Vibe VS Code v4.0 🚀
 
-**Publisher:** Mk tech
-**Version:** 2.0.0 | **Status:** Production Ready | **License:** MIT
+**AI-Powered Development Assistant - Works Independently**
 
-🔌 Feature-rich VS Code extension that brings the power of Vibe AI directly into your editor. Provides intelligent code assistance, multiple AI modes, and seamless workflow integration with support for multiple AI providers.
+[![Version](https://img.shields.io/badge/version-4.0.0-blue.svg)](https://marketplace.visualstudio.com/items?itemName=mktech.vibe-vscode)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-## 🎉 What's New in v2.0.0
+🔥 **Made by KAZI** 🔥
 
-⭐ **Major Update:** Added MegaLLM provider support alongside OpenRouter
-✨ **Enhanced UI:** Improved scrolling, copyable messages, and clear chat functionality
-🔧 **Better UX:** Message copying by clicking, clear chat button, improved layout
-🚀 **Updated Dependencies:** Latest VS Code engine support and type definitions
-📊 **Expanded Models:** Support for 70+ AI models from multiple providers
+## ✨ What's New in v4.0
 
-## 🌟 Key Features
+- 🌐 **4 AI Providers**: OpenRouter, MegaLLM, AgentRouter, Routeway
+- 🤖 **40+ Free Models**: Direct API access to diverse AI models
+- 🎯 **Smart Fallback**: Automatic provider/model switching
+- 📁 **File Operations**: Create, edit, delete files directly
+- 🎨 **Enhanced UI**: Beautiful themes and smooth animations
+- ⚡ **Zero Config**: Hardcoded API keys for instant use
+- 🔒 **Independent**: Works standalone, no CLI required
 
-### 💬 Intelligent Chat System
-- **Multi-Provider Support:** Access to both OpenRouter and MegaLLM AI models
-- **Context-Aware Responses:** Understands your open files and project structure
-- **Conversation History:** Persistent chat sessions across editor restarts
-- **Code Snippet Integration:** Direct code insertion and application
-- **Copyable Messages:** Click on any message to copy its content to clipboard
-- **Clear Chat History:** Easily clear conversation history with one click
+## 🚀 Quick Start
 
-### 🎭 Specialized AI Modes
-- 🏗️ **Architect Mode:** System design and planning
-- 💻 **Code Mode:** Implementation and debugging
-- ❓ **Ask Mode:** Q&A and explanations
-- 🪲 **Debug Mode:** Error analysis and resolution
-- 🪃 **Orchestrator Mode:** Multi-step workflow coordination
-- 🔍 **Research Mode:** Codebase analysis and documentation
+### Installation
 
-### ⚡ Productivity Features
-- **Keyboard Shortcuts:** Quick mode switching without leaving editor
-- **Diff Preview:** Safe code modifications with review
-- **Auto-Complete Integration:** AI-powered suggestions as you type
-- **Multi-File Context:** Analyzes entire project structure
-- **Task Automation:** Repetitive task execution
+1. Open VS Code
+2. Go to Extensions (Ctrl+Shift+X / Cmd+Shift+X)
+3. Search for "Vibe VS Code"
+4. Click Install
 
-## 📋 Features
+### Usage
 
-### Modes
-Modes are managed in the extension backend and surfaced in the webview:
+1. Click the Vibe icon in the Activity Bar
+2. Select your provider and model
+3. Start chatting!
 
-- **Architect (🏗️)** — plan and design
-- **Code (💻)** — write & refactor code
-- **Ask (❓)** — Q&A and explanations
-- **Debug (🪲)** — diagnose & fix issues
-- **Orchestrator (🪃)** — coordinate multi-step workflows
-- **Project Research (🔍)** — analyze and summarize the codebase
+**No additional setup required - works out of the box!**
 
-Mode state is stored in the extension host and updated via webview messages (see mode handling in `src/extension.ts`).
+## 🎯 Features
 
-### Personas
-Personas tailor the assistant behavior per mode:
+### Multi-Provider Architecture
 
-- **Balanced** — general purpose
-- **System Architect** — high-level design
-- **Pair Programmer** — implementation-focused
-- **Debug Doctor** — debugging expert
-- **Research Analyst** — codebase research
+**4 AI Providers with 40+ Models:**
 
-Personas are defined in `src/extension.ts` and applied in a synthesized system prompt per request.
+#### OpenRouter (6 models)
+- Grok 4.1 Fast (128k context)
+- GLM 4.5 Air (128k context)
+- DeepSeek Chat V3 (64k context)
+- Qwen3 Coder (32k context)
+- GPT OSS 20B (8k context)
+- Gemini 2.0 Flash (1M context)
 
-### Chat vs Agent Tabs
-The webview UI provides:
+#### MegaLLM (12 models)
+- Llama 3.3 70B Instruct (128k context)
+- DeepSeek R1 Distill (64k context)
+- Kimi K2 (200k context)
+- DeepSeek V3.1 (64k context)
+- MiniMax M2 (200k context)
+- And 7 more...
 
-- **Chat tab** — direct conversational usage
-- **Agent tab** — agent-style behavior, emphasizing checkpoints & todo planning
+#### AgentRouter (7 models)
+- Claude Haiku 4.5 (200k context)
+- Claude Sonnet 4.5 (200k context)
+- DeepSeek R1 (64k context)
+- DeepSeek V3.1/V3.2 (64k context)
+- GLM 4.5/4.6 (128k context)
 
-Agent/tab selection is handled fully in the webview script and included in the message payload to the backend (see `isAgent` handling in `src/extension.ts`).
+#### Routeway (6 models)
+- Kimi K2 (200k context)
+- MiniMax M2 (200k context)
+- GLM 4.6 (128k context)
+- DeepSeek V3 (64k context)
+- Llama 3.2 3B (8k context)
 
-## 🔧 Technical Details
+### Intelligent Fallback System
 
-### AI Provider Integration
-- Supports both OpenRouter and MegaLLM APIs
-- OpenRouter: Uses fetch to call `https://openrouter.ai/api/v1/chat/completions`
-- MegaLLM: Uses fetch to call `https://ai.megallm.io/v1/chat/completions`
-- Default model: `z-ai/glm-4.5-air:free`
-- Several top models from both providers are exposed in a dropdown for quick switching (see `TOP_FREE_MODELS` in `src/extension.ts`)
-- The API calling wrappers live in `callOpenRouter(...)` and `callMegaLLM(...)` in `src/extension.ts`
+- **Key Fallback**: Tries multiple API keys per provider
+- **Model Fallback**: Switches to alternative models
+- **Provider Fallback**: Automatically tries other providers
+- **Zero Downtime**: Always finds a working model
+
+### File Operations
+
+Direct file operations:
+- Create files and folders
+- Delete with confirmation
+- Move and copy files
+- Apply code patches
+- Real-time explorer refresh
+
+### AI Modes
+
+- **Architect**: Planning and design
+- **Code**: Writing and refactoring
+- **Ask**: Q&A and explanations
+- **Debug**: Issue diagnosis
+- **Orchestrator**: Task coordination
+- **Project Research**: Codebase analysis
+
+### Visual Themes
+
+- Default
+- Neon (purple/cyan glow)
+- Sunset (orange/yellow)
+- Ocean (blue tones)
+- Matrix (green terminal style)
+
+## 🎨 Usage Examples
+
+### Code Generation
+```
+You: Create a REST API with Express.js
+
+AI: [Creates complete project structure]
+- server.js
+- routes/
+- controllers/
+- package.json
+```
+
+### Code Explanation
+```
+You: Explain this function
+
+AI: [Provides detailed explanation with examples]
+```
+
+### Debugging
+```
+You: Why is this code throwing an error?
+
+AI: [Analyzes and suggests fixes]
+```
+
+## 🔧 Configuration
 
 ### Settings
-Extension settings (via VS Code Settings UI or `settings.json`):
 
-- `vibe.provider` (string) — AI provider to use (options: "openrouter", "megallm")
-- `vibe.openrouterApiKey` (string) — your OpenRouter API key
-- `vibe.megallmApiKey` (string) — your MegaLLM API key
-- `vibe.defaultModel` (string) — default model id (defaults to `z-ai/glm-4.5-air:free`)
-- `vibe.autoApproveUnsafeOps` (boolean) — future toggle for auto-approving risky operations
-- `vibe.maxContextFiles` (number) — maximum files considered for context collection
+Access via: `File > Preferences > Settings > Vibe`
 
-Configuration schema is defined in `package.json`.
+- **Provider**: Choose from 4 providers
+- **Default Model**: Select your preferred model
+- **API Keys**: Optional custom keys
+- **Auto-Approve**: Enable/disable auto-approval
+- **Max Context Files**: Limit context size
 
-### Provider Selection
-The extension now supports both OpenRouter and MegaLLM providers. You can switch between providers in the settings panel or using the provider dropdown in the sidebar. Each provider requires its own API key.
+### Keyboard Shortcuts
 
-### UI & UX Improvements
-- **Enhanced Scrolling:** Smooth scrolling with custom-styled scrollbars
-- **Message Copying:** Click on any message to copy its content
-- **Clear Chat:** One-click button to clear conversation history
-- **Responsive Design:** Better layout and spacing for improved readability
-- **Auto-scroll Control:** Smart auto-scroll that respects manual scrolling
+- `Cmd/Ctrl + .`: Next mode
+- `Cmd/Ctrl + Shift + .`: Previous mode
 
-### Context Button
-Context button collects snippets from visible editors (URI, language, first 4k chars) and surfaces them in the sidebar.
-Implementation: `handleRequestContext` in `src/extension.ts`.
-This mimics Vibe-CLI's context injection but is scoped to open editors to keep it safe and predictable.
+### Context Menu
 
-## ⌨️ Commands & Keybindings
+Right-click on selected code:
+- Explain Selected Code
+- Refactor Selected Code
+- Generate Tests for Selection
 
-Commands are contributed in `package.json`:
+## 🏗️ Architecture
 
-- **Vibe: Open Chat** (`vibe.openChat`) — opens the main Vibe panel in Code mode
-- **Vibe: Open Agent Panel** (`vibe.openAgent`) — opens the panel in Architect mode
-- **Vibe: Open Settings** (`vibe.openSettings`) — jumps to Vibe's settings section
-- **Vibe: Next Mode** (`⌘+.`) (`vibe.switchNextMode`)
-- **Vibe: Previous Mode** (`⌘+Shift+.`) (`vibe.switchPrevMode`)
-
-**Keybindings** (when Vibe panel is visible):
-- **Next mode:** `⌘ + .` (macOS) / `Ctrl + .`
-- **Previous mode:** `⌘ + ⇧ + .` / `Ctrl + ⇧ + .`
-
-See the registration logic in `activate(...)` in `src/extension.ts`.
-
-## 🏗️ Building & Running
-
-From this subdirectory (`vibe-code/`):
-
-```bash
-npm install
-npm run compile      # builds to ./dist
+```
+┌─────────────────────────────────────┐
+│     Vibe VS Code v4.0               │
+│     (Independent Extension)         │
+└──────────────┬──────────────────────┘
+               │
+       ┌───────┴────────┐
+       │ Direct API Calls│
+       └───────┬─────────┘
+               │
+    ┌──────────┼──────────┬──────────┐
+    │          │          │          │
+┌───▼───┐  ┌──▼───┐  ┌───▼──┐  ┌───▼────┐
+│OpenRtr│  │MegaLM│  │AgntRt│  │Routeway│
+└───┬───┘  └──┬───┘  └───┬──┘  └───┬────┘
+    │         │          │         │
+    └─────────┴──────────┴─────────┘
+              │
+         [AI Models]
 ```
 
-To develop or debug in VS Code:
+## 📊 Model Selection Guide
 
-1. Open this folder in VS Code
-2. Run "Launch Extension" debug configuration (you may need to create `.vscode/launch.json`)
-3. In Extension Development Host:
-   - Open the Command Palette
-   - Run "Vibe: Open Chat" or "Vibe: Open Agent Panel"
-   - Set your `vibe.openrouterApiKey` in Settings and start chatting
+**For Code Generation:**
+- Qwen3 Coder (OpenRouter)
+- DeepSeek V3.1 (MegaLLM/AgentRouter)
+- Llama 3.3 70B (MegaLLM)
 
-## 📦 Packaging for Marketplace
+**For Long Context:**
+- Gemini 2.0 Flash (1M tokens - OpenRouter)
+- Kimi K2 (200k tokens - MegaLLM/Routeway)
+- MiniMax M2 (200k tokens - MegaLLM/Routeway)
 
-To build a `.vsix` package:
+**For Fast Responses:**
+- Grok 4.1 Fast (OpenRouter)
+- Claude Haiku 4.5 (AgentRouter)
+- GLM 4.5 Air (OpenRouter)
 
-```bash
-npm run compile
-npx @vscode/vsce package
-```
+**For Reasoning:**
+- DeepSeek R1 (AgentRouter)
+- DeepSeek R1 Distill (MegaLLM)
 
-That will produce `vibe-vscode-*.vsix`, which you can:
+## 🔒 Privacy & Security
 
-- **Install locally:** Command Palette → Extensions: Install from VSIX...
-- **Upload to the VS Code Marketplace** under your publisher (`mktech` as in `package.json`)
+- No data retention
+- Local-first processing
+- API keys stored securely in VS Code settings
+- No telemetry or tracking
 
-## 🚀 Versioning & Release
+## 🤝 Contributing
 
-### Current Version
-- **Version:** v2.0.0 (2025-11-20)
-- **Tag Prefix:** `vibe-code-vX.Y.Z`
-- **Release Type:** Independent semantic versioning
+Contributions welcome!
 
-### Release Process
-```bash
-# Bump version (patch/minor/major)
-npm version patch
+1. Fork the repository
+2. Create your feature branch
+3. Commit your changes
+4. Push to the branch
+5. Open a Pull Request
 
-# Commit and tag
-git add package.json
-git commit -m "vibe-code: bump to 1.0.5"
-git tag vibe-code-v1.0.5
+## 📝 License
 
-# Push to trigger automated release
-git push origin vibe-code-v1.0.5
-```
+MIT License - see [LICENSE](LICENSE) file for details
 
-### Automated Workflows
-`vibe-code-v*` triggers:
-- VSIX packaging and build
-- VS Code Marketplace publishing
-- GitHub release with artifacts
+## 🙏 Acknowledgments
 
-## 🔮 Future Roadmap
+- OpenRouter for free model access
+- MegaLLM for high-quality models
+- AgentRouter for Claude access
+- Routeway for diverse model selection
 
-### Planned Enhancements
-- 🔄 **Enhanced Diff Visualization:** Better code review interface
-- 📝 **Advanced Auto-Complete:** Context-aware suggestions
-- 🎯 **Task Templates:** Predefined workflow patterns
-- 🔌 **Theme Integration:** Match VS Code theme automatically
-- 📊 **Usage Analytics:** Privacy-first usage tracking
-- 🌐 **Multi-Language Support:** Internationalization
+## 📞 Support
 
-## 🤝 Contributing Guidelines
+- GitHub Issues: [Report bugs](https://github.com/mk-knight23/vibe/issues)
+- Documentation: [Full docs](https://github.com/mk-knight23/vibe)
 
-- Follow VS Code extension development best practices
-- Test across different VS Code versions
-- Ensure accessibility compliance
-- Maintain backward compatibility
+## 🗺️ Roadmap
 
-## 📝 Notes & Architecture
-
-This release focuses on:
-
-- 🎯 **Solid Foundation:** Reliable chat panel with modes/personas
-- 🔗 **Ecosystem Integration:** Compatible with Vibe CLI and Web
-- 🎨 **Extensible Architecture:** Clean separation of concerns
-- 🛡️ **Privacy-First:** Local processing with optional cloud features
-- ⚡ **Performance:** Optimized for minimal resource usage
-
-Most behavior is orchestrated in `src/extension.ts`; new features should be added there using the existing webview messaging pattern (see `handleMessage` and the inline webview script).
+- [ ] Auto file creation from AI responses
+- [ ] Plugin system
+- [ ] Custom model integration
+- [ ] Team collaboration features
+- [ ] Cloud sync
 
 ---
 
-**Categories:** AI  
-**Tags:** keybindings, terminal  
-**Works with:** Universal
+**Made with 🔥 by KAZI**
 
-## 📊 Resources
-
-- **Issues:** [Report Issues](https://github.com/mk-knight23/vibe/issues)
-- **Repository:** [GitHub](https://github.com/mk-knight23/vibe)
-- **Homepage:** [Vibe Project](https://github.com/mk-knight23/vibe)
-- **License:** [MIT License](LICENSE)
-
----
-
-**Publisher:** Mk tech  
-**Unique Identifier:** `mktech.vibe-vscode`  
-**Report:** [Report a concern](https://marketplace.visualstudio.com/items?itemName=mktech.vibe-vscode&ssr=false#review-details)
+*Vibe VS Code v4.0 - Your AI-powered development companion*

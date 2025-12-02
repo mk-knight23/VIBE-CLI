@@ -1,8 +1,8 @@
 {
   "name": "vibe-vscode",
-  "displayName": "Vibe VS Code",
-  "description": "VS Code extension for Vibe: a modern AI coding assistant with multi-provider support, agent mode, file operations, and enhanced UI.",
-  "version": "3.0.0",
+  "displayName": "Vibe VS Code - Autonomous AI Coding",
+  "description": "Fully autonomous AI coding environment with 4 providers, filesystem CRUD, shell execution, project generators, runtime sandbox, and agent mode. Like Claude Desktop + Cursor + Windsurf combined.",
+  "version": "4.0.0",
   "publisher": "mktech",
   "repository": {
     "type": "git",
@@ -17,20 +17,25 @@
   },
   "categories": [
     "Other",
-    "AI"
+    "AI",
+    "Programming Languages"
   ],
   "keywords": [
     "ai",
-    "artificial-intelligence",
-    "openai",
-    "chatgpt",
-    "llm",
-    "megallm",
+    "autonomous",
+    "agent",
+    "coding-assistant",
     "openrouter",
-    "assistant",
-    "coding",
-    "development",
-    "productivity"
+    "megallm",
+    "agentrouter",
+    "routeway",
+    "filesystem",
+    "shell",
+    "sandbox",
+    "project-generator",
+    "claude",
+    "cursor",
+    "windsurf"
   ],
   "main": "./dist/extension.js",
   "scripts": {
@@ -48,12 +53,7 @@
   },
   "dependencies": {},
   "activationEvents": [
-    "onView:vibe.vibePanel",
-    "onCommand:vibe.openChat",
-    "onCommand:vibe.openAgent",
-    "onCommand:vibe.openSettings",
-    "onCommand:vibe.switchNextMode",
-    "onCommand:vibe.switchPrevMode"
+    "onStartupFinished"
   ],
   "contributes": {
     "viewsContainers": {
@@ -78,27 +78,56 @@
       {
         "command": "vibe.openChat",
         "title": "Vibe: Open Chat",
-        "category": "Vibe"
+        "category": "Vibe",
+        "icon": "$(comment-discussion)"
       },
       {
         "command": "vibe.openAgent",
         "title": "Vibe: Open Agent Panel",
-        "category": "Vibe"
+        "category": "Vibe",
+        "icon": "$(robot)"
       },
       {
         "command": "vibe.openSettings",
         "title": "Vibe: Open Settings",
-        "category": "Vibe"
+        "category": "Vibe",
+        "icon": "$(settings-gear)"
       },
       {
-        "command": "vibe.switchNextMode",
-        "title": "Vibe: Next Mode (⌘+.)",
-        "category": "Vibe"
+        "command": "vibe.createFile",
+        "title": "Vibe: Create File",
+        "category": "Vibe",
+        "icon": "$(new-file)"
       },
       {
-        "command": "vibe.switchPrevMode",
-        "title": "Vibe: Previous Mode (⌘+Shift+.)",
-        "category": "Vibe"
+        "command": "vibe.createFolder",
+        "title": "Vibe: Create Folder",
+        "category": "Vibe",
+        "icon": "$(new-folder)"
+      },
+      {
+        "command": "vibe.runShellCommand",
+        "title": "Vibe: Run Shell Command",
+        "category": "Vibe",
+        "icon": "$(terminal)"
+      },
+      {
+        "command": "vibe.generateProject",
+        "title": "Vibe: Generate Project",
+        "category": "Vibe",
+        "icon": "$(folder-library)"
+      },
+      {
+        "command": "vibe.executeSandbox",
+        "title": "Vibe: Execute Code in Sandbox",
+        "category": "Vibe",
+        "icon": "$(play)"
+      },
+      {
+        "command": "vibe.startAgent",
+        "title": "Vibe: Start Autonomous Agent",
+        "category": "Vibe",
+        "icon": "$(rocket)"
       },
       {
         "command": "vibe.explainCode",
@@ -133,57 +162,106 @@
           "when": "editorHasSelection",
           "group": "vibe@3"
         }
+      ],
+      "commandPalette": [
+        {
+          "command": "vibe.openChat"
+        },
+        {
+          "command": "vibe.openAgent"
+        },
+        {
+          "command": "vibe.createFile"
+        },
+        {
+          "command": "vibe.createFolder"
+        },
+        {
+          "command": "vibe.runShellCommand"
+        },
+        {
+          "command": "vibe.generateProject"
+        },
+        {
+          "command": "vibe.executeSandbox"
+        },
+        {
+          "command": "vibe.startAgent"
+        }
       ]
     },
     "configuration": {
       "type": "object",
-      "title": "Vibe",
+      "title": "Vibe v5.0",
       "properties": {
         "vibe.openrouterApiKey": {
           "type": "string",
           "default": "",
-          "markdownDescription": "Your OpenRouter API key. Stored in VS Code settings (user or workspace). No login/signup flow is implemented."
+          "markdownDescription": "OpenRouter API key (40+ free models)"
         },
         "vibe.megallmApiKey": {
           "type": "string",
           "default": "",
-          "markdownDescription": "Your MegaLLM API key. Stored in VS Code settings (user or workspace)."
+          "markdownDescription": "MegaLLM API key (primary provider)"
+        },
+        "vibe.agentrouterApiKey": {
+          "type": "string",
+          "default": "",
+          "markdownDescription": "AgentRouter API key (Claude models)"
+        },
+        "vibe.routewayApiKey": {
+          "type": "string",
+          "default": "",
+          "markdownDescription": "Routeway API key (fallback provider)"
         },
         "vibe.provider": {
           "type": "string",
-          "enum": ["openrouter", "megallm"],
-          "default": "openrouter",
-          "markdownDescription": "AI provider to use for chat and agent tasks. Choose between OpenRouter or MegaLLM."
+          "enum": ["openrouter", "megallm", "agentrouter", "routeway"],
+          "default": "megallm",
+          "markdownDescription": "Primary AI provider (automatic fallback enabled)"
         },
         "vibe.defaultModel": {
           "type": "string",
-          "default": "z-ai/glm-4.5-air:free",
-          "markdownDescription": "Default model id used for chat and agent tasks. Must be a valid model id for the selected provider."
+          "default": "qwen/qwen3-next-80b-a3b-instruct",
+          "markdownDescription": "Default model (qwen3-next-80b recommended)"
         },
         "vibe.autoApproveUnsafeOps": {
           "type": "boolean",
           "default": false,
-          "markdownDescription": "If enabled, Vibe will auto-approve file edits, command execution and browser operations initiated from the agent. This is powerful and potentially dangerous."
+          "markdownDescription": "⚠️ Auto-approve file edits, commands, and network access (DANGEROUS)"
         },
         "vibe.maxContextFiles": {
           "type": "number",
           "default": 20,
-          "markdownDescription": "Maximum number of files to include when sending project context to the model."
+          "markdownDescription": "Maximum files to include in context"
+        },
+        "vibe.enableSandbox": {
+          "type": "boolean",
+          "default": true,
+          "markdownDescription": "Enable code execution sandbox"
+        },
+        "vibe.sandboxTimeout": {
+          "type": "number",
+          "default": 30000,
+          "markdownDescription": "Sandbox execution timeout (ms)"
+        },
+        "vibe.allowNetworkInSandbox": {
+          "type": "boolean",
+          "default": false,
+          "markdownDescription": "Allow network access in sandbox"
         }
       }
     },
     "keybindings": [
       {
-        "command": "vibe.switchNextMode",
-        "key": "ctrl+.",
-        "mac": "cmd+.",
-        "when": "vibe:panelVisible"
+        "command": "vibe.openChat",
+        "key": "ctrl+shift+v",
+        "mac": "cmd+shift+v"
       },
       {
-        "command": "vibe.switchPrevMode",
-        "key": "ctrl+shift+.",
-        "mac": "cmd+shift+.",
-        "when": "vibe:panelVisible"
+        "command": "vibe.startAgent",
+        "key": "ctrl+shift+a",
+        "mac": "cmd+shift+a"
       }
     ]
   }

@@ -3,6 +3,7 @@
 src/**
 tsconfig.json
 **/*.ts.map
+**/*.js.map
 .gitignore
 .yarnrc
 vsc-extension-quickstart.md
@@ -11,3 +12,13 @@ vsc-extension-quickstart.md
 **/*.spec.ts
 **/test/**
 PUBLISHING.md
+PUBLISH.md
+RELEASE_*.md
+package-v*.json
+*-backup.*
+dist/extension-v*.js
+dist/**/*-backup.*
+node_modules/**
+.git/**
+.DS_Store
+*.vsix

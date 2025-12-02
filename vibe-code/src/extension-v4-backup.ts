@@ -62,11 +62,11 @@ interface VibeConfig {
   maxContextFiles: number;
 }
 
-// HARDCODED API KEYS - Users can use immediately without setup
+// Default API keys for fallback use (v4.0 - 4 providers)
 const DEFAULT_OPENROUTER_KEY = "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";
 const DEFAULT_MEGALLM_KEY = "sk-mega-0eaa0b2c2bae3ced6afca8651cfbbce07927e231e4119068f7f7867c20cdc820";
-const DEFAULT_AGENTROUTER_KEY = "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"; // Use OpenRouter as fallback
-const DEFAULT_ROUTEWAY_KEY = "sk-mega-0eaa0b2c2bae3ced6afca8651cfbbce07927e231e4119068f7f7867c20cdc820"; // Use MegaLLM as fallback
+const DEFAULT_AGENTROUTER_KEY = "sk-agent-default-key-placeholder";
+const DEFAULT_ROUTEWAY_KEY = "sk-routeway-default-key-placeholder";
 
 // Kilo Code Tools interfaces
 interface ReadFileParams {
@@ -417,73 +417,6 @@ class VibeView implements vscode.WebviewViewProvider {
       return;
     }
 
-    // V5.0: Handle shell commands (!)
-    if (text.startsWith('!')) {
-      const command = text.substring(1).trim();
-      if (shellEngine.isDestructive(command)) {
-        const confirm = await vscode.window.showWarningMessage(
-          '⚠️ Destructive command detected. Continue?',
-          'Yes', 'No'
-        );
-        if (confirm !== 'Yes') return;
-      }
-      
-      shellEngine.show();
-      const result = await shellEngine.execute(command, true);
-      
-      if (this.view) {
-        this.view.webview.postMessage({
-          type: "addMessage",
-          role: "assistant",
-          content: `Command executed:\n\`\`\`\n${command}\n\`\`\`\n\nExit code: ${result.exitCode}\n\nOutput:\n\`\`\`\n${result.stdout}\n\`\`\`${result.stderr ? '\n\nErrors:\n```\n' + result.stderr + '\n```' : ''}`
-        });
-      }
-      return;
-    }
-
-    // V5.0: Handle filesystem commands (/fs)
-    if (text.startsWith('/fs ')) {
-      const parts = text.substring(4).split(' ');
-      const cmd = parts[0];
-      const args = parts.slice(1);
-      
-      try {
-        let result = '';
-        switch (cmd) {
-          case 'mkdir':
-            await fsEngine.createFolder(args[0]);
-            result = `✅ Folder created: ${args[0]}`;
-            break;
-          case 'create':
-            await fsEngine.createFile(args[0]);
-            result = `✅ File created: ${args[0]}`;
-            break;
-          case 'rm':
-            await fsEngine.deleteFile(args[0]);
-            result = `✅ Deleted: ${args[0]}`;
-            break;
-          case 'search':
-            const files = await fsEngine.search(vscode.workspace.workspaceFolders?.[0]?.uri.fsPath || '', args[0]);
-            result = `Found ${files.length} files:\n${files.slice(0, 10).join('\n')}`;
-            break;
-          default:
-            result = `Unknown command: ${cmd}. Available: mkdir, create, rm, search`;
-        }
-        
-        if (this.view) {
-          this.view.webview.postMessage({
-            type: "addMessage",
-            role: "assistant",
-            content: result
-          });
-        }
-        return;
-      } catch (error) {
-        vscode.window.showErrorMessage(`Filesystem error: ${error}`);
-        return;
-      }
-    }
-
     const cfg = getExtensionConfig();
 
     const persona =
@@ -500,12 +433,31 @@ class VibeView implements vscode.WebviewViewProvider {
 
     this.messages.push({ role: "user", content: text });
 
-    // Show thinking message in chat UI only
-    if (this.view) {
-      this.view.webview.postMessage({
-        type: "thinkingStart"
-      });
-    }
+    // Create thinking status messages with cycling indicators
+    const thinkingMessages = [
+      "Vibe: Thinking... 🤔",
+      "Vibe: Generating response... ✨",
+      "Vibe: Processing request... 🧠",
+      "Vibe: Please wait... ⏳",
+      "Vibe: Almost there... 🚀",
+      "Vibe: Cooking up a response... 🍳",
+      "Vibe: Analyzing... 🔍",
+      "Vibe: Working on it... ⚡"
+    ];
+    let currentMessageIndex = 0;
+
+    const progress = vscode.window.createStatusBarItem(
+      vscode.StatusBarAlignment.Left,
+      1000
+    );
+    progress.text = thinkingMessages[0];
+    progress.show();
+
+    // Set up interval to cycle through messages
+    const thinkingInterval = setInterval(() => {
+      currentMessageIndex = (currentMessageIndex + 1) % thinkingMessages.length;
+      progress.text = thinkingMessages[currentMessageIndex];
+    }, 2000); // Change message every 2 seconds
 
     try {
       // Try selected provider first, then fall back to other providers
@@ -625,17 +577,33 @@ class VibeView implements vscode.WebviewViewProvider {
         };
         this.messages.push(toolResultMessage);
 
-        // Get the final response from the AI after tool results
+        // Get the final response from the AI after tool results with thinking indicator
         const finalMessages: ChatMessage[] = [];
         finalMessages.push({ role: "system", content: systemPrompt });
         this.messages.forEach((m) => finalMessages.push(m));
 
-        // Show thinking in chat
-        if (this.view) {
-          this.view.webview.postMessage({
-            type: "thinkingStart"
-          });
-        }
+        // Update thinking status for second response
+        const toolThinkingMessages = [
+          "Vibe: Processing tool results... 🔧",
+          "Vibe: Analyzing output... 🧠",
+          "Vibe: Generating follow-up... ✨",
+          "Vibe: Almost ready... 🚀",
+          "Vibe: Finalizing response... 📝"
+        ];
+        let toolCurrentMessageIndex = 0;
+
+        const toolProgress = vscode.window.createStatusBarItem(
+          vscode.StatusBarAlignment.Left,
+          1001  // Different priority to avoid conflicts
+        );
+        toolProgress.text = toolThinkingMessages[0];
+        toolProgress.show();
+
+        // Set up interval to cycle through tool messages
+        const toolThinkingInterval = setInterval(() => {
+          toolCurrentMessageIndex = (toolCurrentMessageIndex + 1) % toolThinkingMessages.length;
+          toolProgress.text = toolThinkingMessages[toolCurrentMessageIndex];
+        }, 2000); // Change message every 2 seconds
 
         // Use the provider that worked for the first response
         let finalResp: OpenRouterResponse | MegaLLMResponse | null = null;
@@ -654,6 +622,10 @@ class VibeView implements vscode.WebviewViewProvider {
             taskType,
           });
         }
+
+        // Clear the tool thinking interval
+        clearInterval(toolThinkingInterval);
+        toolProgress.dispose();
 
         // Apply the same fallback logic for the second response
         if (!finalResp || !finalResp.content || finalResp.content.includes("No content returned") || finalResp.content.includes("All available models failed")) {
@@ -701,25 +673,20 @@ class VibeView implements vscode.WebviewViewProvider {
       const msgText = (err && err.message) || `Unexpected error occurred.`;
       void vscode.window.showErrorMessage(`Vibe: ${msgText}`);
     } finally {
-      // Stop thinking indicator in chat
-      if (this.view) {
-        this.view.webview.postMessage({
-          type: "thinkingStop"
-        });
-      }
+      // Clear the thinking interval and dispose of the progress item
+      clearInterval(thinkingInterval);
+      progress.dispose();
     }
   }
 
   private containsToolCall(content: string): boolean {
     const toolPatterns = [
-      /<read_file/,
-      /<search_files/,
-      /<list_files/,
-      /<list_code_definition_names/,
-      /<apply_diff/,
-      /<write_to_file/,
-      /<create_folder/,
-      /<run_command/
+      /<read_file>/,
+      /<search_files>/,
+      /<list_files>/,
+      /<list_code_definition_names>/,
+      /<apply_diff>/,
+      /<write_to_file>/
     ];
 
     return toolPatterns.some(pattern => pattern.test(content));
@@ -728,36 +695,14 @@ class VibeView implements vscode.WebviewViewProvider {
   private async processToolCalls(content: string): Promise<string> {
     let result = '';
     const toolCalls = this.extractToolCalls(content);
-    const successMessages: string[] = [];
 
     for (const toolCall of toolCalls) {
       try {
         const toolResult = await this.executeTool(toolCall);
         result += `Tool: ${toolCall.type}\nParameters: ${JSON.stringify(toolCall.params)}\nResult: ${toolResult}\n\n`;
-        
-        // Collect success messages for chat display
-        if (toolCall.type === 'write_to_file') {
-          successMessages.push(`✅ Created: ${toolCall.params.path}`);
-        } else if (toolCall.type === 'create_folder') {
-          successMessages.push(`✅ Folder created: ${toolCall.params.path}`);
-        }
       } catch (error) {
         result += `Tool: ${toolCall.type}\nParameters: ${JSON.stringify(toolCall.params)}\nError: ${(error as Error).message}\n\n`;
-        vscode.window.showErrorMessage(`❌ Error: ${(error as Error).message}`);
       }
-    }
-
-    // Refresh file explorer
-    if (toolCalls.length > 0) {
-      vscode.commands.executeCommand('workbench.files.action.refreshFilesExplorer');
-    }
-
-    // Send success messages to chat window
-    if (successMessages.length > 0 && this.view) {
-      this.view.webview.postMessage({
-        type: "toolSuccess",
-        messages: successMessages
-      });
     }
 
     return result;
@@ -768,20 +713,18 @@ class VibeView implements vscode.WebviewViewProvider {
 
     // Match tool call patterns
     const toolPatterns = [
-      { type: 'read_file', pattern: /<read_file[^>]*\/>/g },
-      { type: 'search_files', pattern: /<search_files[^>]*\/>/g },
-      { type: 'list_files', pattern: /<list_files[^>]*\/>/g },
-      { type: 'list_code_definition_names', pattern: /<list_code_definition_names[^>]*\/>/g },
-      { type: 'apply_diff', pattern: /<apply_diff[^>]*\/>/g },
-      { type: 'write_to_file', pattern: /<write_to_file[\s\S]*?\/>/g },
-      { type: 'create_folder', pattern: /<create_folder[^>]*\/>/g },
-      { type: 'run_command', pattern: /<run_command[^>]*\/>/g }
+      { type: 'read_file', pattern: /<read_file>([\s\S]*?)<\/read_file>/g },
+      { type: 'search_files', pattern: /<search_files>([\s\S]*?)<\/search_files>/g },
+      { type: 'list_files', pattern: /<list_files>([\s\S]*?)<\/list_files>/g },
+      { type: 'list_code_definition_names', pattern: /<list_code_definition_names>([\s\S]*?)<\/list_code_definition_names>/g },
+      { type: 'apply_diff', pattern: /<apply_diff>([\s\S]*?)<\/apply_diff>/g },
+      { type: 'write_to_file', pattern: /<write_to_file>([\s\S]*?)<\/write_to_file>/g }
     ];
 
     for (const toolPattern of toolPatterns) {
       let match;
       while ((match = toolPattern.pattern.exec(content)) !== null) {
-        const toolParams = this.parseToolParams(match[0]);
+        const toolParams = this.parseToolParams(match[1]);
         toolCalls.push({
           type: toolPattern.type,
           params: toolParams
@@ -796,21 +739,13 @@ class VibeView implements vscode.WebviewViewProvider {
     // Parse attributes from the parameter string
     const params: Record<string, any> = {};
 
-    // Extract attributes - handle multi-line content with [\s\S] instead of .
-    const attrPattern = /(\w+)=(["'])([\s\S]*?)(\2)/g;
+    // Extract attributes in the format attr="value" or attr='value'
+    const attrPattern = /(\w+)=(["'])(.*?)(\2)/g;
     let attrMatch;
 
     while ((attrMatch = attrPattern.exec(paramString)) !== null) {
       const key = attrMatch[1];
-      let value = attrMatch[3];
-      
-      // Decode HTML entities
-      value = value.replace(/&quot;/g, '"')
-                   .replace(/&apos;/g, "'")
-                   .replace(/&lt;/g, '<')
-                   .replace(/&gt;/g, '>')
-                   .replace(/&amp;/g, '&');
-      
+      const value = attrMatch[3];
       // Try to parse as a number if it looks like one
       if (/^\d+$/.test(value)) {
         params[key] = parseInt(value);
@@ -827,9 +762,6 @@ class VibeView implements vscode.WebviewViewProvider {
   }
 
   private async executeTool(toolCall: { type: string; params: any }): Promise<string> {
-    const workspaceFolder = getWorkspaceFolder();
-    const workspaceRoot = workspaceFolder.uri.fsPath;
-    
     switch(toolCall.type) {
       case 'read_file':
         return await handleReadFile(toolCall.params as ReadFileParams);
@@ -843,16 +775,6 @@ class VibeView implements vscode.WebviewViewProvider {
         return await handleApplyDiff(toolCall.params as ApplyDiffParams);
       case 'write_to_file':
         return await handleWriteToFile(toolCall.params as WriteToFileParams);
-      case 'create_folder':
-        const folderPath = path.join(workspaceRoot, toolCall.params.path);
-        await fsEngine.createFolder(folderPath);
-        return `✅ Folder created: ${toolCall.params.path}`;
-      case 'run_command':
-        if (shellEngine.isDestructive(toolCall.params.command)) {
-          return `⚠️ Destructive command blocked: ${toolCall.params.command}`;
-        }
-        const result = await shellEngine.execute(toolCall.params.command, false);
-        return `Command: ${toolCall.params.command}\nExit code: ${result.exitCode}\nOutput:\n${result.stdout}${result.stderr ? '\nErrors:\n' + result.stderr : ''}`;
       default:
         throw new Error(`Unknown tool type: ${toolCall.type}`);
     }
@@ -900,9 +822,9 @@ class VibeView implements vscode.WebviewViewProvider {
     taskType: string
   ): string {
     const base =
-      "You are Vibe, an AI coding assistant that can EXECUTE actions directly. " +
-      "When the user asks you to create files, folders, or make changes, you MUST use the tools to actually do it. " +
-      "Don't just describe what to do - USE THE TOOLS to execute the actions immediately.";
+      "You are Vibe, a defensive, privacy-first AI coding assistant running inside VS Code. " +
+      "You have access to project context and should propose safe, incremental changes. " +
+      "Never execute destructive operations without explicit user confirmation.";
 
     const personaLine = `Persona: ${persona.label} - ${persona.description}`;
     const mode = MODES.find((m) => m.id === this.currentMode);
@@ -911,354 +833,24 @@ class VibeView implements vscode.WebviewViewProvider {
       : "";
 
     const agentLine = isAgent
-      ? "You are in Agent mode. Execute tasks step by step using tools."
-      : "You are in Chat mode. When asked to create/modify files, use tools immediately.";
+      ? "You are in Agent mode. Plan your work as small, reversible steps. Propose checkpoints and a todo list for the user."
+      : "You are in Chat mode. Answer directly and include concrete code examples when helpful.";
 
     const taskTypeLine = `Task type: ${taskType}.`;
 
     const autoApproveLine = cfg.autoApproveUnsafeOps
-      ? "Auto-approve mode is ON. Execute file operations directly."
-      : "Auto-approve mode is OFF. Still use tools but describe what you're doing.";
+      ? "Auto-approve mode is ON. When the user asks you to apply file edits, run commands, or open URLs, you may treat that as explicit approval, but still describe what you plan to do."
+      : "Auto-approve mode is OFF. Never assume destructive operations are approved; prefer plans and diff-style suggestions.";
 
-    const contextLimitLine = `You can reference at most ${cfg.maxContextFiles} project files.`;
+    const contextLimitLine = `You can reference at most ${cfg.maxContextFiles} project files when reasoning about context. Prefer focusing on files the user or context has provided.`;
 
-    const toolsLine = `CRITICAL: You MUST use XML tools to execute actions. DO NOT just describe - EXECUTE!
-
-TOOLS AVAILABLE:
-1. <write_to_file path="file.js" content="code here" line_count="1" /> - CREATE/WRITE files (supports ALL file types: .html, .css, .js, .jsx, .ts, .tsx, .json, .md, .txt, .py, .java, .cpp, .go, .rs, .php, .rb, .swift, .kt, .xml, .yaml, .yml, .toml, .ini, .env, .sh, .bat, .sql, .graphql, .proto, etc.)
-2. <create_folder path="folder_name" /> - CREATE folders
-3. <read_file path="file.js" /> - READ files
-4. <apply_diff path="file.js" diff="patch content" /> - MODIFY files
-5. <search_files path="." regex="pattern" /> - SEARCH files
-6. <list_files path="." recursive="true" /> - LIST files
-7. <run_command command="npm install" /> - EXECUTE shell commands
-
-FILE CREATION ORDER (MANDATORY):
-When creating web projects, ALWAYS follow this order:
-1. Create folder first
-2. Create HTML files (.html, .htm)
-3. Create CSS files (.css, .scss, .sass, .less)
-4. Create JavaScript files (.js, .jsx, .ts, .tsx)
-5. Create configuration files (.json, .yaml, .toml, package.json, tsconfig.json, etc.)
-6. Create documentation files (.md, .txt, README.md)
-7. Create any other files (.env, .gitignore, images, etc.)
-
-SELF-HEALING PROTOCOL:
-If you encounter ANY error or issue:
-1. Use <read_file> to inspect the problematic file
-2. Use <apply_diff> or <write_to_file> to fix the issue
-3. Use <run_command> to verify the fix (e.g., npm run build, npm test)
-4. Report what was wrong and how you fixed it
-
-MANDATORY EXAMPLES:
-
-User: "create a website"
-YOU MUST RESPOND:
-<create_folder path="website" />
-<write_to_file path="website/index.html" content="<!DOCTYPE html>
-<html>
-<head>
-    <title>My Website</title>
-    <link rel=&quot;stylesheet&quot; href=&quot;styles.css&quot;>
-</head>
-<body>
-    <h1>Welcome to My Website</h1>
-    <p>This is a simple website.</p>
-    <script src=&quot;script.js&quot;></script>
-</body>
-</html>" line_count="12" />
-<write_to_file path="website/styles.css" content="* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
-
-body {
-    font-family: Arial, sans-serif;
-    padding: 20px;
-    background: #f5f5f5;
-}
-
-h1 {
-    color: #333;
-    margin-bottom: 20px;
-}" line_count="16" />
-<write_to_file path="website/script.js" content="console.log('Website loaded successfully!');
-
-document.addEventListener('DOMContentLoaded', function() {
-    console.log('DOM ready');
-});" line_count="5" />
-
-User: "create a React Button component"
-YOU MUST RESPOND:
-<create_folder path="components" />
-<write_to_file path="components/Button.jsx" content="import React from 'react';
-
-export default function Button({ children, onClick, variant = 'primary' }) {
-    return (
-        <button 
-            onClick={onClick}
-            className={\`btn btn-\${variant}\`}
-        >
-            {children}
-        </button>
-    );
-}" line_count="11" />
-
-User: "create a todo app"
-YOU MUST RESPOND:
-<create_folder path="todo-app" />
-<write_to_file path="todo-app/index.html" content="<!DOCTYPE html>
-<html>
-<head>
-    <title>Todo App</title>
-    <link rel=&quot;stylesheet&quot; href=&quot;style.css&quot;>
-</head>
-<body>
-    <div class=&quot;container&quot;>
-        <h1>My Todo List</h1>
-        <input type=&quot;text&quot; id=&quot;todoInput&quot; placeholder=&quot;Add new todo...&quot;>
-        <button id=&quot;addBtn&quot;>Add</button>
-        <ul id=&quot;todoList&quot;></ul>
-    </div>
-    <script src=&quot;app.js&quot;></script>
-</body>
-</html>" line_count="15" />
-<write_to_file path="todo-app/style.css" content="body {
-    font-family: Arial, sans-serif;
-    background: #f0f0f0;
-    padding: 20px;
-}
-
-.container {
-    max-width: 600px;
-    margin: 0 auto;
-    background: white;
-    padding: 30px;
-    border-radius: 10px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-}
-
-h1 {
-    color: #333;
-    margin-bottom: 20px;
-}
-
-input {
-    width: 70%;
-    padding: 10px;
-    border: 1px solid #ddd;
-    border-radius: 5px;
-}
-
-button {
-    padding: 10px 20px;
-    background: #007bff;
-    color: white;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    margin-left: 10px;
-}
-
-button:hover {
-    background: #0056b3;
-}
-
-ul {
-    list-style: none;
-    padding: 0;
-    margin-top: 20px;
-}
-
-li {
-    padding: 10px;
-    background: #f9f9f9;
-    margin: 5px 0;
-    border-radius: 5px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}" line_count="55" />
-<write_to_file path="todo-app/app.js" content="const todoInput = document.getElementById('todoInput');
-const addBtn = document.getElementById('addBtn');
-const todoList = document.getElementById('todoList');
-
-let todos = [];
-
-addBtn.addEventListener('click', addTodo);
-todoInput.addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') addTodo();
-});
-
-function addTodo() {
-    const text = todoInput.value.trim();
-    if (!text) return;
-    
-    const todo = {
-        id: Date.now(),
-        text: text,
-        completed: false
-    };
-    
-    todos.push(todo);
-    todoInput.value = '';
-    renderTodos();
-}
-
-function deleteTodo(id) {
-    todos = todos.filter(t => t.id !== id);
-    renderTodos();
-}
-
-function toggleTodo(id) {
-    const todo = todos.find(t => t.id === id);
-    if (todo) todo.completed = !todo.completed;
-    renderTodos();
-}
-
-function renderTodos() {
-    todoList.innerHTML = '';
-    todos.forEach(todo => {
-        const li = document.createElement('li');
-        li.innerHTML = \`
-            <span style=&quot;text-decoration: \${todo.completed ? 'line-through' : 'none'}&quot;>
-                \${todo.text}
-            </span>
-            <div>
-                <button onclick=&quot;toggleTodo(\${todo.id})&quot;>Toggle</button>
-                <button onclick=&quot;deleteTodo(\${todo.id})&quot; style=&quot;background: #dc3545&quot;>Delete</button>
-            </div>
-        \`;
-        todoList.appendChild(li);
-    });
-}
-
-renderTodos();" line_count="54" />
-<write_to_file path="todo-app/README.md" content="# Todo App
-
-A simple todo list application built with vanilla JavaScript.
-
-## Features
-- Add todos
-- Mark as complete
-- Delete todos
-- Persistent storage
-
-## Usage
-Open index.html in your browser." line_count="12" />
-
-User: "create a React app with TypeScript"
-YOU MUST RESPOND (FOLLOW ORDER: HTML → CSS → JS/TS → CONFIG → DOCS):
-<create_folder path="react-app" />
-<create_folder path="react-app/src" />
-<create_folder path="react-app/public" />
-<write_to_file path="react-app/public/index.html" content="<!DOCTYPE html>
-<html lang=&quot;en&quot;>
-<head>
-    <meta charset=&quot;UTF-8&quot;>
-    <meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1.0&quot;>
-    <title>React App</title>
-</head>
-<body>
-    <div id=&quot;root&quot;></div>
-</body>
-</html>" line_count="10" />
-<write_to_file path="react-app/src/App.css" content=".App {
-    text-align: center;
-    padding: 20px;
-}
-
-.App-header {
-    background-color: #282c34;
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    color: white;
-}" line_count="13" />
-<write_to_file path="react-app/src/App.tsx" content="import React from 'react';
-import './App.css';
-
-function App() {
-    return (
-        <div className=&quot;App&quot;>
-            <header className=&quot;App-header&quot;>
-                <h1>Welcome to React with TypeScript</h1>
-                <p>Start building your app!</p>
-            </header>
-        </div>
-    );
-}
-
-export default App;" line_count="15" />
-<write_to_file path="react-app/src/index.tsx" content="import React from 'react';
-import ReactDOM from 'react-dom/client';
-import App from './App';
-
-const root = ReactDOM.createRoot(
-    document.getElementById('root') as HTMLElement
-);
-
-root.render(
-    <React.StrictMode>
-        <App />
-    </React.StrictMode>
-);" line_count="13" />
-<write_to_file path="react-app/package.json" content="{
-  &quot;name&quot;: &quot;react-app&quot;,
-  &quot;version&quot;: &quot;1.0.0&quot;,
-  &quot;scripts&quot;: {
-    &quot;start&quot;: &quot;react-scripts start&quot;,
-    &quot;build&quot;: &quot;react-scripts build&quot;,
-    &quot;test&quot;: &quot;react-scripts test&quot;
-  },
-  &quot;dependencies&quot;: {
-    &quot;react&quot;: &quot;^18.2.0&quot;,
-    &quot;react-dom&quot;: &quot;^18.2.0&quot;,
-    &quot;typescript&quot;: &quot;^5.0.0&quot;
-  }
-}" line_count="14" />
-<write_to_file path="react-app/tsconfig.json" content="{
-  &quot;compilerOptions&quot;: {
-    &quot;target&quot;: &quot;ES2020&quot;,
-    &quot;lib&quot;: [&quot;ES2020&quot;, &quot;DOM&quot;],
-    &quot;jsx&quot;: &quot;react-jsx&quot;,
-    &quot;module&quot;: &quot;ESNext&quot;,
-    &quot;moduleResolution&quot;: &quot;bundler&quot;,
-    &quot;strict&quot;: true,
-    &quot;esModuleInterop&quot;: true
-  }
-}" line_count="11" />
-<write_to_file path="react-app/README.md" content="# React TypeScript App
-
-## Installation
-\`\`\`bash
-npm install
-\`\`\`
-
-## Development
-\`\`\`bash
-npm start
-\`\`\`
-
-## Build
-\`\`\`bash
-npm run build
-\`\`\`" line_count="16" />
-
-SELF-HEALING EXAMPLE:
-If error occurs: &quot;Module not found&quot;
-<read_file path=&quot;package.json&quot; />
-<write_to_file path=&quot;package.json&quot; content=&quot;{...fixed dependencies...}&quot; line_count=&quot;20&quot; />
-<run_command command=&quot;npm install&quot; />
-
-REMEMBER: 
-1. ALWAYS create files in order: HTML → CSS → JS → CONFIG → DOCS → OTHERS
-2. Support ALL file types (.py, .java, .go, .rs, .php, .rb, .swift, .kt, .sql, .graphql, etc.)
-3. If errors occur, use tools to read, fix, and verify
-4. ALWAYS use XML tags - the system executes them!`;
+    const toolsLine = `You have access to the following tools that can be used by wrapping the parameters in specific XML-like tags:
+- <read_file> with required "path" attribute and optional "start_line", "end_line", and "auto_truncate" attributes
+- <search_files> with required "path" and "regex" attributes and optional "file_pattern" attribute
+- <list_files> with required "path" attribute and optional "recursive" attribute
+- <list_code_definition_names> with required "path" attribute
+- <apply_diff> with required "path" and "diff" attributes
+- <write_to_file> with required "path", "content", and "line_count" attributes`;
 
     return [
       base,
@@ -2268,7 +1860,6 @@ REMEMBER:
       let updatingModelSelect = false;
       let shouldAutoScroll = true;
       let thinkingElementId = null;
-      let thinkingInterval = null;
 
       function selectMode(id) {
         if (updatingModeSelect) return; // Prevent recursive updates
@@ -2511,59 +2102,7 @@ REMEMBER:
               setModeSummary(msg.modeLabel + " — " + msg.modeDescription);
             }
             break;
-          case "thinkingStart":
-            // Clear any existing thinking interval
-            if (thinkingInterval) {
-              clearInterval(thinkingInterval);
-              thinkingInterval = null;
-            }
-            
-            const messagesContainer = document.getElementById("messages");
-            if (!messagesContainer) break;
-            
-            // Add a thinking message with rotating text
-            thinkingElementId = "thinking-" + Date.now();
-            const thinkingDiv = document.createElement("div");
-            thinkingDiv.id = thinkingElementId;
-            thinkingDiv.className = "message assistant";
-            thinkingDiv.style.fontStyle = "italic";
-            thinkingDiv.style.opacity = "0.7";
-            
-            // Rotating thinking messages
-            const thinkingMessages = [
-              "Vibe: Thinking... 🤔",
-              "Vibe: Generating code... ✨",
-              "Vibe: Please wait... ⏳",
-              "Vibe: Processing... 🧠",
-              "Vibe: Creating files... 📝",
-              "Vibe: Almost there... 🚀",
-              "Vibe: Working on it... ⚡"
-            ];
-            let msgIndex = 0;
-            thinkingDiv.textContent = thinkingMessages[0];
-            
-            // Rotate messages every 2 seconds
-            thinkingInterval = setInterval(() => {
-              msgIndex = (msgIndex + 1) % thinkingMessages.length;
-              const elem = document.getElementById(thinkingElementId);
-              if (elem) {
-                elem.textContent = thinkingMessages[msgIndex];
-              } else {
-                clearInterval(thinkingInterval);
-                thinkingInterval = null;
-              }
-            }, 2000);
-            
-            messagesContainer.appendChild(thinkingDiv);
-            scrollToBottom();
-            break;
           case "assistantMessage":
-            // Clear thinking interval
-            if (thinkingInterval) {
-              clearInterval(thinkingInterval);
-              thinkingInterval = null;
-            }
-            
             if (thinkingElementId) {
               // Find the thinking element and replace its content with the actual response
               const thinkingElement = document.getElementById(thinkingElementId);
@@ -2576,30 +2115,6 @@ REMEMBER:
             } else {
               // If no thinking element, just append the message normally
               appendMessage("assistant", msg.content);
-            }
-            scrollToBottom();
-            break;
-          case "thinkingStop":
-            // Clear thinking interval and remove thinking element
-            if (thinkingInterval) {
-              clearInterval(thinkingInterval);
-              thinkingInterval = null;
-            }
-            if (thinkingElementId) {
-              const elem = document.getElementById(thinkingElementId);
-              if (elem) {
-                elem.remove();
-              }
-              thinkingElementId = null;
-            }
-            break;
-          case "toolSuccess":
-            // Display success messages in chat
-            if (msg.messages && Array.isArray(msg.messages)) {
-              msg.messages.forEach(successMsg => {
-                appendMessage("assistant", successMsg);
-              });
-              scrollToBottom();
             }
             break;
           case "context":
@@ -3824,13 +3339,17 @@ async function handleWriteToFile(params: WriteToFileParams): Promise<string> {
     }
 
     // Write the content to the file
-    fs.writeFileSync(filePath, params.content, 'utf8');
+    fs.writeFileSync(filePath, params.content);
 
+    // Verify line count matches expectation
     const actualLineCount = params.content.split('\n').length;
-    
-    return `✅ Successfully wrote ${actualLineCount} lines to '${params.path}'`;
+    if (params.line_count !== actualLineCount) {
+      return `Warning: Expected ${params.line_count} lines but content has ${actualLineCount} lines. Content may have been truncated.`;
+    }
+
+    return `Successfully wrote ${params.line_count} lines to file '${params.path}'.`;
   } catch (error) {
-    return `❌ Error writing to file: ${(error as Error).message}`;
+    return `Error writing to file: ${(error as Error).message}`;
   }
 }
 
@@ -3846,62 +3365,11 @@ function getNonce(): string {
 
 import { PermissionService } from './services/permission';
 import { FileActionsService } from './services/fileActions';
-import { AIProvider, AIProviderConfig } from './providers/AIProvider';
-import { FileSystemEngine } from './services/FileSystem';
-import { ShellEngine } from './services/ShellEngine';
-import { ProjectGenerator } from './services/ProjectGenerator';
-import { RuntimeSandbox } from './services/RuntimeSandbox';
-import { AgentMode } from './services/AgentMode';
-
-let aiProvider: AIProvider;
-let fsEngine: FileSystemEngine;
-let shellEngine: ShellEngine;
-let projectGenerator: ProjectGenerator;
-let sandbox: RuntimeSandbox;
-let agentMode: AgentMode;
 
 export function activate(context: vscode.ExtensionContext) {
-  // Initialize v4 services
+  // Initialize services
   const permissions = new PermissionService();
   const fileActions = new FileActionsService(permissions);
-
-  // Initialize v5 services
-  const workspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath || '';
-  const config = vscode.workspace.getConfiguration('vibe');
-  
-  const providers: AIProviderConfig[] = [
-    {
-      name: 'MegaLLM',
-      baseURL: 'https://ai.megallm.io/v1',
-      apiKey: config.get('megallmApiKey') || DEFAULT_MEGALLM_KEY,
-      models: ['qwen/qwen3-next-80b-a3b-instruct']
-    },
-    {
-      name: 'AgentRouter',
-      baseURL: 'https://agentrouter.org/v1',
-      apiKey: config.get('agentrouterApiKey') || DEFAULT_AGENTROUTER_KEY,
-      models: ['anthropic/claude-3.5-sonnet']
-    },
-    {
-      name: 'Routeway',
-      baseURL: 'https://api.routeway.ai/v1',
-      apiKey: config.get('routewayApiKey') || DEFAULT_ROUTEWAY_KEY,
-      models: ['qwen/qwen3-next-80b-a3b-instruct']
-    },
-    {
-      name: 'OpenRouter',
-      baseURL: 'https://openrouter.ai/api/v1',
-      apiKey: config.get('openrouterApiKey') || DEFAULT_OPENROUTER_KEY,
-      models: TOP_FREE_MODELS
-    }
-  ];
-
-  aiProvider = new AIProvider(providers);
-  fsEngine = new FileSystemEngine(workspaceRoot);
-  shellEngine = new ShellEngine(workspaceRoot);
-  projectGenerator = new ProjectGenerator(fsEngine);
-  sandbox = new RuntimeSandbox();
-  agentMode = new AgentMode(aiProvider, fsEngine, shellEngine, sandbox);
 
   // Register the webview view provider first
   const provider = new VibeView(context, fileActions);
@@ -3952,75 +3420,6 @@ export function activate(context: vscode.ExtensionContext) {
         await fileActions.createFolder(folderPath);
         fileActions.refreshExplorer();
       }
-    }),
-
-    // V5.0 NEW COMMANDS
-    vscode.commands.registerCommand("vibe.runShellCommand", async () => {
-      const command = await vscode.window.showInputBox({ prompt: 'Enter shell command' });
-      if (!command) return;
-      
-      if (shellEngine.isDestructive(command)) {
-        const confirm = await vscode.window.showWarningMessage(
-          '⚠️ This command may be destructive. Continue?',
-          'Yes', 'No'
-        );
-        if (confirm !== 'Yes') return;
-      }
-      
-      shellEngine.show();
-      const result = await shellEngine.execute(command, true);
-      vscode.window.showInformationMessage(`Exit code: ${result.exitCode}`);
-    }),
-
-    vscode.commands.registerCommand("vibe.generateProject", async () => {
-      const templates = projectGenerator.getTemplates();
-      const template = await vscode.window.showQuickPick(templates, { 
-        placeHolder: 'Select project template' 
-      });
-      if (!template) return;
-
-      const projectName = await vscode.window.showInputBox({ prompt: 'Enter project name' });
-      if (!projectName) return;
-
-      await projectGenerator.generate(template, workspaceRoot, projectName);
-      vscode.window.showInformationMessage(`✅ Project ${projectName} created!`);
-      fileActions.refreshExplorer();
-    }),
-
-    vscode.commands.registerCommand("vibe.executeSandbox", async () => {
-      const language = await vscode.window.showQuickPick(['javascript', 'python'], { 
-        placeHolder: 'Select language' 
-      });
-      if (!language) return;
-
-      const code = await vscode.window.showInputBox({ 
-        prompt: 'Enter code to execute',
-        value: language === 'javascript' ? 'console.log("Hello World")' : 'print("Hello World")'
-      });
-      if (!code) return;
-
-      const result = language === 'javascript'
-        ? await sandbox.executeJS(code)
-        : await sandbox.executePython(code);
-
-      const output = `Execution time: ${result.executionTime}ms\n\nOutput:\n${result.stdout}${result.stderr ? '\n\nErrors:\n' + result.stderr : ''}`;
-      vscode.window.showInformationMessage(output);
-    }),
-
-    vscode.commands.registerCommand("vibe.startAgent", async () => {
-      const goal = await vscode.window.showInputBox({ prompt: 'Enter agent goal' });
-      if (!goal) return;
-
-      await vscode.window.withProgress({
-        location: vscode.ProgressLocation.Notification,
-        title: 'Agent working...',
-        cancellable: true
-      }, async (progress) => {
-        const task = await agentMode.execute(goal, (step) => {
-          progress.report({ message: step.description });
-        });
-        vscode.window.showInformationMessage(`✅ Agent completed: ${task.status}`);
-      });
     })
   );
 }
