@@ -13,11 +13,11 @@ jobs:
       
       - uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: '20'
           registry-url: 'https://registry.npmjs.org'
       
       - name: Install dependencies
-        run: cd vibe-cli && npm ci
+        run: cd vibe-cli && npm install --legacy-peer-deps
       
       - name: Build
         run: cd vibe-cli && npm run build

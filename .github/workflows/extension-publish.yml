@@ -13,36 +13,23 @@ jobs:
       
       - uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: '20'
       
       - name: Install dependencies
-        run: cd vibe-code && npm ci
-      
-      - name: Install vsce
-        run: npm install -g @vscode/vsce
+        run: cd vibe-code && npm install --legacy-peer-deps
       
       - name: Compile extension
         run: cd vibe-code && npm run compile
       
       - name: Package extension
-        run: cd vibe-code && vsce package
+        run: cd vibe-code && npx @vscode/vsce package
       
       - name: Publish to VS Code Marketplace
-        run: cd vibe-code && vsce publish -p ${{ secrets.VSCE_TOKEN }}
+        run: cd vibe-code && npx @vscode/vsce publish -p ${{ secrets.VSCE_TOKEN }}
       
       - name: Get version
         id: version
         run: echo "VERSION=$(node -p "require('./vibe-code/package.json').version")" >> $GITHUB_OUTPUT
-      
-      - name: Upload VSIX to Release
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./vibe-code/vibe-vscode-${{ steps.version.outputs.VERSION }}.vsix
-          asset_name: vibe-vscode-${{ steps.version.outputs.VERSION }}.vsix
-          asset_content_type: application/octet-stream
       
       - name: Create GitHub Release
         id: create_release
@@ -64,3 +51,13 @@ jobs:
             - 5 visual themes
           draft: false
           prerelease: false
+      
+      - name: Upload VSIX to Release
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./vibe-code/vibe-vscode-${{ steps.version.outputs.VERSION }}.vsix
+          asset_name: vibe-vscode-${{ steps.version.outputs.VERSION }}.vsix
+          asset_content_type: application/octet-stream

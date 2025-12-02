@@ -299,12 +299,12 @@ async function startChat(initialModel: string, selectedProvider: string = 'megal
   const ask = async () => {
     if (!multiline) {
       const { userInput } = await inquirer.prompt([
-        { type: 'input', name: 'userInput', message: pc.cyan('You:'),
-          // Add history for command recall
-          suggestOnly: true,
+        { 
+          type: 'input', 
+          name: 'userInput', 
+          message: pc.cyan('You:'),
           transformer: (input: string) => {
             if (input.startsWith('/')) {
-              // Show suggestions for commands
               const suggestions = ['/help', '/models', '/generate', '/edit', '/files', '/search', '/run', '/exit'];
               if (suggestions.some(s => s.startsWith(input.toLowerCase()))) {
                 return pc.gray(input);
