@@ -1,9 +1,14 @@
+import { fileURLToPath } from 'url';
+import { dirname, resolve } from 'path';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  // Use process.cwd() instead of __dirname (ESM scope) to silence multi-lockfile warning
   turbopack: {
-    root: process.cwd(),
+    root: __dirname,
   },
   images: {
     remotePatterns: [

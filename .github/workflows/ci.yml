@@ -71,7 +71,7 @@ jobs:
       
       - name: Package
         working-directory: vibe-code
-        run: npx @vscode/vsce package
+        run: npx @vscode/vsce package --no-dependencies
       
       - name: Check version
         working-directory: vibe-code

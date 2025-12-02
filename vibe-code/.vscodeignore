@@ -22,3 +22,9 @@ node_modules/**
 .git/**
 .DS_Store
 *.vsix
+../**
+!dist/**
+!media/**
+!package.json
+!readme.md
+!LICENSE.txt

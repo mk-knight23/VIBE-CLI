@@ -41,7 +41,7 @@
   "scripts": {
     "compile": "rimraf dist && tsc -p ./tsconfig.json",
     "watch": "tsc -p ./tsconfig.json -w",
-    "package": "vsce package",
+    "package": "vsce package --no-dependencies",
     "lint": "echo \"No lint configured\""
   },
   "devDependencies": {
