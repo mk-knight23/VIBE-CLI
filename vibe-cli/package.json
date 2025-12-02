@@ -1,6 +1,6 @@
 {
   "name": "@mk-knight23/vibe-ai-cli",
-  "version": "4.0.0",
+  "version": "4.0.1",
   "description": "AI-Powered Development Assistant with Multi-Provider Support - 40+ Free Models",
   "main": "dist/bin/cli.js",
   "bin": {
