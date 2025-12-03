@@ -1,0 +1,86 @@
+export interface Provider {
+  name: string;
+  baseUrl: string;
+  defaultKey?: string;
+  getApiKey: () => Promise<string>;
+  fetchModels: () => Promise<any[]>;
+  chat: (messages: any[], model: string, options?: any) => Promise<any>;
+}
+
+export interface Model {
+  id: string;
+  name: string;
+  provider: string;
+  contextLength: number;
+  isFree: boolean;
+  pricing?: {
+    prompt: number;
+    completion: number;
+  };
+}
+
+// Default API keys (free tier)
+export const DEFAULT_KEYS = {
+  openrouter: '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',
+  megallm: 'sk-mega-0eaa0b2c2bae3ced6afca8651cfbbce07927e231e4119068f7f7867c20cdc820',
+  agentrouter: 'sk-WXLlCAeAaDCeEjMWCBo7sqXGPOF1HrYEDm0JFBDXP3tEiERw',
+  routeway: 'sk-LeRlb8aww5YXvdP57hnVw07xmIA2c3FvfeLvPhbmFU14osMn'
+};
+
+export const PROVIDERS = {
+  openrouter: {
+    name: 'OpenRouter',
+    baseUrl: 'https://openrouter.ai/api/v1',
+    envKey: 'OPENROUTER_API_KEY'
+  },
+  megallm: {
+    name: 'MegaLLM',
+    baseUrl: 'https://ai.megallm.io/v1',
+    envKey: 'MEGALLM_API_KEY'
+  },
+  agentrouter: {
+    name: 'AgentRouter',
+    baseUrl: 'https://agentrouter.org/v1',
+    envKey: 'AGENTROUTER_API_KEY'
+  },
+  routeway: {
+    name: 'Routeway',
+    baseUrl: 'https://api.routeway.ai/v1',
+    envKey: 'ROUTEWAY_API_KEY'
+  }
+};
+
+export function isFreeModel(model: any): boolean {
+  if (model?.is_free) return true;
+  const pricing = model?.pricing || model?.top_provider?.pricing;
+  if (!pricing) return false;
+  
+  const values = [
+    pricing.prompt,
+    pricing.completion,
+    pricing.input,
+    pricing.output
+  ].filter(v => v !== undefined && v !== null);
+  
+  return values.length > 0 && values.every(v => Number(v) === 0);
+}
+
+export async function fetchWithTimeout(
+  url: string,
+  options: RequestInit & { timeout?: number } = {}
+): Promise<Response> {
+  const { timeout = 30000, ...fetchOptions } = options;
+  const controller = new AbortController();
+  const id = setTimeout(() => controller.abort(), timeout);
+  
+  try {
+    return await fetch(url, { ...fetchOptions, signal: controller.signal });
+  } finally {
+    clearTimeout(id);
+  }
+}
+
+export * from './openrouter';
+export * from './megallm';
+export * from './agentrouter';
+export * from './routeway';

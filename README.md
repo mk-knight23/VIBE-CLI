@@ -1,13 +1,13 @@
-# VIBE v2.0 - Multi-Provider AI Development Platform
+# VIBE v2.1 - Multi-Provider AI Development Platform
 
-**Version: 2.0.0** | **Status: Production Ready** | **License: MIT**
+**Version: 2.1.0** | **CLI: v5.1.0** | **Status: Production Ready** | **License: MIT**
 
 A comprehensive AI-powered development ecosystem with **free API access** across 4 providers and 27+ models. No API keys needed - start coding with AI instantly!
 
 ## 🚀 Three Integrated Tools
 
-### 1. **Vibe CLI v4.0** - Terminal AI Assistant
-Advanced command-line tool with multi-provider support and autonomous capabilities.
+### 1. **Vibe CLI v5.1** - Terminal AI Assistant with Advanced Analysis
+Advanced command-line tool with multi-provider support, codebase exploration, and automation capabilities.
 
 **Key Features:**
 - 🌐 **4 AI Providers**: OpenRouter, MegaLLM, AgentRouter, Routeway
@@ -19,6 +19,10 @@ Advanced command-line tool with multi-provider support and autonomous capabiliti
 - ✅ **Test Generation**: Automated test suite creation
 - 🔄 **Git Automation**: Smart commits and code reviews
 - 🎯 **Agent Mode**: Autonomous multi-step task execution
+- 🔍 **Codebase Exploration**: Analyze architecture, dependencies, and endpoints
+- 🛡️ **Security Scanning**: Find vulnerabilities and hardcoded secrets
+- ⚡ **Performance Analysis**: Detect bottlenecks and optimization opportunities
+- 🔄 **Automation Tools**: Batch operations and git analysis
 
 **Installation:**
 ```bash
@@ -40,7 +44,24 @@ scoop install vibe-ai-cli
 **Quick Start:**
 ```bash
 # Start chatting (no API key needed!)
-vibe chat "Hello! Help me build a REST API"
+vibe
+
+# Explore codebase
+vibe
+> /architecture
+> /dependencies
+> /endpoints
+
+# Security audit
+vibe
+> /security
+> /performance
+
+# Automate workflows
+vibe
+> /git-stats 7
+> /changelog 30
+> /clean-logs
 
 # Generate code
 vibe generate "Create a React todo app with TypeScript"

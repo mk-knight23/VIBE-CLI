@@ -41,5 +41,8 @@
   "engines": {
     "node": ">=20.0.0",
     "npm": ">=9.0.0"
+  },
+  "dependencies": {
+    "vibe-ai-cli": "^4.0.0"
   }
 }

@@ -68,9 +68,10 @@
     "views": {
       "vibe-sidebar": [
         {
-          "type": "webview",
           "id": "vibe.vibePanel",
-          "name": "Chat"
+          "type": "webview",
+          "name": "Chat",
+          "icon": "media/vibe-icon.svg"
         }
       ]
     },

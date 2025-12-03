@@ -1,62 +1,46 @@
-/**
- * Audit logging for Vibe CLI
- */
-
 import fs from 'fs';
 import path from 'path';
+import os from 'os';
+
+const AUDIT_DIR = path.join(os.homedir(), '.vibe');
+const AUDIT_FILE = path.join(AUDIT_DIR, 'audit.log');
 
 export interface AuditEntry {
-  time: string;
-  user: string;
-  op: string;
-  path?: string;
-  provider?: string;
-  model?: string;
-  dryRun: boolean;
-  result?: string;
-  backup?: string;
+  timestamp: string;
+  action: string;
+  tool: string;
+  args: any;
+  result?: any;
+  error?: any;
+  user?: string;
 }
 
-export class AuditLogger {
-  private logPath: string;
-
-  constructor(projectRoot: string = process.cwd()) {
-    const vibeDir = path.join(projectRoot, '.vibe');
-    if (!fs.existsSync(vibeDir)) {
-      fs.mkdirSync(vibeDir, { recursive: true });
+export function logAudit(entry: Omit<AuditEntry, 'timestamp'>): void {
+  try {
+    if (!fs.existsSync(AUDIT_DIR)) {
+      fs.mkdirSync(AUDIT_DIR, { recursive: true });
     }
-    this.logPath = path.join(vibeDir, 'audit.log');
-  }
 
-  log(entry: Partial<AuditEntry>): void {
     const fullEntry: AuditEntry = {
-      time: new Date().toISOString(),
-      user: process.env.USER || 'unknown',
-      op: entry.op || 'unknown',
-      path: entry.path,
-      provider: entry.provider,
-      model: entry.model,
-      dryRun: entry.dryRun ?? false,
-      result: entry.result,
-      backup: entry.backup
+      ...entry,
+      timestamp: new Date().toISOString()
     };
 
-    fs.appendFileSync(this.logPath, JSON.stringify(fullEntry) + '\n');
+    fs.appendFileSync(AUDIT_FILE, JSON.stringify(fullEntry) + '\n');
+  } catch (error) {
+    // Silent fail - don't break execution
   }
+}
 
-  getRecent(limit: number = 50): AuditEntry[] {
-    if (!fs.existsSync(this.logPath)) return [];
+export function getAuditLog(limit = 100): AuditEntry[] {
+  try {
+    if (!fs.existsSync(AUDIT_FILE)) return [];
     
-    const lines = fs.readFileSync(this.logPath, 'utf8').trim().split('\n');
-    return lines.slice(-limit).map(line => JSON.parse(line));
-  }
-
-  cleanup(daysToKeep: number = 14): void {
-    const entries = this.getRecent(1000);
-    const cutoff = Date.now() - (daysToKeep * 24 * 60 * 60 * 1000);
+    const content = fs.readFileSync(AUDIT_FILE, 'utf-8');
+    const lines = content.trim().split('\n').slice(-limit);
     
-    const kept = entries.filter(e => new Date(e.time).getTime() > cutoff);
-    
-    fs.writeFileSync(this.logPath, kept.map(e => JSON.stringify(e)).join('\n') + '\n');
+    return lines.map(line => JSON.parse(line));
+  } catch {
+    return [];
   }
 }

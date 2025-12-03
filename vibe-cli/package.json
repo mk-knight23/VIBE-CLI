@@ -1,23 +1,19 @@
 {
   "name": "@mk-knight23/vibe-ai-cli",
-  "version": "4.0.1",
+  "version": "5.0.0",
   "description": "AI-Powered Development Assistant with Multi-Provider Support - 40+ Free Models",
-  "main": "dist/bin/cli.js",
+  "main": "dist/cli/index.js",
   "bin": {
-    "vibe": "dist/bin/cli.js"
+    "vibe": "bin/vibe.js"
   },
   "publishConfig": {
     "registry": "https://npm.pkg.github.com"
-  },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/mk-knight23/vibe.git"
   },
   "scripts": {
     "build": "tsc",
     "prepublishOnly": "npm run build",
     "test": "echo \"Tests passed\"",
-    "start": "node dist/bin/cli.js"
+    "start": "node bin/vibe.js"
   },
   "keywords": [
     "ai",
