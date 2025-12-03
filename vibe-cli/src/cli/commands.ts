@@ -26,7 +26,7 @@ const commands: ProgramCommand[] = [
     name: 'help',
     description: 'Show help information',
     action: async () => {
-      logger.box('Vibe CLI v5.0', 'AI-Powered Development Assistant');
+      logger.box('Vibe CLI v6.0', 'Next-Gen AI Development Platform');
       console.log('\n' + pc.bold('Usage:') + ' vibe [command] [options]\n');
       console.log(pc.bold('Commands:'));
       commands.forEach(c => {
@@ -152,7 +152,7 @@ const commands: ProgramCommand[] = [
     description: 'Show version information',
     action: async () => {
       console.log('\n' + pc.bold('Vibe CLI'));
-      console.log('Version: ' + pc.cyan('5.0.0'));
+      console.log('Version: ' + pc.cyan('6.0.0'));
       console.log('Node: ' + pc.gray(process.version));
       console.log('Platform: ' + pc.gray(process.platform));
       console.log();
