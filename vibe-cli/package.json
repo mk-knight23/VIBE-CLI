@@ -1,13 +1,10 @@
 {
-  "name": "@mk-knight23/vibe-ai-cli",
+  "name": "vibe-ai-cli",
   "version": "5.0.0",
   "description": "AI-Powered Development Assistant with Multi-Provider Support - 40+ Free Models",
   "main": "dist/cli/index.js",
   "bin": {
     "vibe": "bin/vibe.js"
-  },
-  "publishConfig": {
-    "registry": "https://npm.pkg.github.com"
   },
   "scripts": {
     "build": "tsc",
