@@ -1,6 +1,6 @@
 {
   "name": "vibe-ai-cli",
-  "version": "7.0.0",
+  "version": "7.0.1",
   "description": "Next-Gen AI Development Platform - 60+ Commands, 42+ Tools, Multi-File Editing, Advanced Agents, Cloud Deploy, DevOps Suite",
   "main": "dist/cli/index.js",
   "bin": {

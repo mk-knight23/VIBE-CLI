@@ -5,5 +5,8 @@
   "private": true,
   "license": "MIT",
   "repository": "https://github.com/mk-knight23/vibe",
-  "homepage": "https://vibe-ai.vercel.app"
+  "homepage": "https://vibe-ai.vercel.app",
+  "dependencies": {
+    "vibe-ai-cli": "^7.0.0"
+  }
 }

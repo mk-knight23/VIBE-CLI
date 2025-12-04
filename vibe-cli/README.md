@@ -1,12 +1,13 @@
-# Vibe CLI v5.0.0
+# Vibe CLI v7.0.1
 
-**AI-Powered Development Assistant with Multi-Provider Support**
+**Next-Gen AI Development Platform - 60+ Commands, 42+ Tools, Multi-File Editing, Advanced Agents**
 
-[![Version](https://img.shields.io/badge/version-5.0.0-blue.svg)](https://github.com/mk-knight23/vibe)
+[![Version](https://img.shields.io/badge/version-7.0.1-blue.svg)](https://www.npmjs.com/package/vibe-ai-cli)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Node](https://img.shields.io/badge/node-%3E%3D16.0.0-brightgreen.svg)](https://nodejs.org)
+[![NPM](https://img.shields.io/npm/v/vibe-ai-cli.svg)](https://www.npmjs.com/package/vibe-ai-cli)
 
-> Create complete projects, execute commands, and automate development tasks with AI - all from your terminal.
+> Production-ready AI development platform with autonomous agents, cloud deployment, DevOps automation, and multi-file editing capabilities.
 
 ---
 
@@ -14,376 +15,287 @@
 
 ```bash
 # Install globally
-npm install -g @mk-knight23/vibe-ai-cli
+npm install -g vibe-ai-cli
+
+# Or use without installing
+npx vibe-ai-cli
 
 # Start interactive mode
 vibe
 
-# Create a project instantly
+# Use specific commands
+vibe agent          # Start autonomous agent
+vibe deploy aws     # Deploy to AWS
+vibe docker build   # Build Docker container
+```
+
+---
+
+## ✨ What's New in v7.0.0
+
+### 🤖 **Advanced Autonomous Agents**
+- Self-directed task execution
+- Multi-step workflow automation
+- Context-aware decision making
+- Error recovery and retry logic
+
+### 📝 **Multi-File Editing**
+- Edit multiple files simultaneously
+- Batch operations across projects
+- Smart conflict resolution
+- Atomic transactions
+
+### ☁️ **Cloud Deployment**
+- **AWS:** Lambda, EC2, S3, CloudFormation
+- **Vercel:** One-command deployment
+- **Firebase:** Hosting, Functions, Firestore
+- **Docker:** Build, push, deploy
+
+### 🔧 **DevOps Suite**
+- Docker & Kubernetes automation
+- CI/CD pipeline generation
+- Infrastructure as Code
+- Monitoring & logging setup
+
+### 🧪 **Enhanced Testing**
+- Unit test generation
+- Integration test scaffolding
+- E2E test automation
+- Performance benchmarking
+
+---
+
+## 🎯 Core Features
+
+### 🤖 **Multi-Provider AI (4 Providers, 27+ Models)**
+- **OpenRouter:** 40+ free models (GPT-4o-mini, Gemini 2.0 Flash, Claude)
+- **MegaLLM:** Primary provider with Qwen3-Next-80B
+- **AgentRouter:** Claude models with routing
+- **Routeway:** Fallback provider
+- **Free API Access:** Pre-configured keys included
+
+### 📦 **60+ Commands**
+```bash
+# AI & Chat
+vibe chat           # Interactive chat
+vibe agent          # Autonomous agent mode
+vibe ask            # Quick questions
+
+# Code Generation
+vibe generate       # Generate code
+vibe refactor       # Refactor code
+vibe test           # Generate tests
+vibe debug          # Debug assistance
+
+# Project Management
+vibe init           # Initialize project
+vibe scaffold       # Create from template
+vibe analyze        # Analyze codebase
+
+# Cloud & DevOps
+vibe deploy         # Deploy to cloud
+vibe docker         # Docker operations
+vibe k8s            # Kubernetes management
+vibe ci             # CI/CD setup
+
+# Git Automation
+vibe commit         # Smart commits
+vibe pr             # Create pull requests
+vibe review         # Code review
+
+# Development Tools
+vibe dev            # Dev server
+vibe build          # Build project
+vibe lint           # Lint code
+vibe format         # Format code
+
+# And 40+ more...
+```
+
+### 🛠️ **42+ Tools**
+- **Filesystem:** Create, read, update, delete files
+- **Shell:** Execute commands safely
+- **Sandbox:** Isolated code execution
+- **Web:** HTTP requests, scraping
+- **Memory:** Context management
+- **Git:** Version control automation
+- **Package Manager:** npm, yarn, pnpm support
+- **Database:** Query and migration tools
+- **API:** REST and GraphQL clients
+
+### 📁 **Smart File Operations**
+- Automatic file extraction from AI responses
+- Support for 20+ file types
+- Intelligent folder organization
+- Conflict detection and resolution
+- Backup and rollback capabilities
+
+### 🔐 **Security Features**
+- Dangerous command blocking
+- Sandbox execution environment
+- API key encryption
+- Audit logging
+- Permission management
+
+---
+
+## 📖 Usage Examples
+
+### Create a Full-Stack App
+```bash
 vibe
-> create a todo app with HTML, CSS, and JavaScript
+> create a todo app with React frontend and Node.js backend
 ```
 
-**That's it!** Vibe will create all files and execute setup commands automatically.
-
----
-
-## ✨ Key Features
-
-### 🤖 **Multi-Provider AI Support**
-- **4 Providers:** OpenRouter, MegaLLM, AgentRouter, Routeway
-- **31+ Models:** GPT, Claude, Gemini, DeepSeek, Llama, Qwen, and more
-- **Free Tier:** Pre-configured API keys included
-- **Easy Switching:** Change providers and models on the fly
-
-### 📁 **Automatic File Creation**
-- Extracts files from AI responses automatically
-- Creates complete project structures
-- Supports 10+ file types (HTML, CSS, JS, JSON, Python, etc.)
-- Organizes files in proper folders
-
-### 🔧 **Command Execution**
-- Executes bash commands from AI responses
-- Safe execution with dangerous command blocking
-- Cross-platform support (macOS, Linux, Windows)
-- Real-time output display
-
-### 🎯 **Multiple Operations in One Go**
-- Create files + run commands in single request
-- Sequential execution (files → commands → tools)
-- No manual intervention needed
-- Complete automation
-
----
-
-## 📦 Installation
-
-### NPM (Recommended)
+### Deploy to AWS
 ```bash
-npm install -g @mk-knight23/vibe-ai-cli
+vibe deploy aws --service lambda --region us-east-1
 ```
 
-### Verify Installation
+### Start Autonomous Agent
 ```bash
-vibe --version
-# Output: 5.0.0
+vibe agent
+> Build a REST API with authentication, deploy to Vercel, and set up CI/CD
 ```
 
----
-
-## 🎮 Usage
-
-### Interactive Mode
+### Multi-File Refactoring
 ```bash
-vibe
+vibe refactor --pattern "*.ts" --task "Convert to async/await"
 ```
 
-Start chatting with AI to create projects, execute commands, and automate tasks.
-
-### Example Commands
-
-**Create a Website:**
-```
-You: create a calculator website
-AI: [Creates index.html, style.css, script.js]
-    [Executes: python -m http.server 8000]
-✅ Created 3 file(s)
-✅ Executed 1 command(s)
-```
-
-**Install Packages:**
-```
-You: install express and create a server
-AI: [Creates server.js]
-    [Executes: npm install express]
-✅ Created 1 file(s)
-✅ Executed 1 command(s)
-```
-
-**Multiple Operations:**
-```
-You: create a React app with routing
-AI: [Creates package.json, App.jsx, Router.jsx, etc.]
-    [Executes: npm install, npm install react-router-dom]
-✅ Created 5 file(s)
-✅ Executed 2 command(s)
-```
-
----
-
-## 🎛️ Commands
-
-### Basic Commands
+### Docker Workflow
 ```bash
-vibe                 # Start interactive mode
-vibe --help          # Show help
-vibe --version       # Show version
+vibe docker build --tag myapp:latest
+vibe docker push
+vibe docker deploy --platform kubernetes
 ```
-
-### Interactive Commands
-```
-/help       - Show available commands
-/model      - Change AI model (dropdown)
-/provider   - Switch AI provider
-/clear      - Clear conversation history
-/quit       - Exit CLI
-```
-
----
-
-## 🌐 Providers & Models
-
-### OpenRouter (6 models)
-- Grok 4.1 Fast (128k)
-- GLM 4.5 Air (128k)
-- DeepSeek Chat V3 (64k)
-- Qwen3 Coder (32k)
-- Gemini 2.0 Flash (1M)
-
-### MegaLLM (12 models) - Default
-- Llama 3.3 70B (128k)
-- DeepSeek R1 Distill (64k)
-- Kimi K2 (200k)
-- Qwen3 Next 80B (32k)
-- MiniMax M2 (200k)
-- GPT OSS 120B (8k)
-
-### AgentRouter (7 models)
-- Claude Haiku 4.5 (200k)
-- Claude Sonnet 4.5 (200k)
-- DeepSeek R1 (64k)
-- GLM 4.6 (128k)
-
-### Routeway (6 models)
-- Kimi K2 (200k)
-- MiniMax M2 (200k)
-- DeepSeek V3 (64k)
-- Llama 3.2 3B (8k)
 
 ---
 
 ## 🔧 Configuration
 
-### Optional: Custom API Keys
+### Set API Keys (Optional - Free keys included)
+```bash
+vibe config set openrouter YOUR_KEY
+vibe config set megallm YOUR_KEY
+vibe config set agentrouter YOUR_KEY
+vibe config set routeway YOUR_KEY
+```
+
+### Switch Providers
+```bash
+vibe config provider openrouter
+vibe config model gpt-4o-mini
+```
+
+### Configure Defaults
+```bash
+vibe config set auto-approve false
+vibe config set max-files 50
+vibe config set sandbox-timeout 30000
+```
+
+---
+
+## 🏗️ Architecture
+
+```
+vibe-cli/
+├── src/
+│   ├── ai/              # AI agents & routing
+│   ├── commands/        # 60+ CLI commands
+│   ├── tools/           # 42+ tools
+│   ├── core/            # Engine & orchestration
+│   ├── cloud/           # Cloud deployment
+│   ├── ops/             # DevOps automation
+│   ├── project/         # Templates & scaffolding
+│   ├── analysis/        # Code analysis
+│   ├── git/             # Git operations
+│   ├── debug/           # Debugging tools
+│   └── providers/       # AI provider integrations
+├── dist/                # Compiled output
+├── tests/               # Test suite
+└── docs/                # Documentation
+```
+
+---
+
+## 🧪 Testing
 
 ```bash
-# Set via environment variables
-export OPENROUTER_API_KEY="sk-or-..."
-export MEGALLM_API_KEY="sk-mega-..."
-export AGENTROUTER_API_KEY="sk-..."
-export ROUTEWAY_API_KEY="sk-..."
-```
+# Run all tests
+npm test
 
-**Note:** Pre-configured free API keys are included. Custom keys are optional.
+# Run specific test suites
+npm run test:unit
+npm run test:integration
+npm run test:e2e
+npm run test:security
+npm run test:performance
 
----
-
-## 📚 Examples
-
-### 1. Simple Website
-```
-You: create a portfolio website
-
-Result:
-✅ portfolio-app/index.html
-✅ portfolio-app/style.css
-✅ portfolio-app/script.js
-✅ portfolio-app/README.md
-```
-
-### 2. Node.js Server
-```
-You: create an Express API with user routes
-
-Result:
-✅ express-api/server.js
-✅ express-api/routes/users.js
-✅ express-api/package.json
-✅ Executed: npm install express
-```
-
-### 3. Python Project
-```
-You: create a Flask app with database
-
-Result:
-✅ flask-app/app.py
-✅ flask-app/models.py
-✅ flask-app/requirements.txt
-✅ Executed: pip install -r requirements.txt
-```
-
-### 4. React Application
-```
-You: create a React dashboard with charts
-
-Result:
-✅ dashboard-app/package.json
-✅ dashboard-app/src/App.jsx
-✅ dashboard-app/src/components/Chart.jsx
-✅ dashboard-app/src/components/Dashboard.jsx
-✅ Executed: npm install
-✅ Executed: npm install recharts
+# Run with coverage
+npm run test:coverage
 ```
 
 ---
 
-## 🛡️ Safety Features
+## 📚 Documentation
 
-### Dangerous Command Blocking
-Automatically blocks harmful commands:
-- `rm -rf /` - System deletion
-- `format` - Disk formatting
-- `chmod 777` - Permission abuse
-- `killall` - Process termination
-- And more...
-
-### Path Security
-- Prevents path traversal (`../../../`)
-- Blocks system file access
-- Validates all file paths
-
----
-
-## 🎯 Use Cases
-
-### Development
-- ✅ Create boilerplate projects
-- ✅ Generate components and modules
-- ✅ Set up development environments
-- ✅ Install dependencies automatically
-
-### Learning
-- ✅ Explore new frameworks
-- ✅ Generate example code
-- ✅ Understand project structures
-- ✅ Learn best practices
-
-### Automation
-- ✅ Automate repetitive tasks
-- ✅ Batch file operations
-- ✅ Script generation
-- ✅ Workflow automation
-
----
-
-## 📊 Performance
-
-- **File Creation:** ~15ms per file
-- **Command Execution:** Real-time
-- **AI Response:** 2-5 seconds
-- **Memory Usage:** ~70MB
-
----
-
-## 🔄 How It Works
-
-```
-User Input
-    ↓
-AI Generates Response
-    ↓
-Parse Files → Create Files
-    ↓
-Parse Commands → Execute Commands
-    ↓
-Show Results
-```
-
-**Everything happens automatically!**
-
----
-
-## 🐛 Troubleshooting
-
-### CLI Not Found
-```bash
-npm install -g @mk-knight23/vibe-ai-cli
-```
-
-### Permission Denied
-```bash
-sudo npm install -g @mk-knight23/vibe-ai-cli
-```
-
-### API Errors
-- Check internet connection
-- Try switching provider: `/provider`
-- Try different model: `/model`
-
----
-
-## 📖 Documentation
-
-Full documentation available in `docs/` folder:
-- [Quick Start Guide](docs/QUICK_START.md)
-- [Project Structure](docs/PROJECT_STRUCTURE.md)
-- [File Creation Guide](docs/FILE_CREATION_GUIDE.md)
-- [Tool Usage](docs/TOOL_USAGE.md)
-- [Cross-Platform Support](docs/CROSS_PLATFORM.md)
+- **Complete Guide:** [docs/COMPLETE_DOCUMENTATION.md](./docs/COMPLETE_DOCUMENTATION.md)
+- **Step-by-Step:** [docs/STEP_BY_STEP_GUIDE.md](./docs/STEP_BY_STEP_GUIDE.md)
+- **GitHub:** https://github.com/mk-knight23/vibe
+- **Issues:** https://github.com/mk-knight23/vibe/issues
 
 ---
 
 ## 🤝 Contributing
 
-Contributions welcome! Please:
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Submit a pull request
+We welcome contributions! See [CONTRIBUTING.md](../CONTRIBUTING.md) for guidelines.
+
+```bash
+# Clone repository
+git clone https://github.com/mk-knight23/vibe.git
+cd vibe/vibe-cli
+
+# Install dependencies
+npm install
+
+# Build
+npm run build
+
+# Run tests
+npm test
+
+# Start development
+npm run dev
+```
 
 ---
 
-## 📝 License
+## 📄 License
 
-MIT License - see [LICENSE](LICENSE) file
+MIT © VIBE Team
 
 ---
 
 ## 🔗 Links
 
-- **GitHub:** [https://github.com/mk-knight23/vibe](https://github.com/mk-knight23/vibe)
-- **NPM:** [https://www.npmjs.com/package/vibe-ai-cli](https://www.npmjs.com/package/vibe-ai-cli)
-- **Issues:** [https://github.com/mk-knight23/vibe/issues](https://github.com/mk-knight23/vibe/issues)
-- **Website:** [https://vibe-ai.vercel.app](https://vibe-ai.vercel.app)
+- **NPM:** https://www.npmjs.com/package/vibe-ai-cli
+- **GitHub:** https://github.com/mk-knight23/vibe
+- **Website:** https://vibe-ai.vercel.app
+- **Issues:** https://github.com/mk-knight23/vibe/issues
 
 ---
 
-## 🌟 Features Roadmap
+## 🌟 Support
 
-- [ ] Plugin system
-- [ ] Custom templates
-- [ ] Project scaffolding
-- [ ] Git integration
-- [ ] Cloud deployment
-- [ ] Team collaboration
-
----
-
-## 💡 Tips
-
-1. **Be specific:** "Create a todo app with React and TypeScript"
-2. **Multiple tasks:** "Create files and install dependencies"
-3. **Use /model:** Try different models for better results
-4. **Check output:** Review created files before running
+If you find Vibe CLI useful, please:
+- ⭐ Star the repository
+- 🐛 Report bugs
+- 💡 Suggest features
+- 📖 Improve documentation
+- 🤝 Contribute code
 
 ---
 
-## ⚡ Quick Reference
-
-| Command | Description |
-|---------|-------------|
-| `vibe` | Start CLI |
-| `/help` | Show help |
-| `/model` | Change model |
-| `/provider` | Switch provider |
-| `/clear` | Clear history |
-| `/quit` | Exit |
-
----
-
-**Made with ❤️ by the VIBE Team**
-
-*Empowering developers with AI automation*
-
-**Version 5.0.0** | **Node ≥16.0.0** | **MIT License**
+**Built with ❤️ by the VIBE Team**
