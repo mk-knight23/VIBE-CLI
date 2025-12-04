@@ -6,9 +6,11 @@ import { logger } from '../utils/logger';
 import { tools, executeTool } from '../tools';
 import { parseFilesFromResponse } from '../utils/file-parser';
 import { executeBashCommands } from '../utils/bash-executor';
+import { handleCommand } from './command-handler';
 
+const VERSION = '7.0.0';
 const DEFAULT_MODEL = 'qwen/qwen3-next-80b-a3b-instruct';
-const SYSTEM_PROMPT = `You are Vibe-CLI, an AI coding assistant that EXECUTES tasks directly.
+const SYSTEM_PROMPT = `You are VIBE v7.0.0, an AI-powered development platform created by KAZI.
 
 🔥 CRITICAL RULES:
 1. ALWAYS create files in code blocks with clear filenames
@@ -87,7 +89,7 @@ ls -la
 
 
 export async function startInteractive(client: ApiClient): Promise<void> {
-  logger.box('Vibe CLI v4.5', 'Interactive AI Assistant\nType /help for commands, /quit to exit');
+  logger.box('🎨 VIBE v7.0.0 🔥 Made by KAZI', 'AI-Powered Development Platform\nType /help for commands, /quit to exit');
   
   // Set default provider to MegaLLM (working)
   client.setProvider('megallm');
@@ -109,6 +111,11 @@ export async function startInteractive(client: ApiClient): Promise<void> {
     if (input.startsWith('/')) {
       const handled = await handleCommand(input, client, currentModel);
       if (handled === 'quit') break;
+      if (handled === 'clear') {
+        messages.length = 1; // Keep system prompt
+        lastResponse = '';
+        continue;
+      }
       if (handled === 'create') {
         // Parse last response for files
         if (!lastResponse) {
@@ -178,25 +185,26 @@ export async function startInteractive(client: ApiClient): Promise<void> {
         console.log(`\n${pc.cyan(`Creating project: ${projectName}`)}\n`);
         console.log(`${pc.cyan(`Found ${files.length} file(s) to create`)}\n`);
         
-        for (const file of files) {
-          const { confirm } = await inquirer.prompt<{ confirm: boolean }>([{
-            type: 'confirm',
-            name: 'confirm',
-            message: `Create ${file.path}?`,
-            default: true
-          }]);
-          
-          if (confirm) {
-            try {
-              await executeTool('write_file', { file_path: file.path, content: file.content });
-              logger.success(`✓ Created ${file.path}`);
-            } catch (err: any) {
-              logger.error(`✗ Failed: ${err.message}`);
-            }
+        // Batch create all files in parallel
+        const results = await Promise.all(files.map(async (file) => {
+          try {
+            await executeTool('write_file', { file_path: file.path, content: file.content });
+            return { path: file.path, success: true };
+          } catch (err: any) {
+            return { path: file.path, success: false, error: err.message };
           }
-        }
+        }));
         
-        console.log(`\n${pc.green(`✓ Project created: ${projectName}/`)}\n`);
+        results.forEach(r => {
+          if (r.success) {
+            logger.success(`✓ Created ${r.path}`);
+          } else {
+            logger.error(`✗ Failed ${r.path}: ${r.error}`);
+          }
+        });
+        
+        const successCount = results.filter(r => r.success).length;
+        console.log(`\n${pc.green(`✓ Project created: ${projectName}/ (${successCount}/${files.length} files)`)}\n`);
         continue;
       }
       if (handled === 'model') {
@@ -299,7 +307,8 @@ export async function startInteractive(client: ApiClient): Promise<void> {
           const created: string[] = [];
           const failed: string[] = [];
           
-          for (const file of files) {
+          // Batch create files in parallel
+          await Promise.all(files.map(async (file) => {
             try {
               await executeTool('write_file', { file_path: file.path, content: file.content });
               created.push(file.path);
@@ -308,7 +317,7 @@ export async function startInteractive(client: ApiClient): Promise<void> {
               failed.push(file.path);
               console.log(`${pc.red('✗')} ${file.path}: ${err.message}`);
             }
-          }
+          }));
           
           console.log(`\n${pc.cyan('━'.repeat(60))}`);
           console.log(`${pc.green(`✅ Created ${created.length} file(s)`)}`);
@@ -413,97 +422,5 @@ export async function startInteractive(client: ApiClient): Promise<void> {
       spinner.stop();
       logger.error(`API Error: ${error.message}`);
     }
-  }
-}
-
-async function handleCommand(cmd: string, client: ApiClient, model: string): Promise<string | void> {
-  const parts = cmd.slice(1).split(' ');
-  const command = parts[0];
-  
-  switch (command) {
-    case 'quit':
-    case 'exit':
-      logger.info('Goodbye!');
-      return 'quit';
-    
-    case 'help':
-      console.log(`
-${pc.bold('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')}
-${pc.bold('                    VIBE CLI COMMANDS')}
-${pc.bold('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')}
-
-${pc.bold('Basic Commands:')}
-  ${pc.cyan('/help')}       - Show this help
-  ${pc.cyan('/quit')}       - Exit the CLI
-  ${pc.cyan('/clear')}      - Clear conversation history
-
-${pc.bold('AI Configuration:')}
-  ${pc.cyan('/model')}      - Change AI model (dropdown selection)
-  ${pc.cyan('/provider')}   - Change API provider (dropdown selection)
-
-${pc.bold('File Operations:')}
-  ${pc.cyan('/create')}     - Force create files from last AI response
-  ${pc.cyan('/tools')}      - List all available tools
-
-${pc.bold('Working Providers:')}
-  ${pc.green('✓ megallm')}     - 12 models (default, recommended)
-  ${pc.green('✓ routeway')}    - 6 free models
-  ${pc.yellow('⚠ openrouter')}  - Requires valid API key
-  ${pc.yellow('⚠ agentrouter')} - Requires valid API key
-
-${pc.bold('Usage Examples:')}
-  ${pc.gray('Create projects:')}
-    create a todo app
-    build a calculator website
-    make a React dashboard
-
-  ${pc.gray('File operations:')}
-    list files in src folder
-    read app.js
-    install express
-
-  ${pc.gray('System commands:')}
-    run npm start
-    initialize git
-    show system info
-
-${pc.bold('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')}
-${pc.bold('TIP:')} Just describe what you want in natural language!
-${pc.bold('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')}
-      `);
-      break;
-    
-    case 'model':
-      return 'model';
-    
-    case 'provider':
-      const { provider } = await inquirer.prompt<{ provider: string }>([{
-        type: 'list',
-        name: 'provider',
-        message: 'Select provider:',
-        choices: ['openrouter', 'megallm', 'agentrouter', 'routeway']
-      }]);
-      client.setProvider(provider as any);
-      logger.success(`Switched to ${provider}`);
-      return 'model'; // Trigger model selection after provider change
-      break;
-    
-    case 'tools':
-      console.log(`\n${pc.bold('Available Tools:')}`);
-      tools.forEach(t => {
-        console.log(`  ${pc.cyan(t.displayName)} - ${t.description}`);
-      });
-      console.log();
-      break;
-    
-    case 'clear':
-      logger.success('Conversation cleared');
-      break;
-    
-    case 'create':
-      return 'create';
-    
-    default:
-      logger.warn(`Unknown command: ${command}`);
   }
 }

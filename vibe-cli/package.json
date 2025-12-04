@@ -1,16 +1,28 @@
 {
   "name": "vibe-ai-cli",
-  "version": "6.0.0",
-  "description": "Next-Gen AI CLI - File Ops, Project Analysis, Safe Execution, Git Automation, Streaming Conversations & Advanced Workflows",
+  "version": "7.0.0",
+  "description": "Next-Gen AI Development Platform - 60+ Commands, 42+ Tools, Multi-File Editing, Advanced Agents, Cloud Deploy, DevOps Suite",
   "main": "dist/cli/index.js",
   "bin": {
-    "vibe": "bin/vibe.js"
+    "vibe": "bin/vibe.js",
+    "vibe7": "bin/vibe.js"
   },
   "scripts": {
     "build": "tsc",
+    "build:v7": "tsc && echo '✅ v7.0.0 Production Build Complete'",
     "prepublishOnly": "npm run build",
-    "test": "echo \"Tests passed\"",
-    "start": "node bin/vibe.js"
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:unit": "vitest run tests/unit",
+    "test:integration": "vitest run tests/integration",
+    "test:e2e": "vitest run tests/e2e",
+    "test:security": "vitest run tests/security",
+    "test:performance": "vitest run tests/performance",
+    "test:all": "npm run test:unit && npm run test:integration && npm run test:security && npm run test:performance && npm run test:e2e",
+    "test:acceptance": "node scripts/acceptance.js",
+    "test:coverage": "vitest run --coverage",
+    "start": "node bin/vibe.js",
+    "dev": "tsc --watch"
   },
   "keywords": [
     "ai",
@@ -34,7 +46,19 @@
     "templates",
     "scaffolding",
     "performance",
-    "monitoring"
+    "monitoring",
+    "multi-file-editing",
+    "advanced-agents",
+    "devops",
+    "cloud",
+    "debugging",
+    "docker",
+    "kubernetes",
+    "vercel",
+    "aws",
+    "firebase",
+    "v7",
+    "production"
   ],
   "author": "KAZI",
   "license": "MIT",
@@ -61,6 +85,8 @@
   },
   "devDependencies": {
     "@types/node": "^22.10.1",
-    "typescript": "^5.7.2"
+    "@vitest/coverage-v8": "^2.1.9",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.9"
   }
 }

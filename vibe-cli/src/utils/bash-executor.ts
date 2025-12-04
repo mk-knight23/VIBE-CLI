@@ -8,18 +8,22 @@ export async function executeBashCommands(response: string): Promise<string[]> {
   const executed: string[] = [];
   const bashBlocks = response.matchAll(/```(?:bash|shell|sh)\s*\n([\s\S]*?)```/g);
   
+  const allCommands: string[] = [];
   for (const block of bashBlocks) {
-    const commands = block[1].trim().split('\n');
+    const commands = block[1].trim().split('\n')
+      .map(c => c.trim())
+      .filter(c => c && !c.startsWith('#') && !isDangerous(c));
+    allCommands.push(...commands);
+  }
+  
+  if (allCommands.length === 0) return [];
+  
+  // Batch execute commands in parallel (max 5 at a time)
+  const batchSize = 5;
+  for (let i = 0; i < allCommands.length; i += batchSize) {
+    const batch = allCommands.slice(i, i + batchSize);
     
-    for (const cmd of commands) {
-      const command = cmd.trim();
-      if (!command || command.startsWith('#')) continue;
-      
-      if (isDangerous(command)) {
-        console.log(`${pc.yellow('⚠ Skipped:')} ${command}`);
-        continue;
-      }
-      
+    await Promise.all(batch.map(async (command) => {
       try {
         console.log(`${pc.cyan('$ ')}${command}`);
         const { stdout, stderr } = await execAsync(command, {
@@ -34,7 +38,7 @@ export async function executeBashCommands(response: string): Promise<string[]> {
       } catch (error: any) {
         console.log(`${pc.red('✗')} ${error.message}`);
       }
-    }
+    }));
   }
   
   return executed;
