@@ -1,0 +1,44 @@
+{
+  "keyPoints": [],
+  "decisions": [],
+  "currentArchitecture": {},
+  "projectType": "unknown",
+  "pendingTasks": [],
+  "workspaceMemory": {
+    "files": [],
+    "structure": "",
+    "fileSummaries": {},
+    "lastUpdated": "",
+    "recentChanges": [],
+    "dependencies": {},
+    "scripts": {},
+    "gitBranch": "",
+    "gitRemote": ""
+  },
+  "taskHistory": [],
+  "chatHistory": [],
+  "storyMemory": {
+    "projectGoal": "",
+    "milestones": [],
+    "challenges": [],
+    "solutions": [],
+    "learnings": [],
+    "timeline": []
+  },
+  "userPreferences": {},
+  "codePatterns": [],
+  "frequentCommands": {},
+  "sessionState": {
+    "sessionId": "session_1765737736238_vj25qxkyr",
+    "startTime": 1765737736238,
+    "lastActivity": 1765737736238,
+    "activeTasks": [],
+    "currentContext": "",
+    "sessionGoals": [
+      "Create a React app"
+    ],
+    "completedInSession": [
+      "Setup project structure"
+    ]
+  }
+}

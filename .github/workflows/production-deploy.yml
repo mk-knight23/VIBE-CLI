@@ -1,0 +1,41 @@
+name: Production Deploy v9.0
+
+on:
+  push:
+    tags: ['v9.*', 'cli-v9.*', 'ext-v5.*', 'web-v2.*']
+
+jobs:
+  deploy-cli:
+    if: startsWith(github.ref, 'refs/tags/cli-v9.')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '20.x', registry-url: 'https://registry.npmjs.org' }
+      - run: cd vibe-cli && npm ci && npm run build && npm test
+      - run: cd vibe-cli && npm publish
+        env: { NODE_AUTH_TOKEN: '${{ secrets.NPM_TOKEN }}' }
+
+  deploy-extension:
+    if: startsWith(github.ref, 'refs/tags/ext-v5.')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '20.x' }
+      - run: cd vibe-code && npm ci && npm run compile && npm run package
+      - run: cd vibe-code && npx vsce publish
+        env: { VSCE_PAT: '${{ secrets.VSCE_TOKEN }}' }
+
+  deploy-web:
+    if: startsWith(github.ref, 'refs/tags/web-v2.')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '20.x' }
+      - run: cd vibe-web && npm ci && npm run build
+      - uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./vibe-web/dist

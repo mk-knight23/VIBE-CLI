@@ -1,11 +1,41 @@
 {
   "name": "vibe-ai-cli",
-  "version": "8.1.0",
-  "description": "Ultimate AI Development Platform - 50+ Advanced Tools, Story Memory, Chat History, AI-Powered Analysis, Auto-Refactoring, Security Scanning",
+  "version": "9.0.0",
+  "description": "Ultimate AI Development Platform v9.0 - Multi-Agent Orchestration, Extended Thinking, Semantic Memory, Team Collaboration, Advanced Security",
   "main": "dist/cli/index.js",
   "bin": {
     "vibe": "bin/vibe.js",
-    "vibe8": "bin/vibe.js"
+    "vibe9": "bin/vibe.js"
+  },
+  "vibe-ecosystem": {
+    "compatible_cli": "9.x",
+    "compatible_extension": "5.x",
+    "compatible_web": "2.x",
+    "minimum_node_version": "18.0.0",
+    "breaking_changes": {
+      "9.0.0": [
+        "Memory format changed: store.json → store.db",
+        "Provider API responses now include 'thinking' field",
+        "Web search moved to optional feature (disabled by default)",
+        "Multi-agent execution requires additional memory",
+        "Custom instructions now use .vibe/ directory structure"
+      ]
+    },
+    "migration_guide": "https://docs.vibe-ai.dev/v9-migration",
+    "new_features": {
+      "9.0.0": [
+        "Multi-agent orchestration with 5 specialized roles",
+        "Extended thinking support for complex reasoning",
+        "Web search integration with credibility scoring",
+        "Smart model router with 10+ 2025 models",
+        "Real-time streaming UI with cost tracking",
+        "Plan mode with Mermaid diagrams",
+        "BDD test generation and self-healing tests",
+        "Advanced security scanning with CVE integration",
+        "Semantic memory search with embeddings",
+        "Team collaboration with shared context"
+      ]
+    }
   },
   "scripts": {
     "build": "tsc",
@@ -99,10 +129,12 @@
     "picocolors": "^1.1.1",
     "react-router-dom": "^7.10.1",
     "simple-git": "^3.27.0",
-    "sqlite3": "^5.1.7"
+    "sqlite3": "^5.1.7",
+    "uuid": "^11.0.3"
   },
   "devDependencies": {
     "@types/node": "^25.0.2",
+    "@types/uuid": "^10.0.0",
     "@vitest/coverage-v8": "^4.0.15",
     "concurrently": "^9.2.1",
     "nodemon": "^3.1.11",

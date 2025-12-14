@@ -1,3 +1,6 @@
+import { ModelDefinition } from '../ai/model-router';
+import { ThinkingRequest } from '../ai/extended-thinking';
+
 export interface Provider {
   name: string;
   baseUrl: string;
@@ -5,6 +8,12 @@ export interface Provider {
   getApiKey: () => Promise<string>;
   fetchModels: () => Promise<any[]>;
   chat: (messages: any[], model: string, options?: any) => Promise<any>;
+  
+  // NEW: Extended AI capabilities
+  getAvailableModels?: () => Promise<ModelDefinition[]>;
+  supportsExtendedThinking?: (model: string) => boolean;
+  supportsWebSearch?: (model: string) => boolean;
+  executeOrchestration?: (request: OrchestrationRequest) => Promise<OrchestrationResult>;
 }
 
 export interface Model {
@@ -17,6 +26,45 @@ export interface Model {
     prompt: number;
     completion: number;
   };
+}
+
+// NEW: Provider response with orchestration support
+export interface ProviderResponse {
+  message: string;
+  toolCalls?: { tool: string; args: unknown }[];
+  orchestrationCode?: string;  // Python or TypeScript code
+  mode?: 'streaming' | 'orchestration';  // Execution mode
+  thinking?: string;  // Extended thinking trace
+}
+
+// NEW: Orchestration interfaces
+export interface OrchestrationRequest {
+  code: string;  // Python or TypeScript
+  availableTools: ToolDefinition[];
+  context: ProjectContext;
+  maxExecutionTime: number;
+}
+
+export interface OrchestrationResult {
+  success: boolean;
+  output: string;
+  executionTime: number;
+  error?: string;
+  artifacts?: string[];
+}
+
+export interface ToolDefinition {
+  name: string;
+  description: string;
+  parameters: Record<string, any>;
+}
+
+export interface ProjectContext {
+  workingDir: string;
+  files?: string[];
+  dependencies?: string[];
+  framework?: string;
+  language?: string;
 }
 
 // Default API keys (free tier)
