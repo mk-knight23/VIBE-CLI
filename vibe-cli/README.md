@@ -5,7 +5,7 @@
 [![npm version](https://badge.fury.io/js/vibe-ai-cli.svg)](https://www.npmjs.com/package/vibe-ai-cli)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Node.js](https://img.shields.io/badge/node-%3E%3D18.0.0-brightgreen)](https://nodejs.org/)
-[![Tests](https://img.shields.io/badge/tests-103%20passing-success)](https://github.com/mk-knight23/vibe)
+[![Tests](https://img.shields.io/badge/tests-121%20passing-success)](https://github.com/mk-knight23/vibe)
 
 ## 🎉 What's New in v8.0.0
 
@@ -190,13 +190,13 @@ vibe
 | Chat History | 0 | 100 | New |
 | Advanced Tools | 0 | 8 | New |
 | Memory Layers | 1 | 3 | +200% |
-| Tests | 99 | 103 | +4% |
+| Tests | 99 | 121 | +22% |
 
 ---
 
 ## 🧪 Testing
 
-**Complete Test Suite: 103/103 Passing**
+**Complete Test Suite: 121/121 Passing**
 
 ```bash
 npm test                    # Run all tests

@@ -15,3 +15,7 @@ node_modules/
 *.spec.js
 coverage/
 .nyc_output/
+test-project/
+.vibe/
+tests/
+vitest.config.ts

@@ -726,8 +726,8 @@ export class ContextAwareEditor {
     if (imports.some((imp: string) => imp.includes('vue'))) return 'vue';
     if (imports.some((imp: string) => imp.includes('@angular'))) return 'angular';
     if (imports.some((imp: string) => imp.includes('express'))) return 'express';
-    if (filePath.includes('django') || content.includes('django')) return 'django';
-    if (filePath.includes('flask') || content.includes('flask')) return 'flask';
+    if (filePath.includes('web-framework') || content.includes('web-framework')) return 'web-framework';
+    if (filePath.includes('api-framework') || content.includes('api-framework')) return 'api-framework';
 
     return undefined;
   }

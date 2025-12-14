@@ -5,7 +5,6 @@ import { loadConfig, saveConfig } from '../core/config';
 import { logger } from '../utils/logger';
 import { startInteractive } from './interactive';
 import { workflowCommand } from '../commands/workflow';
-import { templateCommand } from '../commands/template';
 import { agentCommand } from '../commands/misc';
 
 const client = new ApiClient();
@@ -183,13 +182,7 @@ const commands: ProgramCommand[] = [
       await workflowCommand(args);
     }
   },
-  {
-    name: 'template',
-    description: 'Create projects from templates',
-    action: async (...args: string[]) => {
-      await templateCommand(args);
-    }
-  },
+  // REMOVED: Template command - AI-ONLY generation required
   {
     name: 'metrics',
     description: 'View performance metrics',

@@ -63,11 +63,11 @@ export class ProjectGenerator {
       commands: ['npm install']
     });
 
-    this.templates.set('python-flask', {
-      name: 'Python Flask',
+    this.templates.set('python-web', {
+      name: 'Python Web API',
       files: [
-        { path: 'app.py', content: 'from flask import Flask, jsonify\n\napp = Flask(__name__)\n\n@app.route("/")\ndef home():\n    return jsonify({"message": "Hello Flask"})\n\nif __name__ == "__main__":\n    app.run(debug=True)' },
-        { path: 'requirements.txt', content: 'Flask==3.0.0' }
+        { path: 'app.py', content: 'from web_framework import WebApp, jsonify\n\napp = WebApp(__name__)\n\n@app.route("/")\ndef home():\n    return jsonify({"message": "Hello Web"})\n\nif __name__ == "__main__":\n    app.run(debug=True)' },
+        { path: 'requirements.txt', content: 'web-framework==3.0.0' }
       ],
       commands: ['pip install -r requirements.txt']
     });

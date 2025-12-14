@@ -234,39 +234,8 @@ export class ToolOrchestrator {
         toolExecutions.push(this.createToolExecution('write_file', { file_path: context?.filePath, content: context?.content }));
         reasoning = 'Single file write operation';
         riskLevel = 'medium';
-      } else if (analysis.operations.includes('create') && (request || '').toLowerCase().includes('html')) {
-        // Create a simple HTML page
-        const htmlContent = `<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Simple HTML Page</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 2rem;
-            line-height: 1.6;
-        }
-        h1 { color: #333; }
-        p { color: #666; }
-    </style>
-</head>
-<body>
-    <h1>Welcome to My HTML Page</h1>
-    <p>This is a simple HTML page created by VIBE CLI.</p>
-    <p>Edit this file to customize your content!</p>
-</body>
-</html>`;
-        toolExecutions.push(this.createToolExecution('write_file', {
-          file_path: 'index.html',
-          content: htmlContent
-        }));
-        reasoning = 'Create a simple HTML page with basic styling';
-        riskLevel = 'low';
       }
+      // REMOVED: Template-based HTML creation - AI-ONLY generation required
     }
 
     // Complex operations (project creation, multi-step tasks)
@@ -280,18 +249,7 @@ export class ToolOrchestrator {
         reasoning = 'Research project requirements and dependencies before creation';
       }
 
-      // Creation phase
-      if (analysis.operations.includes('create')) {
-        toolExecutions.push(
-          this.createToolExecution('create_directory', { dir_path: context?.projectName || 'new-project' }, 15000, 1),
-          this.createToolExecution('write_file', {
-            file_path: `${context?.projectName || 'new-project'}/package.json`,
-            content: context?.packageJson
-          }, 10000, 2)
-        );
-        reasoning += '. Create project structure and core files';
-        riskLevel = 'high';
-      }
+      // REMOVED: Automatic project creation - AI-ONLY structured generation required
 
       // Setup phase
       if (analysis.operations.includes('execute')) {

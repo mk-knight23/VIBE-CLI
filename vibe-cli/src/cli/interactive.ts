@@ -4,8 +4,8 @@ import ora, { Ora } from 'ora';
 import { ApiClient } from '../core/api';
 import { logger } from '../utils/logger';
 import { tools, executeTool } from '../tools';
-import { parseFilesFromResponse } from '../utils/file-parser';
-import { executeBashCommands } from '../utils/bash-executor';
+import { parseMarkdownResponse } from '../utils/file-parser';
+
 import { handleCommand } from './command-handler';
 import { VIBE_SYSTEM_PROMPT, VERSION, DEFAULT_MODEL } from './system-prompt';
 import { MemoryManager } from '../core/memory';
@@ -94,24 +94,13 @@ export async function startInteractive(client: ApiClient): Promise<void> {
       // Intelligent model selection
       const { selectBestModel, shouldSwitchModel } = await import('../core/model-selector');
       const profile = selectBestModel(input, client.getProvider());
-      
+
       if (shouldSwitchModel(profile, currentModel)) {
         console.log(pc.gray(`Switching to ${profile.model} (${profile.reasoning})`));
         client.setProvider(profile.provider as any);
         currentModel = profile.model;
       }
-      
-      // Check for intelligent project scaffolding
-      const { shouldScaffold, detectAndScaffold } = await import('../core/scaffolder');
-      if (shouldScaffold(input)) {
-        console.log(pc.cyan('\n🔨 Creating project...\n'));
-        const scaffolded = await detectAndScaffold(input, new TerminalRenderer(), memory);
-        if (scaffolded) {
-          console.log(pc.green('\n✓ Project created\n'));
-          continue;
-        }
-      }
-      
+
       lastResponse = await processUserInput(client, messages, currentModel, input, memory);
       
     } catch (error: any) {
@@ -304,11 +293,7 @@ async function handleSlashCommand(
       return { action: 'none' };
       
     case 'create':
-      if (!lastResponse) {
-        showWarning('No previous response to create files from');
-        return { action: 'none' };
-      }
-      await createFilesFromResponse(lastResponse, memory);
+      showWarning('/create command disabled - AI-ONLY structured generation required');
       return { action: 'none' };
       
     default:
@@ -334,7 +319,7 @@ async function switchProvider(client: ApiClient): Promise<void> {
   showSuccess(`Switched to ${provider}`);
 }
 
-async function processUserInput(
+export async function processUserInput(
   client: ApiClient,
   messages: ConversationMessage[],
   currentModel: string,
@@ -367,6 +352,14 @@ async function processUserInput(
     const summarized = memory.summarizeOldMessages(messages);
     messages.length = 0;
     messages.push(...summarized);
+  }
+
+  // AI-ONLY ENFORCEMENT: Log AI usage for project creation
+  const isProjectCreation = /\b(create|build|make|generate|scaffold)\b/i.test(input);
+  if (isProjectCreation) {
+    console.log(pc.cyan(`🤖 Using AI model: ${currentModel} (${client.getProvider()})`));
+    console.log(pc.cyan(`📝 Generating project via AI pipeline`));
+    memory.addMilestone(`AI Project Creation: ${input} (Model: ${currentModel}, Provider: ${client.getProvider()})`);
   }
 
   // Set initial state: Thinking
@@ -480,91 +473,127 @@ async function processUserInput(
       }
     }
 
-    // Handle project creation with trust signals
+    // Handle project creation - AI intent → Tool execution bridge
     const isProjectCreation = /\b(create|build|make|generate|scaffold)\b/i.test(input);
     if (reply && isProjectCreation) {
-      const files = parseFilesFromResponse(reply, 'project');
+      try {
+        let projectPlan: any = null;
+        let projectName: string = '';
+        let folders: string[] = [];
+        let files: Array<{path: string, content: string, executable?: boolean}> = [];
+        let shellCommands: string[] = [];
 
-      if (files.length > 0) {
-        renderer.setState('executing', 'Creating project files...');
+        // Try structured JSON first (preferred)
+        try {
+          projectPlan = JSON.parse(reply.trim());
+          if (projectPlan.projectName && projectPlan.structure) {
+            projectName = projectPlan.projectName;
+            folders = projectPlan.structure.folders || [];
+            files = projectPlan.structure.files || [];
+            shellCommands = projectPlan.shellCommands || [];
+          }
+        } catch (jsonError) {
+          // Fall back to markdown parsing
+          console.log('AI returned markdown, parsing manually...');
+        }
+
+        // If JSON failed, parse markdown response
+        if (!projectPlan || !projectName) {
+          const parsed = parseMarkdownResponse(reply, input);
+          projectName = parsed.projectName;
+          folders = parsed.folders;
+          files = parsed.files;
+          shellCommands = parsed.shellCommands;
+        }
+
+        if (!projectName) {
+          throw new Error('Could not determine project name from AI response');
+        }
+
+        renderer.setState('executing', `Creating project: ${projectName}`);
+
+        // Execute via tools - this is the critical bridge
+        const projectPath = projectName;
+
+        // Create project directory
+        await executeTool('create_directory', { dir_path: projectPath });
+        renderer.showFileOperation('write', projectPath, true);
+        stats.toolsExecuted++;
+
+        // Create folders
+        for (const folder of folders) {
+          const fullPath = `${projectPath}/${folder}`;
+          await executeTool('create_directory', { dir_path: fullPath });
+          renderer.showFileOperation('write', fullPath, true);
+          stats.toolsExecuted++;
+        }
+
+        // Create files
         for (const file of files) {
+          const fullPath = `${projectPath}/${file.path}`;
+          await executeTool('write_file', { file_path: fullPath, content: file.content });
+          renderer.showFileOperation('write', fullPath, true);
+          stats.filesCreated++;
+          stats.toolsExecuted++;
+          memory.onFileWrite(fullPath, file.content);
+
+          if (file.executable) {
+            await executeTool('run_shell_command', { command: `chmod +x ${fullPath}`, description: `Make ${file.path} executable` });
+            stats.toolsExecuted++;
+          }
+        }
+
+        // Execute shell commands
+        for (const cmd of shellCommands) {
+          if (!cmd.trim()) continue;
+
+          if (isDangerousCommand(cmd)) {
+            renderer.status(`Blocked dangerous command: ${cmd}`, 'warning');
+            continue;
+          }
+
+          renderer.status(`🔧 ${cmd}`, 'info');
+
           try {
-            await executeTool('write_file', { file_path: file.path, content: file.content });
-            renderer.showFileOperation('write', file.path, true);
-            stats.filesCreated++;
-            memory.onFileWrite(file.path, file.content);
-          } catch (err: any) {
-            renderer.showFileOperation('write', file.path, false);
-            stats.errors++;
-            memory.onError(`Failed to create ${file.path}: ${err.message}`);
-          }
-        }
-      }
-
-      // Handle shell commands with safety checks
-      if (reply.includes('```bash') || reply.includes('```shell')) {
-        const shouldExecute = await promptShellExecution(reply);
-        if (shouldExecute) {
-          renderer.setState('executing', 'Running setup commands...');
-          const bashBlocks = reply.match(/```(?:bash|shell|sh)\n([\s\S]*?)```/g) || [];
-
-          for (const block of bashBlocks) {
-            const commands = block.replace(/```(?:bash|shell|sh)\n/, '').replace(/```$/, '').trim().split('\n');
-
-            for (const cmd of commands) {
-              if (!cmd.trim()) continue;
-
-              if (isDangerousCommand(cmd)) {
-                renderer.status(`Blocked dangerous command: ${cmd}`, 'warning');
-                continue;
-              }
-
-              const startTime = Date.now();
-
-              // Show command execution start
-              renderer.status(`🔧 ${cmd}`, 'info');
-
-              try {
-                // Use centralized shell executor with live streaming
-                const result = await executeShellCommand(cmd, {
-                  cwd: input.includes('project') ? undefined : process.cwd(), // Use project dir if creating project
-                  timeout: 60000, // 60 second timeout
-                  streamOutput: true,
-                  onStdout: (data: string) => {
-                    // Stream stdout live to user
-                    process.stdout.write(data);
-                  },
-                  onStderr: (data: string) => {
-                    // Stream stderr live to user
-                    process.stderr.write(data);
-                  },
-                  onProgress: (progress) => {
-                    // Update UI with execution progress
-                    if (progress.status === 'completed') {
-                      renderer.showCommandExecution(cmd, progress.exitCode === 0, progress.duration);
-                    } else if (progress.status === 'failed') {
-                      renderer.showCommandExecution(cmd, false, progress.duration);
-                    }
-                  },
-                  retryCount: 1, // Retry once on failure
-                  retryDelay: 1000
-                });
-
-                if (result.success) {
-                  stats.shellCommands++;
-                  memory.onShellCommand(cmd, result.stdout || 'success');
-                } else {
-                  stats.errors++;
-                  memory.onError(`Shell command failed: ${cmd} - ${result.error || 'Unknown error'}`);
+            const result = await executeShellCommand(cmd, {
+              cwd: projectPath,
+              timeout: 60000,
+              streamOutput: true,
+              onStdout: (data: string) => process.stdout.write(data),
+              onStderr: (data: string) => process.stderr.write(data),
+              onProgress: (progress) => {
+                if (progress.status === 'completed') {
+                  renderer.showCommandExecution(cmd, progress.exitCode === 0, progress.duration);
+                } else if (progress.status === 'failed') {
+                  renderer.showCommandExecution(cmd, false, progress.duration);
                 }
-              } catch (err: any) {
-                renderer.showCommandExecution(cmd, false);
-                stats.errors++;
-                memory.onError(`Shell command failed: ${cmd} - ${err.message}`);
-              }
+              },
+              retryCount: 1,
+              retryDelay: 1000
+            });
+
+            if (result.success) {
+              stats.shellCommands++;
+              stats.toolsExecuted++;
+              memory.onShellCommand(cmd, result.stdout || 'success');
+            } else {
+              stats.errors++;
+              memory.onError(`Shell command failed: ${cmd} - ${result.error || 'Unknown error'}`);
             }
+          } catch (err: any) {
+            renderer.showCommandExecution(cmd, false);
+            stats.errors++;
+            memory.onError(`Shell command failed: ${cmd} - ${err.message}`);
           }
         }
+
+        memory.addMilestone(`AI Project Creation: ${projectName} (${files.length} files, ${folders.length} folders)`);
+
+      } catch (parseError: any) {
+        renderer.setState('error', 'Failed to parse AI project structure');
+        stats.errors++;
+        memory.onError(`Project creation failed: ${parseError.message}`);
+        renderer.status(`Error: ${parseError.message}`, 'error');
       }
     }
 
@@ -912,24 +941,7 @@ function showGoodbyeMessage(): void {
   console.log();
 }
 
-async function createFilesFromResponse(response: string, memory: MemoryManager): Promise<void> {
-  const files = parseFilesFromResponse(response, 'project');
-  if (files.length === 0) {
-    showWarning('No code blocks found in response');
-    return;
-  }
-  
-  const stats: OperationStats = {
-    filesCreated: 0,
-    shellCommands: 0,
-    toolsExecuted: 0,
-    errors: 0,
-    startTime: Date.now()
-  };
-  
-  await createFilesWithProgress(files, stats, memory);
-  showOperationSummary(stats);
-}
+// REMOVED: createFilesFromResponse - AI-ONLY structured generation required
 
 function createSpinner(text: string): Ora {
   return ora({ text, color: 'cyan' }).start();
