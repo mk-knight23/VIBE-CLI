@@ -1,85 +1,74 @@
-name: CI - Build & Test
+name: CI
 
 on:
-  push:
-    branches: [ main, develop ]
   pull_request:
-    branches: [ main, develop ]
+    branches: [main]
+  push:
+    branches: [main]
 
 jobs:
-  cli:
-    name: CLI - Build & Test
+  test-cli:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: vibe-cli/package-lock.json
       
-      - name: Install dependencies
+      - name: Install CLI dependencies
         working-directory: vibe-cli
-        run: npm install --legacy-peer-deps
+        run: npm ci
       
-      - name: Build
+      - name: Build CLI
         working-directory: vibe-cli
         run: npm run build
       
-      - name: Check version
+      - name: Test CLI
         working-directory: vibe-cli
-        run: node -p "require('./package.json').version"
+        run: npm test
 
-  web:
-    name: Web - Build & Test
+  test-web:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: vibe-web/package-lock.json
       
-      - name: Install dependencies
+      - name: Install Web dependencies
         working-directory: vibe-web
-        run: npm install --legacy-peer-deps
+        run: npm ci
       
-      - name: Build
+      - name: Build Web
         working-directory: vibe-web
         run: npm run build
       
-      - name: Check version
+      - name: TypeCheck Web
         working-directory: vibe-web
-        run: node -p "require('./package.json').version"
+        run: npm run typecheck
 
-  extension:
-    name: Extension - Build & Package
+  test-extension:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: vibe-code/package-lock.json
       
-      - name: Install dependencies
+      - name: Install Extension dependencies
         working-directory: vibe-code
-        run: npm install --legacy-peer-deps
+        run: npm ci
       
-      - name: Compile
+      - name: Compile Extension
         working-directory: vibe-code
         run: npm run compile
       
-      - name: Package
+      - name: Package Extension
         working-directory: vibe-code
-        run: npx @vscode/vsce package --no-dependencies
-      
-      - name: Check version
-        working-directory: vibe-code
-        run: node -p "require('./package.json').version"
-      
-      - name: Upload VSIX
-        uses: actions/upload-artifact@v4
-        with:
-          name: vibe-vscode-vsix
-          path: vibe-code/*.vsix
-          retention-days: 7
+        run: npm run package

@@ -1,0 +1,71 @@
+name: CLI Release
+
+on:
+  push:
+    tags:
+      - 'vibe-cli-v*'
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          registry-url: 'https://registry.npmjs.org'
+          cache: 'npm'
+          cache-dependency-path: vibe-cli/package-lock.json
+      
+      - name: Install dependencies
+        working-directory: vibe-cli
+        run: npm ci
+      
+      - name: Build
+        working-directory: vibe-cli
+        run: npm run build
+      
+      - name: Test
+        working-directory: vibe-cli
+        run: npm test
+      
+      - name: Publish to NPM
+        working-directory: vibe-cli
+        run: npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      
+      - name: Extract version
+        id: version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/vibe-cli-v}" >> $GITHUB_OUTPUT
+      
+      - name: Create GitHub Release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: CLI v${{ steps.version.outputs.VERSION }}
+          body: |
+            ## VIBE CLI v${{ steps.version.outputs.VERSION }}
+            
+            ### Installation
+            ```bash
+            npm install -g vibe-ai-cli
+            ```
+            
+            ### Features
+            - 36+ Advanced AI Tools
+            - Story Memory System
+            - Chat History with Semantic Search
+            - Multi-provider AI Support (OpenRouter, MegaLLM, AgentRouter, Routeway)
+            - Code Analysis, Refactoring, Security Scanning
+            - Auto Test Generation & Documentation
+            
+            ### Usage
+            ```bash
+            vibe
+            ```
+          draft: false
+          prerelease: false

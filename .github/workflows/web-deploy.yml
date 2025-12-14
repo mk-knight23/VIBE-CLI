@@ -1,46 +1,96 @@
-name: Deploy Web to Vercel
+name: Web Deploy
 
 on:
   push:
+    tags:
+      - 'vibe-web-v*'
     branches:
       - main
     paths:
       - 'vibe-web/**'
-  workflow_dispatch:
 
 jobs:
-  deploy:
+  deploy-vercel:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: vibe-web/package-lock.json
       
       - name: Install Vercel CLI
-        run: npm install -g vercel
+        run: npm install --global vercel@latest
       
       - name: Pull Vercel Environment
         run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
         working-directory: vibe-web
-      
+
+      - name: Install dependencies
+        working-directory: vibe-web
+        run: npm ci
+
       - name: Build Project
         run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
         working-directory: vibe-web
-      
+
       - name: Deploy to Vercel
         run: vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}
         working-directory: vibe-web
+
+  deploy-netlify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
       
-      - name: Comment on PR
-        if: github.event_name == 'pull_request'
-        uses: actions/github-script@v7
+      - uses: actions/setup-node@v4
         with:
-          script: |
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: '✅ Web deployed to Vercel: https://vibe-ai.vercel.app'
-            })
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: vibe-web/package-lock.json
+      
+      - name: Install dependencies
+        working-directory: vibe-web
+        run: npm ci
+      
+      - name: Build
+        working-directory: vibe-web
+        run: npm run build
+      
+      - name: Deploy to Netlify
+        uses: netlify/actions/cli@master
+        with:
+          args: deploy --prod --dir=vibe-web/.next
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
+
+  deploy-github-pages:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: vibe-web/package-lock.json
+      
+      - name: Install dependencies
+        working-directory: vibe-web
+        run: npm ci
+      
+      - name: Build for static export
+        working-directory: vibe-web
+        run: |
+          npm run build
+          touch .next/out/.nojekyll
+      
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./vibe-web/.next/out
+          cname: vibe-ai.dev

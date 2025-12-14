@@ -69,3 +69,14 @@ pnpm-lock.yaml
 # Logs
 *.log
 
+# Random folders created by file-parser bug (now fixed)
+/vibe-cli/advanced/
+/vibe-cli/app/
+/vibe-cli/css/
+/vibe-cli/web/
+/vibe-cli/lication/
+/vibe-cli/simple/
+/vibe-cli/an/
+/vibe-cli/api/
+/vibe-cli/node/
+

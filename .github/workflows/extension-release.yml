@@ -1,0 +1,82 @@
+name: Extension Release
+
+on:
+  push:
+    tags:
+      - 'vibe-code-v*'
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: vibe-code/package-lock.json
+      
+      - name: Install dependencies
+        working-directory: vibe-code
+        run: npm ci
+      
+      - name: Compile
+        working-directory: vibe-code
+        run: npm run compile
+      
+      - name: Package
+        working-directory: vibe-code
+        run: npm run package
+      
+      - name: Publish to VS Code Marketplace
+        working-directory: vibe-code
+        run: npx @vscode/vsce publish --no-dependencies -p ${{ secrets.VSCE_PAT }}
+        continue-on-error: true
+      
+      - name: Publish to Open VSX
+        working-directory: vibe-code
+        run: npx ovsx publish vibe-vscode-*.vsix -p ${{ secrets.OVSX_PAT }}
+        continue-on-error: true
+      
+      - name: Extract version
+        id: version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/vibe-code-v}" >> $GITHUB_OUTPUT
+      
+      - name: Create GitHub Release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: VS Code Extension v${{ steps.version.outputs.VERSION }}
+          body: |
+            ## VIBE VS Code Extension v${{ steps.version.outputs.VERSION }}
+            
+            ### Installation
+            Install from VS Code Marketplace or download the VSIX file.
+            
+            ### Features
+            - Autonomous AI Coding Environment
+            - 40+ AI Models from 4 Providers
+            - Filesystem CRUD Operations
+            - Shell Execution & Project Generation
+            - Runtime Sandbox & Agent Mode
+            - Context-aware Code Generation
+            
+            ### Usage
+            1. Install extension
+            2. Open Command Palette (Ctrl+Shift+P)
+            3. Run "Vibe: Open Chat"
+          draft: false
+          prerelease: false
+      
+      - name: Upload VSIX
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: vibe-code/vibe-vscode-${{ steps.version.outputs.VERSION }}.vsix
+          asset_name: vibe-vscode-${{ steps.version.outputs.VERSION }}.vsix
+          asset_content_type: application/zip

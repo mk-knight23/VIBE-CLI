@@ -2098,7 +2098,7 @@ REMEMBER:
               <div class="sidebar-section" style="flex: 1; overflow-y: auto;">
                 <h3>Vibe Settings</h3>
                 <div class="settings-intro">
-                  <p>🚀 Vibe v4.0 - 4 Providers, 40+ Models</p>
+                  <p>🚀 Vibe v4.0.0 - 4 Providers, 40+ Models</p>
                   <button id="vscodeSettingsBtn" style="margin-top: 8px; padding: 6px 12px; font-size: 11px;">Open Vibe Settings</button>
                 </div>
 
@@ -4028,4 +4028,3 @@ export function activate(context: vscode.ExtensionContext) {
 export function deactivate() {
   // no-op for now
 }
-             

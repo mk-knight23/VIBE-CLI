@@ -87,11 +87,12 @@ export function parseMarkdownResponse(response: string, userInput: string): {
     // Clean up filename
     filename = filename.replace(/^[\/\\]+/, ''); // Remove leading slashes
 
-    // Extract folders from filename
+    // Extract folders from filename (only if it's a valid path)
     const pathParts = filename.split('/');
-    if (pathParts.length > 1) {
+    if (pathParts.length > 1 && filename.includes('.')) {
       const folderPath = pathParts.slice(0, -1).join('/');
-      if (!result.folders.includes(folderPath)) {
+      // Only add if it looks like a valid folder path (not random words)
+      if (folderPath.length > 0 && !folderPath.match(/\s/) && !result.folders.includes(folderPath)) {
         result.folders.push(folderPath);
       }
     }

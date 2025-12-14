@@ -7,6 +7,6 @@
   "repository": "https://github.com/mk-knight23/vibe",
   "homepage": "https://vibe-ai.vercel.app",
   "dependencies": {
-    "vibe-ai-cli": "^7.0.0"
+    "vibe-ai-cli": "^8.0.0"
   }
 }

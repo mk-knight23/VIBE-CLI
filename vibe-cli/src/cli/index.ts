@@ -17,12 +17,12 @@
 import { startInteractive } from './interactive';
 import { ApiClient } from '../core/api';
 
-const VERSION = '8.0.1';
+const VERSION = '8.0.2';
 
 const BANNER = `
 ╔═══════════════════════════════════════════════════════════╗
 ║                                                           ║
-║   🎨 VIBE v8.0.0 - ULTIMATE EDITION                      ║
+║   🎨 VIBE v8.0.2 - ULTIMATE EDITION                      ║
 ║   AI-Powered Development Platform                        ║
 ║                                                           ║
 ║   ✨ Story Memory • Chat History • 36 Advanced Tools    ║
