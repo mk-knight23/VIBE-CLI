@@ -1,9 +1,9 @@
 {
   "name": "vibe-vscode",
-  "displayName": "Vibe VS Code - Autonomous AI Coding",
-  "description": "Fully autonomous AI coding environment with 4 providers, filesystem CRUD, shell execution, project generators, runtime sandbox, and agent mode. Like Claude Desktop + Cursor + Windsurf combined.",
-  "version": "4.0.1",
-  "publisher": "vibe-ai",
+  "displayName": "Vibe VS Code - CLI Parity Edition",
+  "description": "AI coding assistant with complete CLI parity - 35+ commands, memory system, git integration, file operations, and comprehensive testing suite.",
+  "version": "4.1.0",
+  "publisher": "mktech",
   "repository": {
     "type": "git",
     "url": "https://github.com/mk-knight23/vibe"
@@ -22,6 +22,7 @@
   ],
   "keywords": [
     "ai",
+    "cli-parity",
     "autonomous",
     "agent",
     "coding-assistant",
@@ -31,11 +32,11 @@
     "routeway",
     "filesystem",
     "shell",
-    "sandbox",
-    "project-generator",
-    "claude",
-    "cursor",
-    "windsurf"
+    "memory-system",
+    "git-integration",
+    "command-line",
+    "vibe-cli",
+    "mktech"
   ],
   "main": "./dist/extension.js",
   "scripts": {
@@ -192,7 +193,7 @@
     },
     "configuration": {
       "type": "object",
-      "title": "Vibe v5.0",
+      "title": "Vibe v5.0 - Full CLI Parity",
       "properties": {
         "vibe.openrouterApiKey": {
           "type": "string",
@@ -223,12 +224,37 @@
             "routeway"
           ],
           "default": "megallm",
+          "enumDescriptions": [
+            "OpenRouter (40+ models, community-driven)",
+            "MegaLLM (12 models, high performance)",
+            "AgentRouter (7 models, Claude access)",
+            "Routeway (6 models, specialized)"
+          ],
           "markdownDescription": "Primary AI provider (automatic fallback enabled)"
         },
         "vibe.defaultModel": {
           "type": "string",
           "default": "qwen/qwen3-next-80b-a3b-instruct",
           "markdownDescription": "Default model (qwen3-next-80b recommended)"
+        },
+        "vibe.executionMode": {
+          "type": "string",
+          "enum": [
+            "ask",
+            "code",
+            "debug",
+            "architect",
+            "orchestrator"
+          ],
+          "default": "code",
+          "enumDescriptions": [
+            "Ask: Q&A and explanations",
+            "Code: Development and implementation",
+            "Debug: Error diagnosis and fixes",
+            "Architect: System design and planning",
+            "Orchestrator: Complex task coordination"
+          ],
+          "markdownDescription": "Default execution mode for AI interactions"
         },
         "vibe.autoApproveUnsafeOps": {
           "type": "boolean",
@@ -238,7 +264,161 @@
         "vibe.maxContextFiles": {
           "type": "number",
           "default": 20,
+          "minimum": 1,
+          "maximum": 100,
           "markdownDescription": "Maximum files to include in context"
+        },
+        "vibe.contextWindowSize": {
+          "type": "number",
+          "default": 128000,
+          "enum": [
+            32000,
+            64000,
+            128000,
+            256000,
+            512000
+          ],
+          "enumDescriptions": [
+            "32K tokens (basic models)",
+            "64K tokens (standard models)",
+            "128K tokens (advanced models)",
+            "256K tokens (large context)",
+            "512K tokens (maximum context)"
+          ],
+          "markdownDescription": "Maximum context window size in tokens"
+        },
+        "vibe.streamingEnabled": {
+          "type": "boolean",
+          "default": true,
+          "markdownDescription": "Enable real-time streaming responses"
+        },
+        "vibe.enableMemorySystem": {
+          "type": "boolean",
+          "default": true,
+          "markdownDescription": "Enable memory system (story, chat, workspace)"
+        },
+        "vibe.memoryMaxItems": {
+          "type": "number",
+          "default": 1000,
+          "minimum": 10,
+          "maximum": 10000,
+          "markdownDescription": "Maximum items to store in memory"
+        },
+        "vibe.enableTaskHistory": {
+          "type": "boolean",
+          "default": true,
+          "markdownDescription": "Enable task history tracking"
+        },
+        "vibe.taskHistoryMaxItems": {
+          "type": "number",
+          "default": 50,
+          "minimum": 5,
+          "maximum": 500,
+          "markdownDescription": "Maximum tasks to keep in history"
+        },
+        "vibe.enableDiffPreview": {
+          "type": "boolean",
+          "default": true,
+          "markdownDescription": "Show diff previews before applying changes"
+        },
+        "vibe.diffPreviewTimeout": {
+          "type": "number",
+          "default": 30000,
+          "minimum": 5000,
+          "maximum": 120000,
+          "markdownDescription": "Timeout for diff preview confirmation (ms)"
+        },
+        "vibe.enableToolExecutionFeedback": {
+          "type": "boolean",
+          "default": true,
+          "markdownDescription": "Show tool execution progress and results"
+        },
+        "vibe.toolExecutionTimeout": {
+          "type": "number",
+          "default": 60000,
+          "minimum": 10000,
+          "maximum": 300000,
+          "markdownDescription": "Maximum time for tool execution (ms)"
+        },
+        "vibe.enableBatchOperations": {
+          "type": "boolean",
+          "default": true,
+          "markdownDescription": "Enable batch file operations"
+        },
+        "vibe.batchOperationMaxFiles": {
+          "type": "number",
+          "default": 10,
+          "minimum": 1,
+          "maximum": 100,
+          "markdownDescription": "Maximum files in batch operations"
+        },
+        "vibe.enableDependencyTracking": {
+          "type": "boolean",
+          "default": true,
+          "markdownDescription": "Track tool dependencies and execution order"
+        },
+        "vibe.enableProviderFallback": {
+          "type": "boolean",
+          "default": true,
+          "markdownDescription": "Automatically fallback to other providers on failure"
+        },
+        "vibe.providerRetryAttempts": {
+          "type": "number",
+          "default": 3,
+          "minimum": 1,
+          "maximum": 10,
+          "markdownDescription": "Number of retry attempts per provider"
+        },
+        "vibe.providerTimeout": {
+          "type": "number",
+          "default": 30000,
+          "minimum": 5000,
+          "maximum": 120000,
+          "markdownDescription": "Timeout for provider requests (ms)"
+        },
+        "vibe.enableRateLimiting": {
+          "type": "boolean",
+          "default": true,
+          "markdownDescription": "Enable automatic rate limiting"
+        },
+        "vibe.rateLimitRequestsPerMinute": {
+          "type": "number",
+          "default": 60,
+          "minimum": 10,
+          "maximum": 1000,
+          "markdownDescription": "Maximum requests per minute"
+        },
+        "vibe.enableStructuredLogging": {
+          "type": "boolean",
+          "default": true,
+          "markdownDescription": "Enable structured logging to output channel"
+        },
+        "vibe.logLevel": {
+          "type": "string",
+          "enum": [
+            "error",
+            "warn",
+            "info",
+            "debug"
+          ],
+          "default": "info",
+          "enumDescriptions": [
+            "Errors only",
+            "Warnings and errors",
+            "Info, warnings, and errors",
+            "Debug information"
+          ],
+          "markdownDescription": "Logging verbosity level"
+        },
+        "vibe.enableGitIntegration": {
+          "type": "boolean",
+          "default": true,
+          "markdownDescription": "Enable Git integration features"
+        },
+        "vibe.gitAutoCommit": {
+          "type": "boolean",
+          "default": false,
+          "markdownDescription": "Automatically commit changes (requires confirmation)"
         },
         "vibe.enableSandbox": {
           "type": "boolean",
@@ -248,12 +428,131 @@
         "vibe.sandboxTimeout": {
           "type": "number",
           "default": 30000,
+          "minimum": 5000,
+          "maximum": 120000,
           "markdownDescription": "Sandbox execution timeout (ms)"
         },
         "vibe.allowNetworkInSandbox": {
           "type": "boolean",
           "default": false,
           "markdownDescription": "Allow network access in sandbox"
+        },
+        "vibe.enableProjectGeneration": {
+          "type": "boolean",
+          "default": true,
+          "markdownDescription": "Enable project generation features"
+        },
+        "vibe.projectTemplatesPath": {
+          "type": "string",
+          "default": "",
+          "markdownDescription": "Custom path for project templates"
+        },
+        "vibe.enableAgentMode": {
+          "type": "boolean",
+          "default": true,
+          "markdownDescription": "Enable autonomous agent mode"
+        },
+        "vibe.agentMaxSteps": {
+          "type": "number",
+          "default": 20,
+          "minimum": 5,
+          "maximum": 100,
+          "markdownDescription": "Maximum steps for autonomous agent"
+        },
+        "vibe.agentDecisionTimeout": {
+          "type": "number",
+          "default": 10000,
+          "minimum": 1000,
+          "maximum": 60000,
+          "markdownDescription": "Timeout for agent decision making (ms)"
+        },
+        "vibe.enablePerformanceMonitoring": {
+          "type": "boolean",
+          "default": true,
+          "markdownDescription": "Enable performance monitoring and metrics"
+        },
+        "vibe.performanceLogThreshold": {
+          "type": "number",
+          "default": 5000,
+          "minimum": 100,
+          "maximum": 60000,
+          "markdownDescription": "Log operations taking longer than threshold (ms)"
+        },
+        "vibe.enableSecurityScanning": {
+          "type": "boolean",
+          "default": true,
+          "markdownDescription": "Enable security scanning for vulnerabilities"
+        },
+        "vibe.securityScanLevel": {
+          "type": "string",
+          "enum": [
+            "basic",
+            "standard",
+            "comprehensive"
+          ],
+          "default": "standard",
+          "enumDescriptions": [
+            "Basic security checks",
+            "Standard security scanning",
+            "Comprehensive security analysis"
+          ],
+          "markdownDescription": "Security scanning thoroughness"
+        },
+        "vibe.enableCodeQualityAnalysis": {
+          "type": "boolean",
+          "default": true,
+          "markdownDescription": "Enable code quality analysis"
+        },
+        "vibe.codeQualityThreshold": {
+          "type": "number",
+          "default": 70,
+          "minimum": 0,
+          "maximum": 100,
+          "markdownDescription": "Minimum code quality score (0-100)"
+        },
+        "vibe.enableAutoSave": {
+          "type": "boolean",
+          "default": true,
+          "markdownDescription": "Automatically save files after operations"
+        },
+        "vibe.autoSaveDelay": {
+          "type": "number",
+          "default": 1000,
+          "minimum": 0,
+          "maximum": 10000,
+          "markdownDescription": "Delay before auto-saving (ms)"
+        },
+        "vibe.enableBackupOnEdit": {
+          "type": "boolean",
+          "default": true,
+          "markdownDescription": "Create backups before editing files"
+        },
+        "vibe.backupRetentionDays": {
+          "type": "number",
+          "default": 7,
+          "minimum": 1,
+          "maximum": 365,
+          "markdownDescription": "Days to keep file backups"
+        },
+        "vibe.enableTelemetry": {
+          "type": "boolean",
+          "default": false,
+          "markdownDescription": "Enable anonymous usage telemetry"
+        },
+        "vibe.telemetryLevel": {
+          "type": "string",
+          "enum": [
+            "minimal",
+            "standard",
+            "detailed"
+          ],
+          "default": "minimal",
+          "enumDescriptions": [
+            "Basic usage statistics",
+            "Standard usage and performance",
+            "Detailed usage, performance, and errors"
+          ],
+          "markdownDescription": "Telemetry data collection level"
         }
       }
     },

@@ -1,91 +1,56 @@
-name: Create Release
+name: VIBE Ecosystem Release
 
 on:
   push:
     tags:
-      - 'v*.*.*'
+      - 'vibe-cli-v*'
+      - 'vibe-code-v*'
+      - 'vibe-web-v*'
 
 jobs:
-  create-release:
-    name: Create GitHub Release
+  cli-release:
+    if: startsWith(github.ref, 'refs/tags/vibe-cli-v')
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
     steps:
       - uses: actions/checkout@v4
-      
-      - name: Get version from tag
-        id: version
-        run: |
-          VERSION=${GITHUB_REF#refs/tags/v}
-          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
-          echo "TAG_NAME=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
-      
-      - name: Create Release
-        uses: softprops/action-gh-release@v1
+      - uses: actions/setup-node@v4
         with:
-          name: VIBE v${{ steps.version.outputs.VERSION }}
-          body: |
-            ## 🚀 VIBE v${{ steps.version.outputs.VERSION }} Release
-            
-            ### 📦 Packages Included:
-            - **Vibe CLI v4.0** - Terminal AI Assistant
-            - **Vibe Web v2.0** - Interactive Documentation Platform  
-            - **Vibe Code v4.0** - VS Code Extension
-            
-            ### 🌐 Multi-Provider Support:
-            - OpenRouter (6 models)
-            - MegaLLM (12 models)
-            - AgentRouter (7 models)
-            - Routeway (6 models)
-            
-            **Total: 27+ AI models with free API access!**
-            
-            ---
-            
-            ### 🚀 Quick Start:
-            
-            **Install CLI:**
-            ```bash
-            npm install -g vibe-ai-cli
-            vibe chat "Hello!"
-            ```
-            
-            **Try Web:**
-            Visit [https://vibe-ai.vercel.app](https://vibe-ai.vercel.app)
-            
-            **Install VS Code Extension:**
-            Search "Vibe VS Code" in VS Code Marketplace
-            
-            ---
-            
-            ### ✨ Key Features:
-            - 🆓 Free API access included
-            - 🌐 4 AI providers with automatic fallback
-            - 💬 Interactive chat interface
-            - 📁 Auto file creation from AI responses
-            - 🎯 Agent mode for autonomous tasks
-            - 🎨 Beautiful UI with dark mode
-            - ⚡ Zero configuration required
-            
-            ### 📝 What's New in v${{ steps.version.outputs.VERSION }}:
-            - Multi-provider architecture
-            - Enhanced UI/UX across all platforms
-            - Improved performance and stability
-            - Better error handling
-            - Updated documentation
-            
-            ---
-            
-            ### 📚 Documentation:
-            - [Main README](https://github.com/mk-knight23/vibe/blob/main/README.md)
-            - [CLI Documentation](https://github.com/mk-knight23/vibe/blob/main/vibe-cli/README.md)
-            - [Web Documentation](https://vibe-ai.vercel.app/docs)
-            - [VS Code Extension Guide](https://github.com/mk-knight23/vibe/blob/main/vibe-code/readme.md)
-            
-            ### 🐛 Report Issues:
-            [GitHub Issues](https://github.com/mk-knight23/vibe/issues)
-          draft: false
-          prerelease: false
+          node-version: '18'
+      - run: cd vibe-cli && npm ci
+      - run: cd vibe-cli && npm run build
+      - run: cd vibe-cli && npm test
+      - run: cd vibe-cli && npm publish
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+  extension-release:
+    if: startsWith(github.ref, 'refs/tags/vibe-code-v')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+      - run: cd vibe-code && npm ci
+      - run: cd vibe-code && npm run compile
+      - run: cd vibe-code && npm run package
+      - run: cd vibe-code && npx vsce publish
+        env:
+          VSCE_PAT: ${{ secrets.VSCE_PAT }}
+
+  web-deploy:
+    if: startsWith(github.ref, 'refs/tags/vibe-web-v')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+      - run: cd vibe-web && npm ci
+      - run: cd vibe-web && npm run build
+      - uses: amondnet/vercel-action@v25
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+          working-directory: ./vibe-web

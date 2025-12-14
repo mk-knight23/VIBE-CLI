@@ -2,26 +2,37 @@ import * as React from "react"
 import { Slot } from "@radix-ui/react-slot"
 import { cva, type VariantProps } from "class-variance-authority"
 
-import { cn } from "../../lib/utils"
+import { cn } from "@/lib/utils"
 
-/* Dark redesign: gradient default + subtle scale on hover (handled by consumers). */
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md font-medium ring-offset-background ease-smooth focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 select-none",
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0" +
+" hover-elevate active-elevate-2",
   {
     variants: {
       variant: {
-        default: "bg-gradient-to-r from-primary to-accent text-primary-foreground shadow-sm hover:shadow-[0_0_0_2px_rgba(255,255,255,0.08),0_0_25px_-6px_rgba(34,211,238,0.45)]",
-        destructive: "bg-destructive text-destructive-foreground hover:bg-destructive/90",
-        outline: "border border-border/50 bg-transparent hover:border-accent/50 hover:bg-accent/10 text-foreground",
-        secondary: "bg-secondary text-secondary-foreground hover:bg-secondary/70",
-        ghost: "text-muted-foreground hover:text-foreground hover:bg-accent/10",
+        default:
+           // @replit: no hover, and add primary border
+           "bg-primary text-primary-foreground border border-primary-border",
+        destructive:
+          "bg-destructive text-destructive-foreground shadow-sm border-destructive-border",
+        outline:
+          // @replit Shows the background color of whatever card / sidebar / accent background it is inside of.
+          // Inherits the current text color. Uses shadow-xs. no shadow on active
+          // No hover state
+          " border [border-color:var(--button-outline)] shadow-xs active:shadow-none ",
+        secondary:
+          // @replit border, no hover, no shadow, secondary border.
+          "border bg-secondary text-secondary-foreground border border-secondary-border ",
+        // @replit no hover, transparent border
+        ghost: "border border-transparent",
         link: "text-primary underline-offset-4 hover:underline",
       },
       size: {
-        default: "h-11 px-5 text-sm",
-        sm: "h-9 rounded-md px-3 text-xs",
-        lg: "h-13 rounded-md px-8 text-base",
-        icon: "h-10 w-10",
+        // @replit changed sizes
+        default: "min-h-9 px-4 py-2",
+        sm: "min-h-8 rounded-md px-3 text-xs",
+        lg: "min-h-10 rounded-md px-8",
+        icon: "h-9 w-9",
       },
     },
     defaultVariants: {
