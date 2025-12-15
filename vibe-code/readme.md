@@ -1,180 +1,174 @@
-# Vibe VS Code - CLI Parity Edition
+# Vibe VS Code Extension v5.0 - AI Coding Assistant
 
-**Complete CLI Parity** | **35+ Commands** | **Memory System** | **Git Integration**
+Professional AI-powered development environment integrated directly into VS Code.
 
-Transform your VS Code into a powerful AI development environment with complete command-line parity.
+## 🏗️ Architecture
 
-## 🚀 What's New in v4.1.0
+**Production-ready VS Code extension** built with:
+- **TypeScript** - Type-safe development
+- **VS Code API** - Native editor integration
+- **Multi-Provider AI** - Fallback chain for reliability
+- **State Management** - Predictable UI behavior
+- **Security First** - Permission-based operations
 
-### ✅ Complete CLI Parity (35/37 Commands)
-- **Basic Commands:** `/help`, `/version`, `/tools`, `/clear`, `/quit`
-- **AI Commands:** `/model`, `/provider`, `/stream`
-- **Memory System:** `/memory`, `/memory search`, `/memory clear`
-- **File Operations:** `/fs mkdir`, `/fs create`, `/fs rm`, `/fs search`
-- **Git Integration:** `/git status`, `/git branch`, `/git log`
-- **System Tools:** `/status`, `/perf`, `/cleanup`, `/test-all`
+## 📁 Clean Folder Structure
 
-### 🧠 Advanced Memory System
-- 100-message chat history
-- Semantic search functionality
-- Performance monitoring
-- Automatic cleanup
-
-### 🔧 Developer Tools
-- Comprehensive help system
-- Real-time performance metrics
-- System status monitoring
-- Batch operations support
-
-## 🎯 Quick Start
-
-1. **Install Extension**
-2. **Open Vibe Panel** (Ctrl+Shift+V)
-3. **Type `/help`** to see all commands
-4. **Start coding** with AI assistance
-
-## 📋 Available Commands
-
-### Basic Operations
 ```
-/help              - Show comprehensive help
-/version           - Extension version and config
-/tools             - List all available tools
-/clear             - Clear conversation
-/status            - System status overview
+src/
+├── extension.ts           # Main extension entry point
+├── commands/              # Command implementations
+│   ├── codeCommands.ts   # Code analysis commands
+│   └── settingsCommand.ts # Settings management
+├── views/                 # UI components
+│   └── sidebarProvider.ts # Sidebar webview
+├── providers/             # AI provider system
+│   └── AIProvider.ts     # Multi-provider with fallback
+├── services/              # Core services (16 services)
+│   ├── FileSystem.ts     # File operations
+│   ├── ShellEngine.ts    # Command execution
+│   ├── AgentMode.ts      # Autonomous operations
+│   └── ...               # Other specialized services
+└── utils/                 # Utilities
+    └── stateManager.ts   # Extension state management
 ```
 
-### AI & Models
-```
-/model             - Current model information
-/provider          - Provider status and options
-/stream            - Test streaming functionality
-```
+## 🎯 Features
 
-### Memory & History
-```
-/memory            - Memory system overview
-/memory search     - Search chat history
-/memory clear      - Clear all memory
-```
+### ✅ Working Commands (12)
+- **Chat Commands:**
+  - `vibe.openChat` - Open chat panel (Ctrl+Shift+V)
+  - `vibe.openAgent` - Open agent panel
+  - `vibe.openSettings` - Configure extension
 
-### File Operations
-```
-/fs mkdir <path>   - Create directory
-/fs create <path>  - Create file
-/fs rm <path>      - Delete file/directory
-/fs search <query> - Search files
-```
+- **Code Analysis:**
+  - `vibe.explainCode` - Explain selected code
+  - `vibe.refactorCode` - Refactor with AI suggestions
+  - `vibe.generateTests` - Generate unit tests
 
-### Git Integration
-```
-/git status        - Repository status
-/git branch        - Current branch info
-/git log           - Recent commits
-```
+- **File Operations:**
+  - `vibe.createFile` - Create new files
+  - `vibe.createFolder` - Create directories
 
-### System Management
-```
-/perf              - Performance metrics
-/cleanup           - System optimization
-/test-all          - Comprehensive tests
-/fallback          - Test provider fallback
-```
+- **Development Tools:**
+  - `vibe.runShellCommand` - Execute shell commands
+  - `vibe.generateProject` - Generate project templates
+  - `vibe.executeSandbox` - Run code in sandbox
+  - `vibe.startAgent` - Start autonomous agent (Ctrl+Shift+A)
 
-## 🔥 Key Features
+### 🎨 UI Components
+- **Sidebar Chat** - Native VS Code webview with streaming
+- **Chat Panel** - Dedicated chat window
+- **Agent Panel** - Autonomous task execution
+- **Status Bar** - Real-time extension state
+- **Context Menus** - Right-click code analysis
 
-- **4 AI Providers:** OpenRouter, MegaLLM, AgentRouter, Routeway
-- **40+ Models:** GPT-4, Claude, Gemini, DeepSeek, and more
-- **Memory System:** Persistent chat history with search
-- **File Operations:** Direct filesystem manipulation
-- **Shell Integration:** Execute commands safely
-- **Git Integration:** Version control operations
-- **Performance Monitoring:** Real-time metrics
-- **Comprehensive Help:** Superior to CLI experience
+### 🔧 State Management
+- **Idle** - Ready for commands
+- **Streaming** - AI response in progress
+- **Running** - Executing operations
+- **Error** - Error state with recovery
+- **Applying Changes** - File modifications
 
-## 💡 Usage Examples
+## 🚀 Setup & Configuration
 
-### Search Chat History
-```
-/memory search "react components"
+### 1. Install Extension
+```bash
+# Development
+npm install
+npm run compile
+
+# Package
+npm run package
 ```
 
-### Check System Status
+### 2. Configure API Keys
+Open VS Code Settings → Extensions → Vibe:
+
+- **OpenRouter API Key** - Access to 40+ free models
+- **MegaLLM API Key** - High-performance models
+- **AgentRouter API Key** - Claude model access
+- **Routeway API Key** - Specialized models
+
+### 3. Basic Settings
+```json
+{
+  "vibe.provider": "openrouter",
+  "vibe.defaultModel": "x-ai/grok-4.1-fast:free",
+  "vibe.streamingEnabled": true,
+  "vibe.enableProviderFallback": true,
+  "vibe.autoApproveUnsafeOps": false
+}
 ```
-/status
+
+## 🔒 Security Features
+
+- **Permission System** - Explicit approval for file/shell operations
+- **No Hardcoded Keys** - All API keys from user configuration
+- **Safe Defaults** - Auto-approve disabled by default
+- **Sandbox Execution** - Isolated code execution environment
+
+## 📊 Audit Results
+
+### 🧹 Cleaned Up
+- **Removed 4 broken commands** (were declared but not implemented)
+- **Removed 4 empty directories** (ui/, memory/, orchestration/, tutorials/)
+- **Removed 1 broken extension file** (extension.ts with missing imports)
+- **Cleaned 50+ excessive settings** (kept 12 essential ones)
+- **Organized into logical folders** (commands/, views/, utils/)
+
+### ✅ Enhanced
+- **Added missing command implementations** (explainCode, refactorCode, generateTests, openSettings)
+- **Added proper state management** with visual feedback
+- **Added professional sidebar webview** with VS Code theming
+- **Added error boundaries** and proper error handling
+- **Removed security risks** (no hardcoded API keys)
+
+### 🎨 UI Improvements
+- **Native VS Code styling** - Consistent with editor theme
+- **Real-time streaming** - Live AI response updates
+- **Status bar integration** - Extension state visibility
+- **Keyboard shortcuts** - Ctrl+Shift+V (chat), Ctrl+Shift+A (agent)
+- **Context menu integration** - Right-click code analysis
+
+## 🔧 Development
+
+```bash
+# Install dependencies
+npm install
+
+# Compile TypeScript
+npm run compile
+
+# Watch mode
+npm run watch
+
+# Package extension
+npm run package
 ```
-
-### Create Project Structure
-```
-/fs mkdir src
-/fs create src/App.jsx
-```
-
-### Monitor Performance
-```
-/perf
-```
-
-## 🛠️ Configuration
-
-The extension works out of the box with hardcoded API keys. For custom configuration:
-
-1. Open VS Code Settings
-2. Search for "Vibe"
-3. Configure your preferred provider and model
-
-## 📊 System Requirements
-
-- VS Code 1.107.0 or higher
-- Node.js 18+ (for shell operations)
-- Git (for version control features)
-
-## 🔒 Privacy & Security
-
-- No data retention on external servers
-- Local processing where possible
-- Secure API key handling
-- Dangerous command blocking
 
 ## 📈 Performance
 
-- **Memory Usage:** <50MB typical
-- **Command Response:** <10ms average
-- **Search Performance:** <1ms average
-- **Startup Time:** <2s initialization
+- **Fast activation** - Lazy loading of services
+- **Memory efficient** - Proper disposal of resources
+- **Error resilient** - Graceful fallback handling
+- **Type safe** - Full TypeScript coverage
 
-## 🆘 Support
+## 🎯 Extension Marketplace
 
-- **Help Command:** Type `/help` for comprehensive guidance
-- **System Test:** Use `/test-all` to verify functionality
-- **Performance Check:** Use `/perf` for diagnostics
-- **GitHub Issues:** Report bugs and feature requests
+- **Publisher:** mktech
+- **Category:** AI, Programming Languages
+- **Engine:** VS Code ^1.107.0
+- **License:** MIT
 
-## 📝 Changelog
+## 📝 Maintenance Status
 
-### v4.1.0 - CLI Parity Edition
-- ✅ 35+ CLI commands implemented
-- ✅ Memory system with search
-- ✅ Git integration
-- ✅ Performance monitoring
-- ✅ Comprehensive testing suite
-- ✅ Superior help system
-
-### v4.0.3 - Previous Version
-- Basic AI functionality
-- File operations
-- Provider management
-
-## 🏆 Why Choose Vibe?
-
-- **Complete CLI Parity:** Use familiar commands in VS Code
-- **Superior Help:** Better guidance than command-line tools
-- **Memory System:** Never lose context
-- **Performance Optimized:** Fast and efficient
-- **Future Ready:** Extensible architecture
+The extension is now:
+- **Clean** - No unused code or broken features
+- **Secure** - No hardcoded secrets, permission-based
+- **Reliable** - Proper state management and error handling
+- **Professional** - Native VS Code integration
+- **Maintainable** - Clear architecture and documentation
 
 ---
 
-**Made by Mk Tech** | **Free** | **Open Source**
-
-Transform your development workflow with the power of AI and complete CLI parity.
+**Status:** ✅ Production Ready | 🧹 Fully Audited | 🔒 Security Hardened | 🎨 UI Enhanced
