@@ -58,20 +58,24 @@ export function Hero() {
             transition={{ duration: 0.6, delay: 0.3 }}
             className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-12"
           >
-            <div className="flex items-center bg-[#1e1e1e] text-white rounded-lg px-4 py-3 font-mono text-sm border border-gray-700">
+            <div className="group flex items-center bg-[#1e1e1e] text-white rounded-lg px-4 py-3 font-mono text-sm border border-gray-700 hover:border-gray-600 transition-colors">
               <span className="text-gray-400 mr-2">$</span>
               <span>{installCommand}</span>
               <Button
                 size="sm"
                 variant="ghost"
-                className="ml-3 text-gray-400 hover:text-white hover:bg-gray-700 p-1 h-auto"
+                className="ml-3 text-gray-400 hover:text-white hover:bg-gray-700 p-1 h-auto transition-all"
                 onClick={() => copyToClipboard(installCommand)}
               >
-                {copiedText === installCommand ? "Copied!" : <Copy size={14} />}
+                {copiedText === installCommand ? (
+                  <span className="text-green-400 text-xs font-medium">Copied!</span>
+                ) : (
+                  <Copy size={14} className="group-hover:scale-110 transition-transform" />
+                )}
               </Button>
             </div>
             <span className="text-muted-foreground text-sm">Or</span>
-            <Link href="/installation" className="text-primary hover:text-primary/80 text-sm font-medium underline underline-offset-4">
+            <Link href="/installation" className="text-primary hover:text-primary/80 text-sm font-medium underline underline-offset-4 hover:underline-offset-2 transition-all">
               read the documentation
             </Link>
           </motion.div>

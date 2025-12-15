@@ -1,5 +1,5 @@
-import { Navbar } from "@/components/navbar";
-import { Hero } from "@/components/hero";
+import { Navbar } from "@/components/navigation/navbar";
+import { Hero } from "@/components/marketing/hero";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Twitter, Github, Linkedin, Instagram } from "lucide-react";
 import { Link } from "wouter";

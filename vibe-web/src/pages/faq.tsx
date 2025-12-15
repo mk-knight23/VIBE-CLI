@@ -1,4 +1,4 @@
-import { Navbar } from "@/components/navbar";
+import { Navbar } from "@/components/navigation/navbar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Terminal, Code2, MessageCircle, Book } from "lucide-react";
