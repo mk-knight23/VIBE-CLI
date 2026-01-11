@@ -7,13 +7,7 @@ export class Diagnostics {
     static check(): void {
         console.log(chalk.bold('\n🔍 VIBE CLI Diagnostics\n'));
 
-        const checks = [
-            { name: 'OS', value: `${os.type()} ${os.release()} (${os.arch()})`, status: 'OK' },
-            { name: 'Node.js', value: process.version, status: 'OK' },
-            { name: 'Git', value: this.getGitVersion(), status: this.getGitVersion() !== 'Not found' ? 'OK' : 'FAIL' },
-            { name: 'VIBE Config', value: this.checkConfig(), status: 'OK' },
-            { name: 'Workspace', value: process.cwd(), status: 'OK' },
-        ];
+        const checks = this.getDiagnosticsData();
 
         const table = formatTable(
             ['Check', 'Result', 'Status'],
@@ -21,6 +15,16 @@ export class Diagnostics {
         );
 
         console.log(table);
+    }
+
+    static getDiagnosticsData() {
+        return [
+            { name: 'OS', value: `${os.type()} ${os.release()} (${os.arch()})`, status: 'OK' },
+            { name: 'Node.js', value: process.version, status: 'OK' },
+            { name: 'Git', value: this.getGitVersion(), status: this.getGitVersion() !== 'Not found' ? 'OK' : 'FAIL' },
+            { name: 'VIBE Config', value: this.checkConfig(), status: 'OK' },
+            { name: 'Workspace', value: process.cwd(), status: 'OK' },
+        ];
     }
 
     private static getGitVersion(): string {
