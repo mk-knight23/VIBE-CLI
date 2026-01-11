@@ -8,10 +8,15 @@
  * - EXECUTE: Run tools and commands
  * - VERIFY: Validate results
  * - EXPLAIN: Provide explanation of actions
+ * - DEBUG: Error analysis and debugging
+ * - REFACTOR: Pattern recognition and code transformation
+ * - LEARN: Knowledge acquisition and pattern learning
+ * - CONTEXT: Semantic indexing and context management
  *
  * Version: 13.0.0
  */
 import { VibeProviderRouter } from '../providers/router.js';
+import { VibeMemoryManager } from '../memory/index.js';
 import type { ToolDefinition, ToolResult } from '../tools/registry/index.js';
 export interface AgentTask {
     task: string;
@@ -36,7 +41,7 @@ export interface AgentStep {
     timestamp: Date;
     duration: number;
 }
-export type AgentPhase = 'plan' | 'propose' | 'approve' | 'execute' | 'verify' | 'explain';
+export type AgentPhase = 'plan' | 'propose' | 'approve' | 'execute' | 'verify' | 'explain' | 'debug' | 'refactor' | 'learn' | 'context';
 export interface ExecutionPlan {
     steps: PlanStep[];
     tools: string[];
@@ -134,7 +139,7 @@ export declare class ReviewerAgent extends BaseAgent {
 export declare class VibeAgentExecutor {
     private agents;
     private defaultProvider;
-    constructor(provider: VibeProviderRouter);
+    constructor(provider: VibeProviderRouter, memory?: VibeMemoryManager);
     /**
      * Register an agent
      */
@@ -166,6 +171,93 @@ export declare class VibeAgentExecutor {
      * Get available tools from all agents
      */
     getAvailableTools(): ToolDefinition[];
+}
+export interface DebuggerResult {
+    rootCause: string;
+    suggestedFix: string;
+    stackTrace?: string;
+    relevantFiles: string[];
+    fixConfidence: number;
+}
+export declare class DebuggerAgent extends BaseAgent {
+    private router;
+    name: string;
+    description: string;
+    phases: AgentPhase[];
+    constructor(router: VibeProviderRouter);
+    protected run(task: AgentTask, context: AgentExecutionContext, steps: AgentStep[]): Promise<{
+        success: boolean;
+        output: string;
+        artifacts?: string[];
+    }>;
+}
+export interface RefactorResult {
+    patterns: string[];
+    changes: RefactorChange[];
+    estimatedComplexity: 'low' | 'medium' | 'high';
+    breakingChanges: string[];
+}
+export interface RefactorChange {
+    file: string;
+    description: string;
+    before: string;
+    after: string;
+    rationale: string;
+}
+export declare class RefactorAgent extends BaseAgent {
+    private router;
+    name: string;
+    description: string;
+    phases: AgentPhase[];
+    constructor(router: VibeProviderRouter);
+    protected run(task: AgentTask, context: AgentExecutionContext, steps: AgentStep[]): Promise<{
+        success: boolean;
+        output: string;
+        artifacts?: string[];
+    }>;
+}
+export interface LearningResult {
+    knowledgeGained: string;
+    patternsLearned: string[];
+    suggestions: string[];
+    confidenceBoost: number;
+}
+export declare class LearningAgent extends BaseAgent {
+    private router;
+    private memory;
+    name: string;
+    description: string;
+    phases: AgentPhase[];
+    constructor(router: VibeProviderRouter, memory: VibeMemoryManager);
+    protected run(task: AgentTask, context: AgentExecutionContext, steps: AgentStep[]): Promise<{
+        success: boolean;
+        output: string;
+        artifacts?: string[];
+    }>;
+}
+export interface ContextResult {
+    relevantContext: string[];
+    indexedFiles: number;
+    semanticMatches: ContextMatch[];
+    contextCoverage: number;
+}
+export interface ContextMatch {
+    file: string;
+    relevance: number;
+    excerpt: string;
+}
+export declare class ContextAgent extends BaseAgent {
+    private router;
+    private memory;
+    name: string;
+    description: string;
+    phases: AgentPhase[];
+    constructor(router: VibeProviderRouter, memory: VibeMemoryManager);
+    protected run(task: AgentTask, context: AgentExecutionContext, steps: AgentStep[]): Promise<{
+        success: boolean;
+        output: string;
+        artifacts?: string[];
+    }>;
 }
 export declare const agentExecutor: VibeAgentExecutor;
 export { VibeAgentExecutor as VibeAgentSystem };

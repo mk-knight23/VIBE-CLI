@@ -108,3 +108,6 @@ docs/.next/
 # ===============================
 logs/
 *.log
+
+# Auto Claude data directory
+.auto-claude/

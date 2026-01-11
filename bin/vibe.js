@@ -1,110 +1,25 @@
 #!/usr/bin/env node
 
 /**
- * VIBE CLI v12 - Entry Point
- *
- * One command to rule them all.
- * Run `vibe` to start the interactive TUI.
- *
- * Note: Uses require() for CommonJS entry point since package.json uses "type": "commonjs"
+ * VIBE CLI v13 - Production Entry Point
  */
 
-// Load environment variables first
+// Load environment variables
 require('dotenv').config();
 
-/**
- * Simple argument parser for flags
- */
-function hasFlag(flags) {
-  return process.argv.slice(2).some(arg =>
-    flags.some(flag => arg === flag || arg.startsWith(`${flag}=`))
-  );
-}
-
-/**
- * Show version
- */
-function showVersion() {
-  console.log('VIBE v12.0.0');
-  process.exit(0);
-}
-
-/**
- * Show help
- */
-function showHelp() {
-  console.log(`
-╔═══════════════════════════════════════════════════════════════╗
-║                                                               ║
-║   V I B E  v12.0.0                                            ║
-║   AI-Powered Development Environment                          ║
-║                                                               ║
-║   Usage:                                                      ║
-║     vibe                    - Start interactive TUI           ║
-║     vibe --help             - Show this help                  ║
-║     vibe --version          - Show version                    ║
-║                                                               ║
-║   Examples:                                                   ║
-║     vibe build a REST API                                     ║
-║     vibe fix the failing tests                                ║
-║     vibe deploy to gcp                                        ║
-║     vibe remember we use PostgreSQL                           ║
-║                                                               ║
-╚═══════════════════════════════════════════════════════════════╝
-`);
-  process.exit(0);
-}
-
-/**
- * Main entry point
- */
-async function main() {
-  // Handle --version / -v flag
-  if (hasFlag(['--version', '-v'])) {
-    showVersion();
-  }
-
-  // Handle --help / -h flag
-  if (hasFlag(['--help', '-h'])) {
-    showHelp();
-  }
-
-  // Display startup banner
-  console.log('\n🎨 VIBE v12.0.0\n');
-  console.log('Initializing...');
-
-  try {
-    // Import the core engine (the single source of truth)
-    const { VibeCoreEngine } = require('../dist/core/engine');
-
-    // Create and initialize the engine
-    const engine = new VibeCoreEngine();
-
-    // Initialize and start interactive mode
-    console.log('Ready!\n');
-    await engine.startInteractiveMode();
-
-  } catch (error) {
-    console.error('\n❌ Error starting VIBE:', error.message);
-    if (process.env.DEBUG) {
-      console.error(error.stack);
-    }
-    console.error('\nMake sure all dependencies are installed: npm install\n');
+// Attempt to run the compiled source
+try {
+  const { run } = require('../dist/cli/main');
+  run().catch(err => {
+    console.error('❌ Fatal Error:', err.message);
+    if (process.env.DEBUG) console.error(err.stack);
     process.exit(1);
+  });
+} catch (err) {
+  if (err.code === 'MODULE_NOT_FOUND') {
+    console.error('❌ Error: VIBE CLI has not been built yet. Please run "npm run build" first.');
+  } else {
+    console.error('❌ Error loading VIBE CLI:', err.message);
   }
-}
-
-// Handle Ctrl+C gracefully
-process.on('SIGINT', () => {
-  console.log('\n\n👋 Goodbye! Happy coding!\n');
-  process.exit(0);
-});
-
-// Handle uncaught errors
-process.on('uncaughtException', (error) => {
-  console.error('\n❌ Unexpected error:', error.message);
   process.exit(1);
-});
-
-// Run main
-main();
+}

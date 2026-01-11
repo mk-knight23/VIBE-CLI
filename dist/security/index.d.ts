@@ -7,6 +7,8 @@
  * - Path traversal prevention
  * - Shell injection prevention
  * - Security audit reporting
+ * - Secrets management
+ * - PII scrubbing
  *
  * Version: 13.0.0
  */

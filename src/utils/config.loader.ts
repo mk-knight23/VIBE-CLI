@@ -1,245 +1,401 @@
 /**
- * VIBE-CLI v12 - Configuration Loader
- * Load and validate configuration from .env files and environment variables
+ * VIBE CLI v13 - Configuration Loader
+ *
+ * Handles loading, validation, and management of VIBE CLI configuration.
+ * Supports .vibe/config.json and environment variable overrides.
+ *
+ * Version: 13.0.0
  */
 
 import * as fs from 'fs';
 import * as path from 'path';
-import dotenv from 'dotenv';
+import * as os from 'os';
+import type { VibeConfig, ModelConfig, AgentSettingsConfig, UIConfig, TelemetryConfig, SecurityConfig, PluginConfig, PolicyConfig } from '../core-types';
 
-export interface ConfigSchema {
-  [key: string]: {
-    type: 'string' | 'number' | 'boolean';
-    required?: boolean;
-    default?: any;
-    description?: string;
-    envVar?: string;
-  };
-}
+// ============================================================================
+// Constants
+// ============================================================================
 
-export interface ConfigLoaderOptions {
-  schema?: ConfigSchema;
-  envFilePath?: string;
-  envFileName?: string;
-  allowMissing?: boolean;
-  prefix?: string;
-}
+const CONFIG_FILE_NAME = 'config.json';
+const VIBE_DIR = '.vibe';
 
-export interface LoadResult<T = Record<string, any>> {
-  config: T;
-  errors: string[];
-  warnings: string[];
-}
+/** Default configuration path in user's home directory */
+export const DEFAULT_CONFIG_DIR = path.join(os.homedir(), VIBE_DIR);
 
-export class ConfigLoader<T extends Record<string, any> = Record<string, any>> {
-  private schema: ConfigSchema;
-  private envFilePath: string;
-  private envFileName: string;
-  private allowMissing: boolean;
-  private prefix: string;
+/** Project-level config path */
+export const PROJECT_CONFIG_PATH = path.join(process.cwd(), VIBE_DIR, CONFIG_FILE_NAME);
 
-  constructor(options: ConfigLoaderOptions = {}) {
-    this.schema = options.schema ?? {};
-    this.envFilePath = options.envFilePath ?? process.cwd();
-    this.envFileName = options.envFileName ?? '.env';
-    this.allowMissing = options.allowMissing ?? false;
-    this.prefix = options.prefix ?? 'VIBE_';
-  }
+// ============================================================================
+// Default Configuration
+// ============================================================================
 
-  /**
-   * Load configuration from environment and .env file
-   */
-  load(userConfig?: Partial<T>): LoadResult<T> {
-    const result: LoadResult<T> = {
-      config: {} as T,
-      errors: [],
-      warnings: [],
-    };
-
-    // Load .env file
-    this.loadEnvFile(result);
-
-    // Apply schema defaults and validate
-    this.applySchema(result);
-
-    // Override with user config
-    if (userConfig) {
-      Object.assign(result.config, userConfig);
-    }
-
-    return result;
-  }
-
-  /**
-   * Load environment variables from .env file
-   */
-  private loadEnvFile(result: LoadResult<T>): void {
-    const envPath = path.join(this.envFilePath, this.envFileName);
-
-    if (fs.existsSync(envPath)) {
-      try {
-        const parsed = dotenv.config({ path: envPath });
-        if (parsed.error) {
-          result.warnings.push(`Failed to parse .env file: ${parsed.error.message}`);
-        }
-      } catch (error) {
-        result.warnings.push(`Error reading .env file: ${error}`);
-      }
-    } else if (!this.allowMissing) {
-      result.warnings.push(`.env file not found at ${envPath}`);
-    }
-  }
-
-  /**
-   * Apply schema validation and defaults
-   */
-  private applySchema(result: LoadResult<T>): void {
-    for (const [key, schema] of Object.entries(this.schema)) {
-      const envVar = schema.envVar || `${this.prefix}${key.toUpperCase()}`;
-      let value: any = process.env[envVar];
-
-      // Convert type
-      if (value !== undefined) {
-        switch (schema.type) {
-          case 'number':
-            value = parseFloat(value);
-            if (isNaN(value)) {
-              result.errors.push(`Invalid number for ${key}: ${process.env[envVar]}`);
-              continue;
-            }
-            break;
-          case 'boolean':
-            value = value.toLowerCase() === 'true' || value.toLowerCase() === '1';
-            break;
-        }
-      }
-
-      // Check required
-      if (value === undefined && schema.required) {
-        if (schema.default !== undefined) {
-          value = schema.default;
-        } else {
-          result.errors.push(`Missing required configuration: ${key} (env: ${envVar})`);
-          continue;
-        }
-      }
-
-      // Use default if not set
-      if (value === undefined && schema.default !== undefined) {
-        value = schema.default;
-      }
-
-      // Set the value
-      (result.config as any)[key] = value;
-    }
-  }
-
-  /**
-   * Get a specific configuration value
-   */
-  get<K extends keyof T>(key: K): T[K] | undefined {
-    const envVar = this.schema[key as string]?.envVar || `${this.prefix}${String(key).toUpperCase()}`;
-    return process.env[envVar] as any;
-  }
-
-  /**
-   * Set an environment variable
-   */
-  set(key: string, value: string): void {
-    process.env[key] = value;
-  }
-
-  /**
-   * Check if a configuration key is set
-   */
-  has(key: string): boolean {
-    const envVar = this.schema[key]?.envVar || `${this.prefix}${key.toUpperCase()}`;
-    return process.env[envVar] !== undefined;
-  }
-
-  /**
-   * Validate loaded configuration
-   */
-  validate(config: T): { valid: boolean; errors: string[] } {
-    const errors: string[] = [];
-
-    for (const [key, schema] of Object.entries(this.schema)) {
-      if (schema.required && config[key as keyof T] === undefined) {
-        errors.push(`Missing required configuration: ${key}`);
-      }
-    }
-
-    return {
-      valid: errors.length === 0,
-      errors,
-    };
-  }
-}
-
-/**
- * Common VIBE configuration schema
- */
-export const VIBE_CONFIG_SCHEMA: ConfigSchema = {
-  PROVIDER: {
-    type: 'string',
-    required: false,
-    default: 'openrouter',
-    envVar: 'VIBE_PROVIDER',
-    description: 'AI provider to use',
-  },
-  MODEL: {
-    type: 'string',
-    required: false,
-    default: 'anthropic/claude-sonnet-4-20250514',
-    envVar: 'VIBE_MODEL',
-    description: 'Model to use for AI responses',
-  },
-  OPENAI_API_KEY: {
-    type: 'string',
-    required: false,
-    envVar: 'OPENAI_API_KEY',
-    description: 'OpenAI API key',
-  },
-  ANTHROPIC_API_KEY: {
-    type: 'string',
-    required: false,
-    envVar: 'ANTHROPIC_API_KEY',
-    description: 'Anthropic API key',
-  },
-  GOOGLE_API_KEY: {
-    type: 'string',
-    required: false,
-    envVar: 'GOOGLE_API_KEY',
-    description: 'Google API key',
-  },
-  OPENROUTER_API_KEY: {
-    type: 'string',
-    required: false,
-    envVar: 'OPENROUTER_API_KEY',
-    description: 'OpenRouter API key',
-  },
-  DEBUG: {
-    type: 'boolean',
-    required: false,
-    default: false,
-    envVar: 'DEBUG',
-    description: 'Enable debug mode',
-  },
-  SKIP_API_CONFIG: {
-    type: 'boolean',
-    required: false,
-    default: false,
-    envVar: 'SKIP_API_CONFIG',
-    description: 'Skip API configuration prompts',
+const DEFAULT_MODEL_CONFIG: ModelConfig = {
+  default: 'claude-sonnet-4',
+  fallback: ['gpt-4o', 'gemini-1.5-pro'],
+  costOptimization: true,
+  taskRouting: {
+    'quick-review': 'claude-haiku',
+    'complex-analysis': 'claude-opus',
+    'code-completion': 'claude-sonnet-4',
+    'code-generation': 'gpt-4o',
+    'documentation': 'gemini-1.5-pro',
   },
 };
 
-/**
- * Create a VIBE configuration loader
- */
-export function createConfigLoader(options?: Partial<ConfigLoaderOptions>): ConfigLoader {
-  return new ConfigLoader({
-    schema: VIBE_CONFIG_SCHEMA,
-    ...options,
-  });
+const DEFAULT_AGENT_CONFIG: AgentSettingsConfig = {
+  enabled: ['planner', 'executor', 'reviewer', 'debugger', 'refactor', 'learning', 'context'],
+  maxSteps: 50,
+  checkpointOnStart: true,
+  autoApproveLowRisk: true,
+};
+
+const DEFAULT_UI_CONFIG: UIConfig = {
+  theme: 'dark',
+  verbosity: 'normal',
+  emojiEnabled: true,
+  compactMode: false,
+  showTimestamps: false,
+  animations: {
+    spinners: true,
+    progressBars: true,
+  },
+};
+
+const DEFAULT_TELEMETRY_CONFIG: TelemetryConfig = {
+  enabled: false,
+  anonymize: true,
+  retentionDays: 30,
+  features: {
+    commandUsage: true,
+    performance: true,
+    errors: true,
+    featureUsage: true,
+  },
+};
+
+const DEFAULT_SECURITY_CONFIG: SecurityConfig = {
+  requireApprovalForHighRisk: true,
+  blockedPatterns: ['**/secrets/**', '**/.env*', '**/credentials*'],
+  maxFileSize: 10 * 1024 * 1024, // 10MB
+  dangerousCommands: ['rm -rf', 'sudo', 'chmod 777', '> /dev/null'],
+  sandbox: {
+    enabled: false,
+    allowedOperations: ['read', 'write', 'list'],
+    deniedOperations: ['execute', 'network'],
+  },
+};
+
+const DEFAULT_PLUGIN_CONFIG: PluginConfig = {
+  enabled: [],
+  autoUpdate: true,
+  pluginDir: path.join(os.homedir(), VIBE_DIR, 'plugins'),
+};
+
+const DEFAULT_POLICY_CONFIG: PolicyConfig = {
+  enabled: false,
+  rules: [],
+  defaultAction: 'prompt',
+};
+
+const DEFAULT_CONFIG: VibeConfig = {
+  version: '13.0.0',
+  models: DEFAULT_MODEL_CONFIG,
+  agentSettings: DEFAULT_AGENT_CONFIG,
+  ui: DEFAULT_UI_CONFIG,
+  telemetry: DEFAULT_TELEMETRY_CONFIG,
+  security: DEFAULT_SECURITY_CONFIG,
+  plugins: DEFAULT_PLUGIN_CONFIG,
+  policies: DEFAULT_POLICY_CONFIG,
+};
+
+// ============================================================================
+// Configuration Loader Class
+// ============================================================================
+
+export class ConfigLoader {
+  private configDir: string;
+  private projectConfigPath: string;
+  private userConfigPath: string;
+  private config: VibeConfig | null = null;
+
+  constructor(options: { projectRoot?: string; configDir?: string } = {}) {
+    this.projectConfigPath = options.projectRoot 
+      ? path.join(options.projectRoot, VIBE_DIR, CONFIG_FILE_NAME)
+      : PROJECT_CONFIG_PATH;
+    this.configDir = options.configDir || DEFAULT_CONFIG_DIR;
+    this.userConfigPath = path.join(this.configDir, CONFIG_FILE_NAME);
+  }
+
+  // ============================================================================
+  // Public Methods
+  // ============================================================================
+
+  /**
+   * Load configuration from file(s)
+   */
+  load(): VibeConfig {
+    if (this.config) {
+      return this.config;
+    }
+
+    // Start with default config
+    this.config = this.deepClone(DEFAULT_CONFIG);
+
+    // Load user config (highest priority)
+    this.loadFromFile(this.userConfigPath);
+
+    // Load project config (overrides user config)
+    this.loadFromFile(this.projectConfigPath);
+
+    // Apply environment variable overrides
+    this.applyEnvOverrides();
+
+    return this.config;
+  }
+
+  /**
+   * Get current configuration
+   */
+  get(): VibeConfig {
+    if (!this.config) {
+      return this.load();
+    }
+    return this.config;
+  }
+
+  /**
+   * Save configuration to file
+   */
+  save(configPath?: string): void {
+    const targetPath = configPath || this.userConfigPath;
+    const dir = path.dirname(targetPath);
+
+    // Ensure directory exists
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+    }
+
+    fs.writeFileSync(targetPath, JSON.stringify(this.config, null, 2));
+  }
+
+  /**
+   * Update specific configuration section
+   */
+  updateSection<K extends keyof VibeConfig>(section: K, value: VibeConfig[K]): void {
+    if (!this.config) {
+      this.load();
+    }
+    (this.config as unknown as Record<string, unknown>)[section] = value;
+  }
+
+  /**
+   * Get configuration for a specific section
+   */
+  getSection<K extends keyof VibeConfig>(section: K): VibeConfig[K] {
+    const config = this.get();
+    return config[section];
+  }
+
+  /**
+   * Reset configuration to defaults
+   */
+  reset(): void {
+    this.config = this.deepClone(DEFAULT_CONFIG);
+  }
+
+  /**
+   * Get the configuration directory
+   */
+  getConfigDir(): string {
+    return this.configDir;
+  }
+
+  /**
+   * Get the project configuration path
+   */
+  getProjectConfigPath(): string {
+    return this.projectConfigPath;
+  }
+
+  /**
+   * Check if configuration exists
+   */
+  configExists(): boolean {
+    return fs.existsSync(this.userConfigPath) || fs.existsSync(this.projectConfigPath);
+  }
+
+  /**
+   * Create default configuration file
+   */
+  createDefaultConfig(): void {
+    this.load();
+    this.save(this.userConfigPath);
+  }
+
+  // ============================================================================
+  // Private Methods
+  // ============================================================================
+
+  /**
+   * Load configuration from a file path
+   */
+  private loadFromFile(filePath: string): void {
+    if (!fs.existsSync(filePath)) {
+      return;
+    }
+
+    try {
+      const content = fs.readFileSync(filePath, 'utf-8');
+      const fileConfig = JSON.parse(content) as Partial<VibeConfig>;
+      
+      // Merge file config into current config
+      this.mergeConfig(fileConfig);
+    } catch (error) {
+      console.warn(`Warning: Failed to load config from ${filePath}:`, error);
+    }
+  }
+
+  /**
+   * Merge configuration from source into target
+   */
+  private mergeConfig(source: Partial<VibeConfig>): void {
+    if (!this.config) {
+      this.config = {} as VibeConfig;
+    }
+
+    // Merge top-level properties
+    if ('version' in source && source.version) {
+      this.config.version = source.version;
+    }
+
+    // Merge models
+    if (source.models) {
+      this.config.models = { ...this.config.models, ...source.models };
+    }
+
+    // Merge agents
+    if (source.agentSettings) {
+      this.config.agentSettings = { ...this.config.agentSettings, ...source.agentSettings };
+    }
+
+    // Merge UI
+    if (source.ui) {
+      this.config.ui = { ...this.config.ui, ...source.ui };
+    }
+
+    // Merge telemetry
+    if (source.telemetry) {
+      this.config.telemetry = { ...this.config.telemetry, ...source.telemetry };
+    }
+
+    // Merge security
+    if (source.security) {
+      this.config.security = { ...this.config.security, ...source.security };
+    }
+
+    // Merge plugins
+    if (source.plugins) {
+      this.config.plugins = { ...this.config.plugins, ...source.plugins };
+    }
+
+    // Merge policies
+    if (source.policies) {
+      this.config.policies = { ...this.config.policies, ...source.policies };
+    }
+  }
+
+  /**
+   * Apply environment variable overrides
+   */
+  private applyEnvOverrides(): void {
+    if (!this.config) return;
+
+    // Model configuration overrides
+    if (process.env.VIBE_DEFAULT_MODEL) {
+      this.config.models.default = process.env.VIBE_DEFAULT_MODEL;
+    }
+
+    if (process.env.VIBE_API_KEY_ANTHROPIC) {
+      this.config.models.apiKeys = this.config.models.apiKeys || {};
+      this.config.models.apiKeys.anthropic = process.env.VIBE_API_KEY_ANTHROPIC;
+    }
+
+    if (process.env.VIBE_API_KEY_OPENAI) {
+      this.config.models.apiKeys = this.config.models.apiKeys || {};
+      this.config.models.apiKeys.openai = process.env.VIBE_API_KEY_OPENAI;
+    }
+
+    if (process.env.VIBE_API_KEY_GOOGLE) {
+      this.config.models.apiKeys = this.config.models.apiKeys || {};
+      this.config.models.apiKeys.google = process.env.VIBE_API_KEY_GOOGLE;
+    }
+
+    // UI configuration overrides
+    if (process.env.VIBE_THEME) {
+      const validThemes: UIConfig['theme'][] = ['dark', 'light', 'solarized', 'nord', 'high-contrast'];
+      if (validThemes.includes(process.env.VIBE_THEME as UIConfig['theme'])) {
+        this.config.ui.theme = process.env.VIBE_THEME as UIConfig['theme'];
+      }
+    }
+
+    if (process.env.VIBE_VERBOSITY) {
+      const validVerbosity: UIConfig['verbosity'][] = ['silent', 'normal', 'verbose', 'debug'];
+      if (validVerbosity.includes(process.env.VIBE_VERBOSITY as UIConfig['verbosity'])) {
+        this.config.ui.verbosity = process.env.VIBE_VERBOSITY as UIConfig['verbosity'];
+      }
+    }
+
+    if (process.env.VIBE_NO_EMOJI) {
+      this.config.ui.emojiEnabled = false;
+    }
+
+    // Telemetry overrides
+    if (process.env.VIBE_TELEMETRY !== undefined) {
+      this.config.telemetry.enabled = process.env.VIBE_TELEMETRY === '1' || process.env.VIBE_TELEMETRY === 'true';
+    }
+
+    // Security overrides
+    if (process.env.VIBE_SANDBOX) {
+      this.config.security.sandbox.enabled = process.env.VIBE_SANDBOX === '1' || process.env.VIBE_SANDBOX === 'true';
+    }
+  }
+
+  /**
+   * Deep clone an object
+   */
+  private deepClone<T>(obj: T): T {
+    return JSON.parse(JSON.stringify(obj)) as T;
+  }
+}
+
+// ============================================================================
+// Singleton Instance
+// ============================================================================
+
+let configLoaderInstance: ConfigLoader | null = null;
+
+export function getConfigLoader(options?: { projectRoot?: string; configDir?: string }): ConfigLoader {
+  if (!configLoaderInstance || options) {
+    configLoaderInstance = new ConfigLoader(options);
+  }
+  return configLoaderInstance;
+}
+
+export function loadConfig(): VibeConfig {
+  return getConfigLoader().load();
+}
+
+export function saveConfig(config: VibeConfig, path?: string): void {
+  const loader = getConfigLoader();
+  const currentConfig = loader.get();
+  
+  currentConfig.models = config.models;
+  currentConfig.agentSettings = config.agentSettings;
+  currentConfig.ui = config.ui;
+  currentConfig.telemetry = config.telemetry;
+  currentConfig.security = config.security;
+  currentConfig.plugins = config.plugins;
+  currentConfig.policies = config.policies;
+  
+  loader.save(path);
 }

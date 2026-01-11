@@ -1,73 +1,86 @@
 /**
- * VIBE-CLI v12 - Configuration Loader
- * Load and validate configuration from .env files and environment variables
+ * VIBE CLI v13 - Configuration Loader
+ *
+ * Handles loading, validation, and management of VIBE CLI configuration.
+ * Supports .vibe/config.json and environment variable overrides.
+ *
+ * Version: 13.0.0
  */
-export interface ConfigSchema {
-    [key: string]: {
-        type: 'string' | 'number' | 'boolean';
-        required?: boolean;
-        default?: any;
-        description?: string;
-        envVar?: string;
-    };
+import type { VibeConfig } from '../core-types';
+/** Default configuration path in user's home directory */
+export declare const DEFAULT_CONFIG_DIR: string;
+/** Project-level config path */
+export declare const PROJECT_CONFIG_PATH: string;
+export declare class ConfigLoader {
+    private configDir;
+    private projectConfigPath;
+    private userConfigPath;
+    private config;
+    constructor(options?: {
+        projectRoot?: string;
+        configDir?: string;
+    });
+    /**
+     * Load configuration from file(s)
+     */
+    load(): VibeConfig;
+    /**
+     * Get current configuration
+     */
+    get(): VibeConfig;
+    /**
+     * Save configuration to file
+     */
+    save(configPath?: string): void;
+    /**
+     * Update specific configuration section
+     */
+    updateSection<K extends keyof VibeConfig>(section: K, value: VibeConfig[K]): void;
+    /**
+     * Get configuration for a specific section
+     */
+    getSection<K extends keyof VibeConfig>(section: K): VibeConfig[K];
+    /**
+     * Reset configuration to defaults
+     */
+    reset(): void;
+    /**
+     * Get the configuration directory
+     */
+    getConfigDir(): string;
+    /**
+     * Get the project configuration path
+     */
+    getProjectConfigPath(): string;
+    /**
+     * Check if configuration exists
+     */
+    configExists(): boolean;
+    /**
+     * Create default configuration file
+     */
+    createDefaultConfig(): void;
+    /**
+     * Load configuration from a file path
+     */
+    private loadFromFile;
+    /**
+     * Merge configuration from source into target
+     */
+    private mergeConfig;
+    /**
+     * Apply environment variable overrides
+     */
+    private applyEnvOverrides;
+    /**
+     * Deep clone an object
+     */
+    private deepClone;
 }
-export interface ConfigLoaderOptions {
-    schema?: ConfigSchema;
-    envFilePath?: string;
-    envFileName?: string;
-    allowMissing?: boolean;
-    prefix?: string;
-}
-export interface LoadResult<T = Record<string, any>> {
-    config: T;
-    errors: string[];
-    warnings: string[];
-}
-export declare class ConfigLoader<T extends Record<string, any> = Record<string, any>> {
-    private schema;
-    private envFilePath;
-    private envFileName;
-    private allowMissing;
-    private prefix;
-    constructor(options?: ConfigLoaderOptions);
-    /**
-     * Load configuration from environment and .env file
-     */
-    load(userConfig?: Partial<T>): LoadResult<T>;
-    /**
-     * Load environment variables from .env file
-     */
-    private loadEnvFile;
-    /**
-     * Apply schema validation and defaults
-     */
-    private applySchema;
-    /**
-     * Get a specific configuration value
-     */
-    get<K extends keyof T>(key: K): T[K] | undefined;
-    /**
-     * Set an environment variable
-     */
-    set(key: string, value: string): void;
-    /**
-     * Check if a configuration key is set
-     */
-    has(key: string): boolean;
-    /**
-     * Validate loaded configuration
-     */
-    validate(config: T): {
-        valid: boolean;
-        errors: string[];
-    };
-}
-/**
- * Common VIBE configuration schema
- */
-export declare const VIBE_CONFIG_SCHEMA: ConfigSchema;
-/**
- * Create a VIBE configuration loader
- */
-export declare function createConfigLoader(options?: Partial<ConfigLoaderOptions>): ConfigLoader;
+export declare function getConfigLoader(options?: {
+    projectRoot?: string;
+    configDir?: string;
+}): ConfigLoader;
+export declare function loadConfig(): VibeConfig;
+export declare function saveConfig(config: VibeConfig, path?: string): void;
 //# sourceMappingURL=config.loader.d.ts.map

@@ -1,0 +1,19 @@
+/**
+ * VIBE-CLI v12 - Configuration Module
+ *
+ * Hierarchical configuration system with:
+ * - Global and project-level config resolution
+ * - Environment variable overrides
+ * - Schema validation
+ * - Secrets handling
+ */
+
+export { configResolver, ConfigResolver, DEFAULT_CONFIG } from './resolver';
+export type {
+  ConfigResolutionOptions,
+  ConfigSource,
+  VibeConfig,
+  ThemeName,
+  VerbosityLevel,
+} from './resolver';
+export { ConfigurationError } from './resolver';

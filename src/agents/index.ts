@@ -8,6 +8,10 @@
  * - EXECUTE: Run tools and commands
  * - VERIFY: Validate results
  * - EXPLAIN: Provide explanation of actions
+ * - DEBUG: Error analysis and debugging
+ * - REFACTOR: Pattern recognition and code transformation
+ * - LEARN: Knowledge acquisition and pattern learning
+ * - CONTEXT: Semantic indexing and context management
  *
  * Version: 13.0.0
  */
@@ -49,7 +53,7 @@ export interface AgentStep {
   duration: number;
 }
 
-export type AgentPhase = 'plan' | 'propose' | 'approve' | 'execute' | 'verify' | 'explain';
+export type AgentPhase = 'plan' | 'propose' | 'approve' | 'execute' | 'verify' | 'explain' | 'debug' | 'refactor' | 'learn' | 'context';
 
 export interface ExecutionPlan {
   steps: PlanStep[];
@@ -517,13 +521,17 @@ export class VibeAgentExecutor {
   private agents: Map<string, VibeAgent> = new Map();
   private defaultProvider: VibeProviderRouter;
 
-  constructor(provider: VibeProviderRouter) {
+  constructor(provider: VibeProviderRouter, memory?: VibeMemoryManager) {
     this.defaultProvider = provider;
 
     // Register built-in agents
     this.registerAgent(new PlannerAgent(provider));
     this.registerAgent(new ExecutorAgent(provider));
     this.registerAgent(new ReviewerAgent(provider));
+    this.registerAgent(new DebuggerAgent(provider));
+    this.registerAgent(new RefactorAgent(provider));
+    this.registerAgent(new LearningAgent(provider, memory || new VibeMemoryManager()));
+    this.registerAgent(new ContextAgent(provider, memory || new VibeMemoryManager()));
   }
 
   /**
@@ -725,10 +733,376 @@ ${review.output}
 }
 
 // ============================================================================
+// DEBUGGER AGENT
+// ============================================================================
+
+export interface DebuggerResult {
+  rootCause: string;
+  suggestedFix: string;
+  stackTrace?: string;
+  relevantFiles: string[];
+  fixConfidence: number;
+}
+
+export class DebuggerAgent extends BaseAgent {
+  name = 'debugger';
+  description = 'Analyzes errors and suggests fixes';
+  phases: AgentPhase[] = ['debug'];
+
+  constructor(private router: VibeProviderRouter) {
+    super(router);
+  }
+
+  protected async run(
+    task: AgentTask,
+    context: AgentExecutionContext,
+    steps: AgentStep[]
+  ): Promise<{ success: boolean; output: string; artifacts?: string[] }> {
+    const startTime = Date.now();
+    const errorInfo = task.context.error as { message?: string; stack?: string; file?: string } || {};
+
+    // Analyze the error
+    const prompt = `
+Analyze this error and provide debugging assistance:
+
+Error: ${errorInfo.message || task.task}
+${errorInfo.stack ? `Stack Trace:\n${errorInfo.stack}` : ''}
+File: ${errorInfo.file || 'Unknown'}
+
+Context:
+${JSON.stringify(task.context, null, 2)}
+
+Provide:
+1. Root cause analysis
+2. Suggested fix
+3. List of relevant files that may need changes
+4. Confidence level (0-1)
+
+Respond with JSON: {rootCause, suggestedFix, relevantFiles: string[], fixConfidence}
+    `.trim();
+
+    const response = await this.router.chat([
+      { role: 'system', content: 'You are an expert debugger. Analyze errors and provide clear fixes.' },
+      { role: 'user', content: prompt },
+    ]);
+
+    // Parse the response
+    let debugResult: DebuggerResult = {
+      rootCause: 'Unable to determine root cause',
+      suggestedFix: 'Manual investigation required',
+      relevantFiles: [],
+      fixConfidence: 0,
+    };
+
+    try {
+      const jsonMatch = response?.content?.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        debugResult = { ...debugResult, ...JSON.parse(jsonMatch[0]) };
+      }
+    } catch {
+      // Fallback to raw response
+      debugResult.rootCause = response?.content || 'Unknown error';
+    }
+
+    steps.push({
+      id: crypto.randomUUID(),
+      phase: 'debug',
+      action: 'Analyze error and suggest fix',
+      result: `Root cause: ${debugResult.rootCause}\nFix: ${debugResult.suggestedFix}`,
+      timestamp: new Date(),
+      duration: Date.now() - startTime,
+    });
+
+    return {
+      success: true,
+      output: `Debug Analysis:\n\nRoot Cause: ${debugResult.rootCause}\n\nSuggested Fix: ${debugResult.suggestedFix}\n\nConfidence: ${(debugResult.fixConfidence * 100).toFixed(0)}%`,
+      artifacts: [JSON.stringify(debugResult, null, 2)],
+    };
+  }
+}
+
+// ============================================================================
+// REFACTOR AGENT
+// ============================================================================
+
+export interface RefactorResult {
+  patterns: string[];
+  changes: RefactorChange[];
+  estimatedComplexity: 'low' | 'medium' | 'high';
+  breakingChanges: string[];
+}
+
+export interface RefactorChange {
+  file: string;
+  description: string;
+  before: string;
+  after: string;
+  rationale: string;
+}
+
+export class RefactorAgent extends BaseAgent {
+  name = 'refactor';
+  description = 'Identifies patterns and refactors code';
+  phases: AgentPhase[] = ['refactor'];
+
+  constructor(private router: VibeProviderRouter) {
+    super(router);
+  }
+
+  protected async run(
+    task: AgentTask,
+    context: AgentExecutionContext,
+    steps: AgentStep[]
+  ): Promise<{ success: boolean; output: string; artifacts?: string[] }> {
+    const startTime = Date.now();
+    const targetFile = task.context.file as string || '';
+    const patternType = task.context.pattern as string || 'general';
+
+    const prompt = `
+Refactor task: ${task.task}
+
+Target file: ${targetFile}
+Pattern type: ${patternType}
+
+Analyze the code and identify refactoring opportunities:
+1. Code smells or anti-patterns
+2. Potential improvements
+3. Breaking changes (if any)
+4. Estimated complexity
+
+Respond with JSON: {patterns: string[], changes: [{file, description, before, after, rationale}], estimatedComplexity, breakingChanges: string[]}
+    `.trim();
+
+    const response = await this.router.chat([
+      { role: 'system', content: 'You are an expert code refactorer. Identify patterns and improve code quality.' },
+      { role: 'user', content: prompt },
+    ]);
+
+    let refactorResult: RefactorResult = {
+      patterns: ['General code improvement'],
+      changes: [],
+      estimatedComplexity: 'medium',
+      breakingChanges: [],
+    };
+
+    try {
+      const jsonMatch = response?.content?.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        refactorResult = { ...refactorResult, ...JSON.parse(jsonMatch[0]) };
+      }
+    } catch {
+      refactorResult.patterns = [response?.content || 'No patterns identified'];
+    }
+
+    steps.push({
+      id: crypto.randomUUID(),
+      phase: 'refactor',
+      action: 'Identify refactoring patterns',
+      result: `Found ${refactorResult.patterns.length} patterns, ${refactorResult.changes.length} changes proposed`,
+      timestamp: new Date(),
+      duration: Date.now() - startTime,
+    });
+
+    return {
+      success: true,
+      output: `Refactoring Analysis:\n\nPatterns Found:\n${refactorResult.patterns.map(p => `- ${p}`).join('\n')}\n\nProposed Changes: ${refactorResult.changes.length}\nComplexity: ${refactorResult.estimatedComplexity.toUpperCase()}`,
+      artifacts: [JSON.stringify(refactorResult, null, 2)],
+    };
+  }
+}
+
+// ============================================================================
+// LEARNING AGENT
+// ============================================================================
+
+export interface LearningResult {
+  knowledgeGained: string;
+  patternsLearned: string[];
+  suggestions: string[];
+  confidenceBoost: number;
+}
+
+export class LearningAgent extends BaseAgent {
+  name = 'learn';
+  description = 'Learns from interactions and improves over time';
+  phases: AgentPhase[] = ['learn'];
+
+  constructor(
+    private router: VibeProviderRouter,
+    private memory: VibeMemoryManager
+  ) {
+    super(router);
+  }
+
+  protected async run(
+    task: AgentTask,
+    context: AgentExecutionContext,
+    steps: AgentStep[]
+  ): Promise<{ success: boolean; output: string; artifacts?: string[] }> {
+    const startTime = Date.now();
+
+    // Extract learning from the task and context
+    const prompt = `
+Learn from this interaction and improve future responses:
+
+Task: ${task.task}
+Context: ${JSON.stringify(task.context, null, 2)}
+
+What can be learned from this interaction?
+Provide:
+1. Key knowledge gained
+2. Patterns observed
+3. Suggestions for improvement
+4. Confidence boost (0-1)
+
+Respond with JSON: {knowledgeGained, patternsLearned: string[], suggestions: string[], confidenceBoost}
+    `.trim();
+
+    const response = await this.router.chat([
+      { role: 'system', content: 'You are a learning agent that improves from interactions.' },
+      { role: 'user', content: prompt },
+    ]);
+
+    let learningResult: LearningResult = {
+      knowledgeGained: 'General pattern recognition',
+      patternsLearned: [],
+      suggestions: [],
+      confidenceBoost: 0,
+    };
+
+    try {
+      const jsonMatch = response?.content?.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        learningResult = { ...learningResult, ...JSON.parse(jsonMatch[0]) };
+      }
+    } catch {
+      learningResult.knowledgeGained = response?.content || 'No new learning';
+    }
+
+    // Store the learning in memory
+    this.memory.add({
+      type: 'action',
+      content: learningResult.knowledgeGained,
+      tags: ['learning', ...learningResult.patternsLearned],
+      source: 'inference',
+    });
+
+    steps.push({
+      id: crypto.randomUUID(),
+      phase: 'learn',
+      action: 'Extract and store knowledge',
+      result: `Learned: ${learningResult.knowledgeGained.slice(0, 100)}...`,
+      timestamp: new Date(),
+      duration: Date.now() - startTime,
+    });
+
+    return {
+      success: true,
+      output: `Learning Complete:\n\nKnowledge Gained: ${learningResult.knowledgeGained}\nPatterns: ${learningResult.patternsLearned.length}\nSuggestions: ${learningResult.suggestions.length}`,
+      artifacts: [JSON.stringify(learningResult, null, 2)],
+    };
+  }
+}
+
+// ============================================================================
+// CONTEXT AGENT
+// ============================================================================
+
+export interface ContextResult {
+  relevantContext: string[];
+  indexedFiles: number;
+  semanticMatches: ContextMatch[];
+  contextCoverage: number;
+}
+
+export interface ContextMatch {
+  file: string;
+  relevance: number;
+  excerpt: string;
+}
+
+export class ContextAgent extends BaseAgent {
+  name = 'context';
+  description = 'Manages semantic indexing and context retrieval';
+  phases: AgentPhase[] = ['context'];
+
+  constructor(
+    private router: VibeProviderRouter,
+    private memory: VibeMemoryManager
+  ) {
+    super(router);
+  }
+
+  protected async run(
+    task: AgentTask,
+    context: AgentExecutionContext,
+    steps: AgentStep[]
+  ): Promise<{ success: boolean; output: string; artifacts?: string[] }> {
+    const startTime = Date.now();
+    const query = task.context.query as string || task.task;
+
+    // Retrieve relevant context from memory
+    const relevantDocs = this.memory.search(query);
+
+    const prompt = `
+Given this query: ${query}
+
+And these context documents:
+${relevantDocs.map((d: { content: string }) => `- ${d.content.slice(0, 200)}...`).join('\n')}
+
+Identify the most relevant context and provide:
+1. Key context points
+2. Files that should be indexed
+3. Semantic matches
+4. Context coverage score (0-1)
+
+Respond with JSON: {relevantContext: string[], indexedFiles, semanticMatches: [{file, relevance, excerpt}], contextCoverage}
+    `.trim();
+
+    const response = await this.router.chat([
+      { role: 'system', content: 'You are a context agent that manages semantic understanding.' },
+      { role: 'user', content: prompt },
+    ]);
+
+    let contextResult: ContextResult = {
+      relevantContext: relevantDocs.map((d: { content: string }) => d.content),
+      indexedFiles: relevantDocs.length,
+      semanticMatches: [],
+      contextCoverage: 0.5,
+    };
+
+    try {
+      const jsonMatch = response?.content?.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        const parsed = JSON.parse(jsonMatch[0]);
+        contextResult = { ...contextResult, ...parsed };
+      }
+    } catch {
+      // Use defaults
+    }
+
+    steps.push({
+      id: crypto.randomUUID(),
+      phase: 'context',
+      action: 'Retrieve relevant context',
+      result: `Found ${contextResult.relevantContext.length} context items, ${contextResult.indexedFiles} files indexed`,
+      timestamp: new Date(),
+      duration: Date.now() - startTime,
+    });
+
+    return {
+      success: true,
+      output: `Context Retrieval:\n\nRelevant Context: ${contextResult.relevantContext.length} items\nFiles Indexed: ${contextResult.indexedFiles}\nCoverage: ${(contextResult.contextCoverage * 100).toFixed(0)}%`,
+      artifacts: [JSON.stringify(contextResult, null, 2)],
+    };
+  }
+}
+
+// ============================================================================
 // EXPORTS
 // ============================================================================
 
-export const agentExecutor = new VibeAgentExecutor(new VibeProviderRouter());
+export const agentExecutor = new VibeAgentExecutor(new VibeProviderRouter(), new VibeMemoryManager());
 export { VibeAgentExecutor as VibeAgentSystem };
 export type {
   AgentTask as VibeAgentTask,

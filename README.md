@@ -58,16 +58,20 @@ VIBE CLI v12 represents a complete architectural redesign:
 ### Installation
 
 ```bash
-# From source
+# Clone the repository
 git clone https://github.com/mk-knight23/VIBE-CLI.git
 cd VIBE-CLI
+
+# Install dependencies
 npm install
+
+# Build the project
 npm run build
 
 # Link globally
 npm link
 
-# Or run directly
+# Run directly
 node bin/vibe.js
 ```
 
