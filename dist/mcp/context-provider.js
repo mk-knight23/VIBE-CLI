@@ -1,6 +1,6 @@
 "use strict";
 /**
- * VIBE-CLI v12 - MCP Context Providers
+ * VIBE-CLI v0.0.1 - MCP Context Providers
  * Structured, minimal, inspectable context for agents
  *
  * Phase 5: MCP Everywhere

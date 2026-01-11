@@ -1,5 +1,5 @@
 /**
- * VIBE-CLI v12 - Context Module
+ * VIBE-CLI v0.0.1 - Context Module
  * MCP-based context management for AI agents
  */
 

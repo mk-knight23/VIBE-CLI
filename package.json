@@ -1,18 +1,18 @@
 {
   "name": "@vibe/cli",
-  "version": "13.0.0",
-  "description": "VIBE CLI v13 - AI Developer Teammate. One command, infinite capability.",
+  "version": "0.0.1",
+  "description": "VIBE CLI - AI Developer Teammate. One command, infinite capability.",
   "main": "dist/index.js",
   "bin": {
     "vibe": "bin/vibe.js"
   },
   "vibe": {
-    "version": "13.0.0",
+    "version": "0.0.1",
     "architecture": "8-primitives",
     "mcp_enabled": true,
     "minimum_node_version": "20.0.0",
     "breaking_changes": {
-      "12.0.0": [
+      "0.0.1": [
         "Single command 'vibe' only - no subcommands exposed to users",
         "Intent-driven natural language - no slash commands",
         "MCP-first context architecture",
@@ -23,7 +23,7 @@
   },
   "scripts": {
     "build": "tsc",
-    "build:v12": "tsc && echo '✅ VIBE v12 Build Complete'",
+    "build:v0.0.1": "tsc && echo '✅ VIBE v0.0.1 Build Complete'",
     "build:watch": "tsc --watch",
     "test": "vitest run",
     "test:unit": "vitest run tests/unit",
@@ -74,34 +74,34 @@
     "@types/fs-extra": "^11.0.4",
     "@types/react-router-dom": "^5.3.3",
     "axios": "^1.13.2",
-    "better-sqlite3": "^11.6.0",
-    "chalk": "^5.3.0",
+    "better-sqlite3": "^12.6.0",
+    "chalk": "^5.6.2",
     "commander": "^14.0.2",
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",
     "express": "^5.2.1",
-    "fast-glob": "^3.3.2",
+    "fast-glob": "^3.3.3",
     "fs-extra": "^11.3.3",
-    "inquirer": "^13.1.0",
+    "inquirer": "^13.2.0",
     "node-fetch": "^3.3.2",
     "ora": "^9.0.0",
     "picocolors": "^1.1.1",
-    "react-router-dom": "^7.10.1",
-    "simple-git": "^3.27.0",
-    "uuid": "^11.0.3",
+    "react-router-dom": "^7.12.0",
+    "simple-git": "^3.30.0",
+    "uuid": "^0.0.1",
     "zod": "^4.3.5"
   },
   "devDependencies": {
-    "@types/better-sqlite3": "^7.6.11",
-    "@types/node": "^25.0.2",
-    "@types/uuid": "^10.0.0",
-    "@vitest/coverage-v8": "^4.0.15",
+    "@types/better-sqlite3": "^7.6.13",
+    "@types/node": "^25.0.6",
+    "@types/uuid": "^11.0.0",
+    "@vitest/coverage-v8": "^4.0.16",
     "concurrently": "^9.2.1",
     "madge": "^8.0.0",
     "nodemon": "^3.1.11",
     "ts-unused-exports": "^11.0.1",
-    "typescript": "^5.7.2",
-    "vitest": "^4.0.15"
+    "typescript": "^5.9.3",
+    "vitest": "^4.0.16"
   },
   "files": [
     "dist/**/*",

@@ -4,7 +4,7 @@
  * Abstract base class for all LLM provider adapters.
  * Provides unified interface for chat, streaming, and completion.
  *
- * Version: 13.0.0
+ * Version: 0.0.1
  */
 import type { ChatMessage } from '../../types.js';
 export interface ModelInfo {

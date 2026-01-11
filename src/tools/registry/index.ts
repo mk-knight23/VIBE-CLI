@@ -12,7 +12,7 @@
  * - Risk level
  * - Approval requirements
  *
- * Version: 13.0.0
+ * Version: 0.0.1
  */
 
 import * as fs from 'fs';
@@ -31,6 +31,7 @@ export interface SchemaProperty {
   description: string;
   optional?: boolean;
   enum?: string[];
+  items?: SchemaProperty;
 }
 
 export interface ToolSchema {

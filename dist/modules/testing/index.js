@@ -1,6 +1,6 @@
 "use strict";
 /**
- * VIBE-CLI v12 - Testing Module
+ * VIBE-CLI v0.0.1 - Testing Module
  * Test generation, execution, and coverage analysis
  */
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {

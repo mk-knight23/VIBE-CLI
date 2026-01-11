@@ -1,5 +1,5 @@
 /**
- * VIBE-CLI v12 - Git Rebase Helper
+ * VIBE-CLI v0.0.1 - Git Rebase Helper
  * Guide complex rebasing with explanations and safety checks
  */
 

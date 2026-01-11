@@ -1,11 +1,11 @@
 "use strict";
 /**
- * VIBE CLI v13 - Configuration Loader
+ * VIBE CLI v0.0.1 - Configuration Loader
  *
  * Handles loading, validation, and management of VIBE CLI configuration.
  * Supports .vibe/config.json and environment variable overrides.
  *
- * Version: 13.0.0
+ * Version: 0.0.1
  */
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
@@ -122,7 +122,7 @@ const DEFAULT_POLICY_CONFIG = {
     defaultAction: 'prompt',
 };
 const DEFAULT_CONFIG = {
-    version: '13.0.0',
+    version: '0.0.1',
     models: DEFAULT_MODEL_CONFIG,
     agentSettings: DEFAULT_AGENT_CONFIG,
     ui: DEFAULT_UI_CONFIG,

@@ -1,5 +1,5 @@
 /**
- * VIBE-CLI v12 - Progress Display
+ * VIBE-CLI v0.0.1 - Progress Display
  * Real-time execution status with progress bars and milestone tracking
  */
 

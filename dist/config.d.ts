@@ -1,5 +1,5 @@
 /**
- * VIBE-CLI v12 - Configuration & BYOK (Bring Your Own Key) Manager
+ * VIBE-CLI v0.0.1 - Configuration & BYOK (Bring Your Own Key) Manager
  * Handles API key input, secure storage, and provider configuration
  */
 import { VibeProviderRouter } from './providers/router';

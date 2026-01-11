@@ -1,11 +1,10 @@
 /**
- * VIBE-CLI v12 - Core Engine
+ * VIBE-CLI v0.0.1 - Core Engine
  * Main orchestrator for the CLI
  */
-import { ModuleLoader } from './module.loader';
 import { VibeProviderRouter } from '../providers/router';
 import { VibeMemoryManager } from '../memory';
-import type { VibeSession } from '../types';
+import { VibeAgentExecutor } from '../agents';
 export interface EngineConfig {
     modulesDir?: string;
     skipModules?: boolean;
@@ -17,21 +16,32 @@ export interface EngineStatus {
     moduleCount: number;
     provider: string;
     model: string;
+    version: string;
 }
 export declare class VibeCoreEngine {
     private moduleLoader;
     private provider;
     private memory;
     private configManager;
+    private agentExecutor;
     private session;
     private cli;
     private initialized;
     private modulesLoaded;
+    private readonly VERSION;
     constructor(config?: EngineConfig);
     /**
      * Initialize the engine
      */
     initialize(): Promise<boolean>;
+    /**
+     * Load or create a session
+     */
+    private loadOrCreateSession;
+    /**
+     * Save session
+     */
+    private saveSession;
     /**
      * Start interactive mode
      */
@@ -41,6 +51,14 @@ export declare class VibeCoreEngine {
      */
     getStatus(): EngineStatus;
     /**
+     * Execute a command through the agent pipeline
+     */
+    executeCommand(input: string): Promise<{
+        success: boolean;
+        result?: any;
+        error?: string;
+    }>;
+    /**
      * Get provider
      */
     getProvider(): VibeProviderRouter;
@@ -49,33 +67,9 @@ export declare class VibeCoreEngine {
      */
     getMemory(): VibeMemoryManager;
     /**
-     * Get module loader
+     * Get agent executor
      */
-    getModuleLoader(): ModuleLoader;
-    /**
-     * Get session
-     */
-    getSession(): VibeSession | null;
-    /**
-     * Execute a module by name
-     */
-    executeModule(moduleName: string, params: Record<string, any>): Promise<{
-        success: boolean;
-        data?: any;
-        error?: string;
-    }>;
-    /**
-     * Execute a command through the orchestrator
-     */
-    executeCommand(input: string): Promise<{
-        success: boolean;
-        result?: any;
-        error?: string;
-    }>;
-    /**
-     * Check if initialized
-     */
-    isInitialized(): boolean;
+    getAgentExecutor(): VibeAgentExecutor | null;
     /**
      * Shutdown engine
      */

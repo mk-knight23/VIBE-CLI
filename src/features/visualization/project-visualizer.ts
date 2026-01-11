@@ -1,5 +1,5 @@
 /**
- * VIBE-CLI v12 - Project Visualizer
+ * VIBE-CLI v0.0.1 - Project Visualizer
  * Visual codebase understanding and dependency maps
  */
 
@@ -300,6 +300,26 @@ export class ProjectVisualizer {
       format: 'ascii',
       content: lines.join('\n'),
     };
+  }
+
+  /**
+   * Analyze architecture with AI assistance
+   */
+  async analyzeArchitectureWithAI(dirPath: string, provider: any): Promise<string> {
+    const layers = this.analyzeArchitecture(dirPath);
+    const summary = this.formatArchitecture(layers);
+
+    const prompt = `Analyze this project architecture and provide 3-5 recommendations for improvement (e.g., modularity, patterns, decoupling).
+    
+Architecture Summary:
+${summary}`;
+
+    try {
+      const response = await provider.chat([{ role: 'system', content: 'You are a senior software architect.' }, { role: 'user', content: prompt }]);
+      return response.content;
+    } catch {
+      return 'AI analysis unavailable.';
+    }
   }
 
   /**

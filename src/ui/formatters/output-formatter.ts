@@ -1,5 +1,5 @@
 /**
- * VIBE-CLI v12 - Output Formatter
+ * VIBE-CLI v0.0.1 - Output Formatter
  * Generate reports and exports in multiple formats
  */
 

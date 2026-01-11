@@ -1,5 +1,5 @@
 /**
- * VIBE-CLI v12 - Providers Index
+ * VIBE-CLI v0.0.1 - Providers Index
  */
 export { VibeProviderRouter } from './router';
 export { UnifiedProviderRouter, unifiedRouter } from './unified.router';

@@ -1,5 +1,5 @@
 /**
- * VIBE-CLI v12 - State Serializer
+ * VIBE-CLI v0.0.1 - State Serializer
  * Serializes and deserializes code state with gzip compression
  */
 

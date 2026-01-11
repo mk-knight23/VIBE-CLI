@@ -1,5 +1,5 @@
 /**
- * VIBE-CLI v12 - Pattern Recognizer
+ * VIBE-CLI v0.0.1 - Pattern Recognizer
  * Identify and refactor code patterns at scale
  */
 

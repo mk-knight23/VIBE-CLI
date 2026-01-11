@@ -1,5 +1,5 @@
 /**
- * VIBE-CLI v12 - Multi-Model Manager
+ * VIBE-CLI v0.0.1 - Multi-Model Manager
  * Support multiple LLMs with intelligent model selection
  */
 

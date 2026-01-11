@@ -8,7 +8,7 @@
  * - Auto-approve configurable for low-risk ops
  * - Remember preferences per operation type
  *
- * Version: 13.0.0
+ * Version: 0.0.1
  */
 import type { ApprovalType, ApprovalRisk } from '../types.js';
 export type RiskLevel = 'low' | 'medium' | 'high' | 'critical';

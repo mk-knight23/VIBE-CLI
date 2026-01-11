@@ -1,5 +1,5 @@
 /**
- * VIBE-CLI v12 - Codebase Analyzer Exports
+ * VIBE-CLI v0.0.1 - Codebase Analyzer Exports
  */
 
 export * from './ast-analyzer';

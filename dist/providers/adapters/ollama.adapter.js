@@ -8,7 +8,7 @@
  * - Streaming support
  * - Model management
  *
- * Version: 13.0.0
+ * Version: 0.0.1
  */
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.lmstudioAdapter = exports.ollamaAdapter = exports.LMStudioAdapter = exports.OllamaAdapter = void 0;

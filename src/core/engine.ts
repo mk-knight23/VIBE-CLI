@@ -1,16 +1,18 @@
 /**
- * VIBE-CLI v12 - Core Engine
+ * VIBE-CLI v0.0.1 - Core Engine
  * Main orchestrator for the CLI
  */
 
 import * as path from 'path';
+import * as fs from 'fs';
 import chalk from 'chalk';
 import { ModuleLoader } from './module.loader';
 import { VibeProviderRouter } from '../providers/router';
 import { VibeMemoryManager } from '../memory';
 import { VibeConfigManager } from '../config';
 import { CLIEngine } from '../tui';
-import type { VibeSession, VibeIntent } from '../types';
+import { VibeAgentExecutor } from '../agents';
+import type { VibeSession } from '../types';
 
 export interface EngineConfig {
   modulesDir?: string;
@@ -24,6 +26,7 @@ export interface EngineStatus {
   moduleCount: number;
   provider: string;
   model: string;
+  version: string;
 }
 
 export class VibeCoreEngine {
@@ -31,10 +34,12 @@ export class VibeCoreEngine {
   private provider: VibeProviderRouter;
   private memory: VibeMemoryManager;
   private configManager: VibeConfigManager;
+  private agentExecutor: VibeAgentExecutor | null = null;
   private session: VibeSession | null = null;
   private cli: CLIEngine | null = null;
   private initialized: boolean = false;
   private modulesLoaded: boolean = false;
+  private readonly VERSION = '0.0.1';
 
   constructor(config?: EngineConfig) {
     const modulesDir = config?.modulesDir || path.join(__dirname, '..', 'modules');
@@ -51,7 +56,7 @@ export class VibeCoreEngine {
     console.log(chalk.cyan(`
 ╔═══════════════════════════════════════════════════════════════╗
 ║                                                               ║
-║   V I B E   v12.0.0                                           ║
+║   V I B E   v${this.VERSION}                                        ║
 ║   Initializing Core Engine...                                 ║
 ║                                                               ║
 ╚═══════════════════════════════════════════════════════════════╝
@@ -59,13 +64,13 @@ export class VibeCoreEngine {
 
     try {
       // Step 1: Load configuration
-      console.log(chalk.gray('  1/5 Loading configuration...'));
+      console.log(chalk.gray('  1/6 Loading configuration...'));
       this.configManager = new VibeConfigManager(this.provider);
-      const config = this.configManager.loadConfig();
+      this.configManager.loadConfig();
       console.log(chalk.green('    ✓ Configuration loaded'));
 
       // Step 2: Initialize provider
-      console.log(chalk.gray('  2/5 Initializing AI provider...'));
+      console.log(chalk.gray('  2/6 Initializing AI provider...'));
       const status = this.provider.getStatus();
       const keyStatus = this.provider.isProviderConfigured(status.provider)
         ? chalk.green('configured')
@@ -73,25 +78,25 @@ export class VibeCoreEngine {
       console.log(chalk.green(`    ✓ Provider: ${status.provider}/${status.model} (${keyStatus})`));
 
       // Step 3: Initialize memory
-      console.log(chalk.gray('  3/5 Initializing memory...'));
+      console.log(chalk.gray('  3/6 Initializing memory...'));
       const memoryCount = this.memory.getEntryCount();
       console.log(chalk.green(`    ✓ Memory: ${memoryCount} entries`));
 
       // Step 4: Load modules (unless skipped)
-      console.log(chalk.gray('  4/5 Loading modules...'));
+      console.log(chalk.gray('  4/6 Loading modules...'));
       await this.moduleLoader.loadAll();
       this.modulesLoaded = true;
       const stats = this.moduleLoader.getStats();
       console.log(chalk.green(`    ✓ Modules: ${stats.loaded}/${stats.total} loaded`));
 
-      // Step 5: Create session
-      console.log(chalk.gray('  5/5 Creating session...'));
-      this.session = {
-        id: `session-${Date.now()}`,
-        projectRoot: process.cwd(),
-        createdAt: new Date(),
-        lastActivity: new Date(),
-      };
+      // Step 5: Initialize Agent System
+      console.log(chalk.gray('  5/6 Initializing agent system...'));
+      this.agentExecutor = new VibeAgentExecutor(this.provider, this.memory);
+      console.log(chalk.green(`    ✓ Agent System: v0.0.1 ready`));
+
+      // Step 6: Create session
+      console.log(chalk.gray('  6/6 Creating session...'));
+      this.session = this.loadOrCreateSession();
       console.log(chalk.green(`    ✓ Session: ${this.session.id}`));
 
       this.initialized = true;
@@ -113,6 +118,50 @@ export class VibeCoreEngine {
   }
 
   /**
+   * Load or create a session
+   */
+  private loadOrCreateSession(): VibeSession {
+    const sessionDir = path.join(process.cwd(), '.vibe');
+    if (!fs.existsSync(sessionDir)) {
+      fs.mkdirSync(sessionDir, { recursive: true });
+    }
+
+    const sessionFile = path.join(sessionDir, 'session.json');
+    if (fs.existsSync(sessionFile)) {
+      try {
+        const data = JSON.parse(fs.readFileSync(sessionFile, 'utf-8'));
+        return {
+          ...data,
+          lastActivity: new Date(),
+        };
+      } catch (e) {
+        // Fallback to new session
+      }
+    }
+
+    const session: VibeSession = {
+      id: `session-${Date.now()}`,
+      projectRoot: process.cwd(),
+      createdAt: new Date(),
+      lastActivity: new Date(),
+    };
+
+    this.saveSession(session);
+    return session;
+  }
+
+  /**
+   * Save session
+   */
+  private saveSession(session: VibeSession): void {
+    const sessionDir = path.join(process.cwd(), '.vibe');
+    if (!fs.existsSync(sessionDir)) {
+      fs.mkdirSync(sessionDir, { recursive: true });
+    }
+    fs.writeFileSync(path.join(sessionDir, 'session.json'), JSON.stringify(session, null, 2));
+  }
+
+  /**
    * Start interactive mode
    */
   async startInteractiveMode(): Promise<void> {
@@ -128,7 +177,7 @@ export class VibeCoreEngine {
     await this.configManager.runFirstTimeSetup();
     await this.configManager.checkAndPromptForKeys();
 
-    // Create CLI engine (simplified v12 - no Orchestrator, no VibeSession)
+    // Create CLI engine
     this.cli = new CLIEngine(this.provider, this.memory);
 
     // Start CLI
@@ -149,7 +198,40 @@ export class VibeCoreEngine {
       moduleCount: moduleStats.loaded,
       provider: providerStatus.provider,
       model: providerStatus.model,
+      version: this.VERSION,
     };
+  }
+
+  /**
+   * Execute a command through the agent pipeline
+   */
+  async executeCommand(input: string): Promise<{ success: boolean; result?: any; error?: string }> {
+    if (!this.initialized || !this.agentExecutor) {
+      return { success: false, error: 'Engine not initialized' };
+    }
+
+    try {
+      const result = await this.agentExecutor.executePipeline({
+        task: input,
+        context: {},
+        approvalMode: 'prompt',
+      });
+
+      return {
+        success: result.success,
+        result: {
+          output: result.output,
+          artifacts: result.artifacts,
+          steps: result.steps,
+        },
+        error: result.error,
+      };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error',
+      };
+    }
   }
 
   /**
@@ -167,72 +249,10 @@ export class VibeCoreEngine {
   }
 
   /**
-   * Get module loader
+   * Get agent executor
    */
-  getModuleLoader(): ModuleLoader {
-    return this.moduleLoader;
-  }
-
-  /**
-   * Get session
-   */
-  getSession(): VibeSession | null {
-    return this.session;
-  }
-
-  /**
-   * Execute a module by name
-   */
-  async executeModule(moduleName: string, params: Record<string, any>): Promise<{ success: boolean; data?: any; error?: string }> {
-    return this.moduleLoader.execute(moduleName, params);
-  }
-
-  /**
-   * Execute a command through the orchestrator
-   */
-  async executeCommand(input: string): Promise<{ success: boolean; result?: any; error?: string }> {
-    if (!this.initialized) {
-      return { success: false, error: 'Engine not initialized' };
-    }
-
-    const { IntentRouter } = require('./intent/router');
-    const { Orchestrator } = require('./orchestration');
-
-    const intentRouter = new IntentRouter(this.provider);
-    const orchestrator = new Orchestrator({
-      provider: this.provider,
-      memory: this.memory,
-    });
-
-    try {
-      // Classify intent
-      const classification = await intentRouter.classify(input);
-      const intent = classification.intent;
-
-      // Execute
-      const result = await orchestrator.execute(intent, {}, { approved: true });
-
-      return {
-        success: result.success,
-        result: {
-          summary: result.summary,
-          output: result.output,
-          changes: result.changes,
-        },
-      };
-    } catch (error) {
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : 'Unknown error',
-      };
-    }
-  }
-
-  /**
-   * Check if initialized
-   */
-  isInitialized(): boolean {
-    return this.initialized;
+  getAgentExecutor(): VibeAgentExecutor | null {
+    return this.agentExecutor;
   }
 
   /**
@@ -243,6 +263,7 @@ export class VibeCoreEngine {
 
     if (this.session) {
       this.session.lastActivity = new Date();
+      this.saveSession(this.session);
     }
 
     console.log(chalk.green('  ✓ Session saved'));

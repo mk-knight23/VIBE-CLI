@@ -1,5 +1,5 @@
 /**
- * VIBE-CLI v12 - Terminal Command Generator
+ * VIBE-CLI v0.0.1 - Terminal Command Generator
  * Convert natural language to shell commands
  */
 
@@ -197,10 +197,10 @@ export class CommandGenerator {
   /**
    * Generate command from natural language
    */
-  generate(naturalLanguage: string, options: CommandGenerationOptions = {}): GeneratedCommand {
-    const { shell = this.shellType } = options;
+  async generate(naturalLanguage: string, options: CommandGenerationOptions & { history?: string[], provider?: any } = {}): Promise<GeneratedCommand> {
+    const { shell = this.shellType, history, provider } = options;
 
-    // Try to match against templates
+    // 1. Try to match against templates
     for (const template of this.templates) {
       for (const pattern of template.patterns) {
         const matches = naturalLanguage.match(pattern);
@@ -210,8 +210,66 @@ export class CommandGenerator {
       }
     }
 
+    // 2. Try predictive history matching
+    if (history) {
+      const suggestion = this.suggestFromHistory(naturalLanguage, history);
+      if (suggestion) return suggestion;
+    }
+
+    // 3. AI Fallback if provider is available
+    if (provider) {
+      return this.generateWithAI(naturalLanguage, provider, shell);
+    }
+
     // Fallback: return help
     return this.generateHelpCommand(shell);
+  }
+
+  /**
+   * Suggest a command based on history
+   */
+  private suggestFromHistory(query: string, history: string[]): GeneratedCommand | null {
+    const queryLower = query.toLowerCase();
+    // Simple reversal search for last similar command
+    for (let i = history.length - 1; i >= 0; i--) {
+      if (history[i].toLowerCase().includes(queryLower)) {
+        return {
+          command: history[i],
+          shell: this.shellType,
+          explanation: 'Found in command history',
+          parts: [{ type: 'command', value: history[i] }],
+          syntax: history[i],
+          isValid: true,
+          validationErrors: [],
+        };
+      }
+    }
+    return null;
+  }
+
+  /**
+   * AI-powered command generation fallback
+   */
+  private async generateWithAI(input: string, provider: any, shell: ShellType): Promise<GeneratedCommand> {
+    const prompt = `Convert this natural language request into a single SHELL command for ${shell}: "${input}".
+Respond ONLY with the command. No other text.`;
+
+    try {
+      const response = await provider.chat([{ role: 'system', content: 'You are a shell command expert.' }, { role: 'user', content: prompt }]);
+      const command = response.content.trim().replace(/```/g, '');
+
+      return {
+        command,
+        shell,
+        explanation: 'AI-generated command suggestion',
+        parts: [{ type: 'command', value: command }],
+        syntax: command,
+        isValid: true,
+        validationErrors: [],
+      };
+    } catch (error) {
+      return this.generateHelpCommand(shell);
+    }
   }
 
   /**

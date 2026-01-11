@@ -7,7 +7,7 @@
  * - Streaming support
  * - Model management
  *
- * Version: 13.0.0
+ * Version: 0.0.1
  */
 import { BaseProviderAdapter, ProviderOptions, ProviderResponse, StreamCallback } from './base.adapter.js';
 import type { ChatMessage } from '../../types.js';

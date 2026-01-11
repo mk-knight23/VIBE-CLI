@@ -8,7 +8,7 @@
  * - Provider health monitoring
  * - Task-based model selection
  *
- * Version: 13.0.0
+ * Version: 0.0.1
  */
 import { BaseProviderAdapter, ModelInfo, ProviderOptions, ProviderResponse, StreamCallback } from './adapters/base.adapter.js';
 import type { ChatMessage } from '../types.js';

@@ -8,7 +8,7 @@
  * - Vision/multimodal support
  * - Free tier support
  *
- * Version: 13.0.0
+ * Version: 0.0.1
  */
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.googleAdapter = exports.GoogleAdapter = void 0;

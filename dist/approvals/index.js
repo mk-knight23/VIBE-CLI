@@ -1,6 +1,6 @@
 "use strict";
 /**
- * VIBE-CLI v12 - Approvals Index
+ * VIBE-CLI v0.0.1 - Approvals Index
  */
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.approvalManager = exports.VibeApprovalManager = exports.ApprovalManager = void 0;

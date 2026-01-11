@@ -12,7 +12,7 @@
  * - Network allowlist
  * - Process isolation
  *
- * Version: 13.0.0
+ * Version: 0.0.1
  */
 
 import * as child_process from 'child_process';

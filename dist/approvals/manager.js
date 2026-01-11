@@ -9,7 +9,7 @@
  * - Auto-approve configurable for low-risk ops
  * - Remember preferences per operation type
  *
- * Version: 13.0.0
+ * Version: 0.0.1
  */
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;

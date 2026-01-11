@@ -12,7 +12,7 @@
  * - Risk level
  * - Approval requirements
  *
- * Version: 13.0.0
+ * Version: 0.0.1
  */
 export type ToolCategory = 'filesystem' | 'shell' | 'git' | 'search' | 'web' | 'code';
 export type RiskLevel = 'low' | 'medium' | 'high' | 'critical';
@@ -21,6 +21,7 @@ export interface SchemaProperty {
     description: string;
     optional?: boolean;
     enum?: string[];
+    items?: SchemaProperty;
 }
 export interface ToolSchema {
     type: 'object';

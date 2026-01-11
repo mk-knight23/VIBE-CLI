@@ -1,5 +1,5 @@
 /**
- * VIBE-CLI v12 - Modules Index
+ * VIBE-CLI v0.0.1 - Modules Index
  */
 
 export type { BaseModule, ModuleInfo, ModuleResult } from './base.module';

@@ -8,7 +8,7 @@
  * - System message handling
  * - Claude-specific features
  *
- * Version: 13.0.0
+ * Version: 0.0.1
  */
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.bedrockAdapter = exports.anthropicAdapter = exports.BedrockAnthropicAdapter = exports.AnthropicAdapter = void 0;

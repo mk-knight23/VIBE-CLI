@@ -1,5 +1,5 @@
 /**
- * VIBE-CLI v12 - Testing Module
+ * VIBE-CLI v0.0.1 - Testing Module
  * Test generation, execution, and coverage analysis
  */
 import { BaseModule, ModuleResult } from '../base.module';

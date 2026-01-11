@@ -1,6 +1,6 @@
 "use strict";
 /**
- * VIBE-CLI v12 - Custom Error Classes
+ * VIBE-CLI v0.0.1 - Custom Error Classes
  * Production-grade error handling with specific error types
  */
 Object.defineProperty(exports, "__esModule", { value: true });

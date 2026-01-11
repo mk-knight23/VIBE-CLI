@@ -1,5 +1,5 @@
 /**
- * VIBE-CLI v12 - File Writer Utility
+ * VIBE-CLI v0.0.1 - File Writer Utility
  * Reliable file writing with verification and error handling
  */
 export interface WriteOptions {

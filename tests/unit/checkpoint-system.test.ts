@@ -1,5 +1,5 @@
 /**
- * VIBE-CLI v12 - Checkpoint System Tests
+ * VIBE-CLI v0.0.1 - Checkpoint System Tests
  */
 
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';

@@ -1,6 +1,6 @@
 "use strict";
 /**
- * VIBE-CLI v12 - Security Module
+ * VIBE-CLI v0.0.1 - Security Module
  * Vulnerability scanning, dependency auditing, and security fixes
  */
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {

@@ -1,6 +1,6 @@
 "use strict";
 /**
- * VIBE-CLI v12 - Workflow Automation Engine
+ * VIBE-CLI v0.0.1 - Workflow Automation Engine
  * Create, execute, and manage multi-step workflows
  */
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {

@@ -1,5 +1,5 @@
 /**
- * VIBE-CLI v12 - Multi-File Handler
+ * VIBE-CLI v0.0.1 - Multi-File Handler
  * Coherent multi-file editing with cross-file consistency
  */
 

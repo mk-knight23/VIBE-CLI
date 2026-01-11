@@ -1,5 +1,5 @@
 /**
- * VIBE-CLI v12 - Base Module Unit Tests
+ * VIBE-CLI v0.0.1 - Base Module Unit Tests
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';

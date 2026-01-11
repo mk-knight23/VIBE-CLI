@@ -1,5 +1,5 @@
 /**
- * VIBE-CLI v12 - File Editor Feature Exports
+ * VIBE-CLI v0.0.1 - File Editor Feature Exports
  */
 
 export * from './diff-applier';

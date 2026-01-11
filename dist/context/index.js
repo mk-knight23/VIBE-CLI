@@ -1,6 +1,6 @@
 "use strict";
 /**
- * VIBE-CLI v12 - Context Module
+ * VIBE-CLI v0.0.1 - Context Module
  * MCP-based context management for AI agents
  */
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {

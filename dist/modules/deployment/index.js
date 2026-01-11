@@ -1,6 +1,6 @@
 "use strict";
 /**
- * VIBE-CLI v12 - Deployment Module
+ * VIBE-CLI v0.0.1 - Deployment Module
  * Build, deploy, CI/CD setup, and monitoring
  */
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {

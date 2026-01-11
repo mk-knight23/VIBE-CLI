@@ -1,6 +1,6 @@
 "use strict";
 /**
- * VIBE-CLI v12 - Cache Utility
+ * VIBE-CLI v0.0.1 - Cache Utility
  * In-memory caching with TTL support
  */
 Object.defineProperty(exports, "__esModule", { value: true });

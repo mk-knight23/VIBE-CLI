@@ -1,5 +1,5 @@
 /**
- * VIBE-CLI v12 - Memory Module
+ * VIBE-CLI v0.0.1 - Memory Module
  * Project context and memory management
  */
 import type { VibeMemoryEntry, MemoryType, MemoryQuery } from '../types';

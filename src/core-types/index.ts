@@ -1,8 +1,8 @@
 /**
- * VIBE CLI v13 - Main Types Index
+ * VIBE CLI v0.0.1 - Main Types Index
  * 
  * Central export point for all type definitions.
- * Version: 13.0.0
+ * Version: 0.0.1
  */
 
 // ============================================================================
@@ -10,7 +10,7 @@
 // ============================================================================
 
 /** VIBE CLI version */
-export const VIBE_VERSION = '13.0.0';
+export const VIBE_VERSION = '0.0.1';
 
 /** VIBE CLI version type */
 export type VibeVersion = typeof VIBE_VERSION;

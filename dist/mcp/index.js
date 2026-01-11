@@ -1,6 +1,6 @@
 "use strict";
 /**
- * VIBE-CLI v12 - MCP Manager
+ * VIBE-CLI v0.0.1 - MCP Manager
  * Model Context Protocol backbone for structured context
  */
 Object.defineProperty(exports, "__esModule", { value: true });

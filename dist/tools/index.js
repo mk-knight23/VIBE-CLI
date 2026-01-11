@@ -1,6 +1,6 @@
 "use strict";
 /**
- * VIBE-CLI v12 - Tools Index
+ * VIBE-CLI v0.0.1 - Tools Index
  */
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.commandValidator = exports.securityScanner = exports.checkpointSystem = exports.CheckpointSystem = exports.VibeDiffEditor = exports.diffEditor = exports.DiffEditor = exports.VibeSandbox = exports.sandbox = exports.Sandbox = exports.VibeToolRegistry = exports.toolRegistry = exports.ToolRegistry = exports.VibeToolExecutor = void 0;

@@ -1,10 +1,10 @@
 /**
- * VIBE CLI v13 - Configuration Loader
+ * VIBE CLI v0.0.1 - Configuration Loader
  *
  * Handles loading, validation, and management of VIBE CLI configuration.
  * Supports .vibe/config.json and environment variable overrides.
  *
- * Version: 13.0.0
+ * Version: 0.0.1
  */
 
 import * as fs from 'fs';
@@ -98,7 +98,7 @@ const DEFAULT_POLICY_CONFIG: PolicyConfig = {
 };
 
 const DEFAULT_CONFIG: VibeConfig = {
-  version: '13.0.0',
+  version: '0.0.1',
   models: DEFAULT_MODEL_CONFIG,
   agentSettings: DEFAULT_AGENT_CONFIG,
   ui: DEFAULT_UI_CONFIG,

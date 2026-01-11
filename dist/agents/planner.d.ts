@@ -1,5 +1,5 @@
 /**
- * VIBE-CLI v12 - PLANNING Primitive
+ * VIBE-CLI v0.0.1 - PLANNING Primitive
  *
  * Creates execution plans for complex tasks.
  * Breaks down user intents into actionable steps.

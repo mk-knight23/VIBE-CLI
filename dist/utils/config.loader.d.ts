@@ -1,10 +1,10 @@
 /**
- * VIBE CLI v13 - Configuration Loader
+ * VIBE CLI v0.0.1 - Configuration Loader
  *
  * Handles loading, validation, and management of VIBE CLI configuration.
  * Supports .vibe/config.json and environment variable overrides.
  *
- * Version: 13.0.0
+ * Version: 0.0.1
  */
 import type { VibeConfig } from '../core-types';
 /** Default configuration path in user's home directory */

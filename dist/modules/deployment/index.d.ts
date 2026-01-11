@@ -1,5 +1,5 @@
 /**
- * VIBE-CLI v12 - Deployment Module
+ * VIBE-CLI v0.0.1 - Deployment Module
  * Build, deploy, CI/CD setup, and monitoring
  */
 import { BaseModule, ModuleResult } from '../base.module';

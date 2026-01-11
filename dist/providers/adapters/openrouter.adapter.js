@@ -8,7 +8,7 @@
  * - Credit tracking
  * - Provider fallback
  *
- * Version: 13.0.0
+ * Version: 0.0.1
  */
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.openRouterAdapter = exports.OpenRouterAdapter = void 0;

@@ -1,5 +1,5 @@
 /**
- * VIBE-CLI v12 - Shared Readline Interface
+ * VIBE-CLI v0.0.1 - Shared Readline Interface
  *
  * SINGLETON: Only one readline interface for the entire application.
  * Prevents duplicate input / character echo issues.
@@ -63,4 +63,27 @@ export function promptNumber(
       }
     });
   });
+}
+
+/**
+ * Write a chunk to stdout without a newline
+ */
+export function writeStreamChunk(chunk: string): void {
+  process.stdout.write(chunk);
+}
+
+/**
+ * Draw a decorative box around text
+ */
+export function drawBox(text: string, color: (s: string) => string = (s) => s): void {
+  const lines = text.split('\n');
+  const width = Math.max(...lines.map((l) => l.length)) + 4;
+  const top = color('╔' + '═'.repeat(width - 2) + '╗');
+  const bottom = color('╚' + '═'.repeat(width - 2) + '╝');
+
+  console.log(top);
+  for (const line of lines) {
+    console.log(color('║ ') + line.padEnd(width - 4) + color(' ║'));
+  }
+  console.log(bottom);
 }

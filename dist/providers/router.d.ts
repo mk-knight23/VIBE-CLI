@@ -1,5 +1,5 @@
 /**
- * VIBE-CLI v12 - Provider Router
+ * VIBE-CLI v0.0.1 - Provider Router
  * Universal interface for AI providers (OpenAI, Anthropic, Google, xAI, Ollama)
  */
 import type { ProviderConfig, ProviderResponse, IProviderRouter } from '../types';
@@ -10,7 +10,12 @@ export declare class VibeProviderRouter implements IProviderRouter {
     private currentModel;
     private userConfig;
     private configDir;
+    private usageHistory;
     constructor();
+    getUsage(): {
+        totalTokens: number;
+        totalCost: number;
+    };
     private initializeProviders;
     private loadUserConfig;
     private saveUserConfig;
@@ -49,6 +54,7 @@ export declare class VibeProviderRouter implements IProviderRouter {
         model?: string;
         temperature?: number;
     }): AsyncGenerator<string>;
+    private executeChat;
     private streamOpenAI;
     private streamAnthropic;
     /**

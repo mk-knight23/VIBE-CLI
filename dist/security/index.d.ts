@@ -10,7 +10,7 @@
  * - Secrets management
  * - PII scrubbing
  *
- * Version: 13.0.0
+ * Version: 0.0.1
  */
 export type SecurityLevel = 'low' | 'medium' | 'high' | 'critical';
 export interface SecurityIssue {

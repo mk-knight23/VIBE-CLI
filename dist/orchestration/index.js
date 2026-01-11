@@ -1,6 +1,6 @@
 "use strict";
 /**
- * VIBE-CLI v12 Orchestrator
+ * VIBE-CLI v0.0.1 Orchestrator
  * Multi-agent orchestration for intent-driven execution
  */
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
@@ -50,7 +50,7 @@ const debugging_1 = require("../modules/debugging");
 const security_1 = require("../modules/security");
 const deployment_1 = require("../modules/deployment");
 /**
- * V12 Orchestrator - manages agent execution
+ * V0.0.1 Orchestrator - manages agent execution
  */
 class Orchestrator {
     provider;

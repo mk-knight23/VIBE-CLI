@@ -1,5 +1,5 @@
 /**
- * VIBE-CLI v12 - Debugging Module
+ * VIBE-CLI v0.0.1 - Debugging Module
  * Error analysis, fix suggestions, and performance profiling
  */
 import { BaseModule, ModuleResult } from '../base.module';

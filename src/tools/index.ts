@@ -1,5 +1,5 @@
 /**
- * VIBE-CLI v12 - Tools Index
+ * VIBE-CLI v0.0.1 - Tools Index
  */
 
 export { VibeToolExecutor } from './executor';

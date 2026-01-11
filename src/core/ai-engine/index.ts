@@ -1,5 +1,5 @@
 /**
- * VIBE-CLI v12 - AI Engine Exports
+ * VIBE-CLI v0.0.1 - AI Engine Exports
  */
 
 export * from './multi-model-manager';

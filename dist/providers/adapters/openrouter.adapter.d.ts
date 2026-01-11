@@ -7,7 +7,7 @@
  * - Credit tracking
  * - Provider fallback
  *
- * Version: 13.0.0
+ * Version: 0.0.1
  */
 import { BaseProviderAdapter, ModelInfo, ProviderOptions, ProviderResponse, StreamCallback } from './base.adapter.js';
 import type { ChatMessage } from '../../types.js';

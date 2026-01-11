@@ -1,5 +1,5 @@
 /**
- * VIBE-CLI v12 - CI/CD Integration
+ * VIBE-CLI v0.0.1 - CI/CD Integration
  * Automate deployment pipelines
  */
 
@@ -97,6 +97,56 @@ export class CICDManager {
 
   constructor() {
     this.initializeBuiltinPipelines();
+  }
+
+  /**
+   * Generate pipeline configuration using AI from a description
+   */
+  async generatePipelineWithAI(description: string, provider: any): Promise<PipelineConfig> {
+    const prompt = `Create a CI/CD pipeline configuration based on this description: "${description}".
+    Respond with a JSON object:
+    {
+      "name": "Pipeline Name",
+      "provider": "github" | "gitlab" | "bitbucket" | "circleci" | "jenkins" | "azure",
+      "stages": ["install", "lint", "test", "build", "deploy", "notify"],
+      "triggers": [{ "type": "push", "branches": ["main"] }],
+      "environment": { "KEY": "VALUE" },
+      "secrets": ["SECRET_NAME"],
+      "cache": { "enabled": true, "paths": ["node_modules"] }
+    }`;
+
+    try {
+      const response = await provider.chat([{ role: 'system', content: 'You are a DevOps expert.' }, { role: 'user', content: prompt }]);
+      const config = JSON.parse(response.content.trim().replace(/```json/g, '').replace(/```/g, ''));
+      return config;
+    } catch (error) {
+      console.error(chalk.red('✗ AI pipeline generation failed:'), error);
+      throw error;
+    }
+  }
+
+  /**
+   * Suggest a deployment target based on project analysis
+   */
+  async suggestDeploymentTarget(projectPath: string, provider: any): Promise<DeploymentTarget> {
+    const files = fs.readdirSync(projectPath);
+    const content = files.join(', ');
+
+    const prompt = `Based on these files in the project root, suggest the best deployment target (vercel, netlify, aws, gcp, docker, heroku) and environment.
+    Files: ${content}
+    Respond with JSON: { name, type, environment, config: {} }`;
+
+    try {
+      const response = await provider.chat([{ role: 'system', content: 'You are a cloud architect.' }, { role: 'user', content: prompt }]);
+      return JSON.parse(response.content.trim().replace(/```json/g, '').replace(/```/g, ''));
+    } catch {
+      return {
+        name: 'Default',
+        type: 'docker',
+        environment: 'production',
+        config: {},
+      };
+    }
   }
 
   /**
@@ -655,8 +705,8 @@ coverage
       execution.status === 'success'
         ? chalk.green
         : execution.status === 'failed'
-        ? chalk.red
-        : chalk.yellow;
+          ? chalk.red
+          : chalk.yellow;
 
     lines.push(chalk.bold('\n📊 Pipeline Execution\n'));
     lines.push(chalk.gray('='.repeat(50)));

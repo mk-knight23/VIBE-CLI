@@ -1,5 +1,5 @@
 /**
- * VIBE-CLI v12 - Context Manager
+ * VIBE-CLI v0.0.1 - Context Manager
  * Efficient context management with smart file selection and chunking
  */
 

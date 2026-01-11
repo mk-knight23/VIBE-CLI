@@ -1,5 +1,5 @@
 /**
- * VIBE-CLI v12 - Intent Router Unit Tests
+ * VIBE-CLI v0.0.1 - Intent Router Unit Tests
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';

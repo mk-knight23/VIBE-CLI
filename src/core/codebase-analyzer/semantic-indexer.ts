@@ -1,5 +1,5 @@
 /**
- * VIBE-CLI v12 - Semantic Indexer
+ * VIBE-CLI v0.0.1 - Semantic Indexer
  * Build semantic index for intelligent code retrieval
  */
 

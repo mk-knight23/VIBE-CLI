@@ -1,6 +1,6 @@
 "use strict";
 /**
- * VIBE-CLI v12 - Module Loader
+ * VIBE-CLI v0.0.1 - Module Loader
  * Loads and manages VIBE modules
  */
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {

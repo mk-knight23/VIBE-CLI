@@ -1,5 +1,5 @@
 /**
- * VIBE-CLI v12 - Test Generator
+ * VIBE-CLI v0.0.1 - Test Generator
  * Automated test generation with coverage improvement
  */
 
@@ -123,10 +123,11 @@ export class TestGenerator {
   /**
    * Generate tests for a file
    */
-  generateForFile(
+  async generateForFile(
     sourceFilePath: string,
-    options?: TestGenerationOptions
-  ): GeneratedTest | null {
+    options?: TestGenerationOptions,
+    provider?: any
+  ): Promise<GeneratedTest | null> {
     if (!fs.existsSync(sourceFilePath)) {
       return null;
     }
@@ -140,6 +141,39 @@ export class TestGenerator {
 
     // Determine test type based on file
     const testType = this.inferTestType(sourceFilePath);
+
+    if (provider) {
+      const prompt = `Generate comprehensive unit tests for this ${ext} file using ${framework}.
+      
+Code:
+${content}
+
+Provide the full test file content. Include imports, setup, and various test cases (valid input, edge cases, error handling).
+Respond with the code ONLY.`;
+
+      try {
+        const response = await provider.chat([{ role: 'system', content: 'You are a senior QA engineer.' }, { role: 'user', content: prompt }]);
+        const testContent = response.content.trim().replace(/```typescript/g, '').replace(/```javascript/g, '').replace(/```/g, '');
+
+        const test: GeneratedTest = {
+          filePath: this.generateTestPath(sourceFilePath, outputDir),
+          testFramework: framework,
+          testType,
+          describeName: this.generateDescribeName(fileName),
+          testCases: [], // Already in content
+          imports: [], // Already in content
+          setupCode: '', // Already in content
+          teardownCode: '', // Already in content
+        };
+
+        // Custom flag for pre-formatted content
+        (test as any).fullContent = testContent;
+        this.generatedTests.push(test);
+        return test;
+      } catch {
+        // Fallback to local
+      }
+    }
 
     // Generate test structure
     const test: GeneratedTest = {
@@ -163,10 +197,11 @@ export class TestGenerator {
   /**
    * Generate tests for a directory
    */
-  generateForDirectory(
+  async generateForDirectory(
     dirPath: string,
-    options?: TestGenerationOptions
-  ): GeneratedTest[] {
+    options?: TestGenerationOptions,
+    provider?: any
+  ): Promise<GeneratedTest[]> {
     const tests: GeneratedTest[] = [];
     const { glob } = require('fast-glob');
 
@@ -179,7 +214,7 @@ export class TestGenerator {
     progressDisplay.startProgress(files.length, 'Generating tests');
 
     for (const file of files) {
-      const test = this.generateForFile(path.join(dirPath, file), options);
+      const test = await this.generateForFile(path.join(dirPath, file), options, provider);
       if (test) {
         tests.push(test);
         progressDisplay.incrementProgress(1);
@@ -529,6 +564,9 @@ afterEach(() => {
    * Format test file content
    */
   private formatTestFile(test: GeneratedTest): string {
+    if ((test as any).fullContent) {
+      return (test as any).fullContent;
+    }
     const lines: string[] = [];
 
     // Add imports
@@ -639,15 +677,15 @@ afterEach(() => {
   /**
    * Generate tests for coverage gaps
    */
-  generateForCoverageGaps(gaps: CoverageGap[], options?: TestGenerationOptions): GeneratedTest[] {
+  async generateForCoverageGaps(gaps: CoverageGap[], options?: TestGenerationOptions, provider?: any): Promise<GeneratedTest[]> {
     const tests: GeneratedTest[] = [];
 
     for (const gap of gaps) {
       // Generate targeted test for uncovered lines
-      const test = this.generateForFile(gap.filePath, {
+      const test = await this.generateForFile(gap.filePath, {
         ...options,
         testType: 'unit',
-      });
+      }, provider);
 
       if (test) {
         // Add specific test for uncovered lines

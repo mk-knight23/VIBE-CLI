@@ -1,5 +1,5 @@
 /**
- * VIBE CLI v12 - Command Line Arguments Parser
+ * VIBE CLI v0.0.1 - Command Line Arguments Parser
  * Simple, minimal argument parsing for single-command UX
  */
 

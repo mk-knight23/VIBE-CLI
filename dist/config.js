@@ -1,6 +1,6 @@
 "use strict";
 /**
- * VIBE-CLI v12 - Configuration & BYOK (Bring Your Own Key) Manager
+ * VIBE-CLI v0.0.1 - Configuration & BYOK (Bring Your Own Key) Manager
  * Handles API key input, secure storage, and provider configuration
  */
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
@@ -67,7 +67,7 @@ class VibeConfigManager {
             console.log(chalk_1.default.cyan(`
 ╔═══════════════════════════════════════════════════════════════╗
 ║                                                               ║
-║   ${chalk_1.default.white.bold('V I B E')}  ${chalk_1.default.green('v13.0.0')}                                    ║
+║   ${chalk_1.default.white.bold('V I B E')}  ${chalk_1.default.green('v0.0.1.0.0')}                                    ║
 ║   ${chalk_1.default.gray('AI-Powered Development Environment')}                       ║
 ║                                                               ║
 ╚═══════════════════════════════════════════════════════════════╝

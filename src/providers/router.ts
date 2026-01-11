@@ -1,5 +1,5 @@
 /**
- * VIBE-CLI v12 - Provider Router
+ * VIBE-CLI v0.0.1 - Provider Router
  * Universal interface for AI providers (OpenAI, Anthropic, Google, xAI, Ollama)
  */
 
@@ -22,12 +22,19 @@ export class VibeProviderRouter implements IProviderRouter {
   private currentModel: string = 'MiniMax-M2.1';
   private userConfig: UserConfig = {};
   private configDir: string;
+  private usageHistory: Array<{ timestamp: Date; tokens: number; cost: number }> = [];
 
   constructor() {
     this.providers = new Map();
     this.configDir = path.join(os.homedir(), '.vibe');
     this.initializeProviders();
     this.loadUserConfig();
+  }
+
+  getUsage(): { totalTokens: number; totalCost: number } {
+    const totalTokens = this.usageHistory.reduce((acc, curr) => acc + curr.tokens, 0);
+    const totalCost = this.usageHistory.reduce((acc, curr) => acc + curr.cost, 0);
+    return { totalTokens, totalCost };
   }
 
   private initializeProviders(): void {
@@ -413,8 +420,37 @@ export class VibeProviderRouter implements IProviderRouter {
         break;
       default:
         // Non-streaming fallback
-        const response = await this.chat(messages, options);
+        const response = await this.executeChat(provider, model, messages, options);
         yield response.content;
+    }
+  }
+
+  private async executeChat(
+    provider: string,
+    model: string,
+    messages: Array<{ role: string; content: string }>,
+    options?: { temperature?: number; maxTokens?: number }
+  ): Promise<ProviderResponse> {
+    switch (provider) {
+      case 'openai':
+        return this.callOpenAI(messages, model, options);
+      case 'anthropic':
+        return this.callAnthropic(messages, model, options);
+      case 'google':
+        return this.callGoogle(messages, model, options);
+      case 'ollama':
+        return this.callOllama(messages, model, options);
+      case 'openrouter':
+        const openRouterConfig = this.providers.get('openrouter');
+        return this.callOpenAICompatible(
+          messages,
+          model,
+          openRouterConfig?.baseUrl || 'https://openrouter.ai/api/v1',
+          this.getApiKey('openrouter'),
+          'openrouter'
+        );
+      default:
+        throw new Error(`Unsupported provider: ${provider}`);
     }
   }
 

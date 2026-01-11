@@ -1,5 +1,5 @@
 /**
- * VIBE-CLI v13 - Agents Module
+ * VIBE-CLI v0.0.1 - Agents Module
  *
  * Multi-agent system for autonomous task execution:
  * - PLAN: Create execution plan
@@ -13,11 +13,12 @@
  * - LEARN: Knowledge acquisition and pattern learning
  * - CONTEXT: Semantic indexing and context management
  *
- * Version: 13.0.0
+ * Version: 0.0.1
  */
 import { VibeProviderRouter } from '../providers/router.js';
 import { VibeMemoryManager } from '../memory/index.js';
-import type { ToolDefinition, ToolResult } from '../tools/registry/index.js';
+import type { ToolDefinition, ToolResult, ToolContext } from '../tools/registry/index.js';
+export type { ToolDefinition, ToolResult, ToolContext };
 export interface AgentTask {
     task: string;
     context: Record<string, unknown>;

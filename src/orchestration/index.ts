@@ -1,5 +1,5 @@
 /**
- * VIBE-CLI v12 Orchestrator
+ * VIBE-CLI v0.0.1 Orchestrator
  * Multi-agent orchestration for intent-driven execution
  */
 
@@ -48,7 +48,7 @@ export interface ExecutionResult {
 }
 
 /**
- * V12 Orchestrator - manages agent execution
+ * V0.0.1 Orchestrator - manages agent execution
  */
 export class Orchestrator {
   private provider: VibeProviderRouter;

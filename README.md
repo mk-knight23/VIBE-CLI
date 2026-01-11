@@ -1,241 +1,124 @@
-# VIBE CLI v12
+# VIBE CLI v0.0.1
 
 <p align="center">
-  <strong>The AI Engineer That Feels Like a Teammate</strong>
+  <strong>The Agentic AI Coding Partner for Modern Engineering</strong>
 </p>
 
 <p align="center">
   <a href="#-quick-start">Quick Start</a> •
-  <a href="#-philosophy">Philosophy</a> •
+  <a href="#-core-commands">Commands</a> •
   <a href="#-features">Features</a> •
-  <a href="docs/index.md">Documentation</a> •
-  <a href="docs/faq.md">FAQ</a>
+  <a href="#-architecture">Architecture</a> •
+  <a href="#-safety--control">Safety</a> •
+  <a href="docs/USER-GUIDE.md">User Guide</a>
 </p>
 
 ---
 
 ## What is VIBE?
 
-VIBE CLI v12 is an **interactive AI developer tool** that feels like Claude Code + Warp + Devin + Cursor — but simpler, safer, and deterministic.
+VIBE CLI v0.0.1 is an **autonomous AI developer tool** that transforms how you build, test, and deploy software. It's a context-aware engine that executes complex engineering tasks with high precision, acting as a true teammate rather than just a chat interface.
 
-**One command. One UI. Zero memorization.**
-
-Instead of learning complex CLI syntax:
+**One command. One UI. Professional results.**
 
 ```bash
-# Old way - memorization required
-vibe --mode batch --model gpt-4 --agent planner --approval manual
-vibe run workflow --name deploy --env production --approve
-vibe exec --agent code --task "fix the bug" --provider anthropic
+vibe> "scaffold a next.js app with auth and supabase"
+vibe> "fix that flaky test in src/utils"
+vibe> "refactor this module for better modularity"
+vibe> "generate a github action for this project"
 ```
-
-You just type what you want:
-
-```
-> vibe
-vibe> "build auth for the API"
-vibe> "fix the failing tests"
-vibe> "deploy to gcp"
-vibe> "undo that"
-vibe> "remember this decision"
-```
-
-## Why v12?
-
-VIBE CLI v12 represents a complete architectural redesign:
-
-| Before | v12 |
-|--------|-----|
-| 75+ LLM providers | 5 best-in-class (OpenAI, Anthropic, Google, xAI, Local) |
-| Multiple commands & subcommands | **Single** `vibe` command |
-| Mode switching | Intent-driven natural language |
-| 60+ scattered tools | **8 unified primitives** |
-| Manual safety checks | Approval-first, safe-by-default |
-| Complex setup | Zero-config TUI |
 
 ## 🚀 Quick Start
 
 ### Installation
 
 ```bash
-# Clone the repository
+# Clone and install
 git clone https://github.com/mk-knight23/VIBE-CLI.git
 cd VIBE-CLI
-
-# Install dependencies
 npm install
 
-# Build the project
+# Build and link
 npm run build
-
-# Link globally
 npm link
-
-# Run directly
-node bin/vibe.js
 ```
 
-### First Run
-
+### Configuration
+Launch VIBE and set up your providers:
 ```bash
 $ vibe
-
-  ╔═══════════════════════════════════════════════════════════╗
-  ║  VIBE CLI v12                                             ║
-  ║  Your AI Development Teammate                             ║
-  ╠═══════════════════════════════════════════════════════════╣
-  ║                                                           ║
-  ║  Project: my-awesome-project                              ║
-  ║  Model: Claude Sonnet 4 (Balanced)                        ║
-  ║  Memory: 12 decisions remembered                          ║
-  ║                                                           ║
-  ╠═══════════════════════════════════════════════════════════╣
-  ║  What would you like to do?                              ║
-  ║                                                           ║
-  ║  > _                                                     ║
-  ║                                                           ║
-  ╚═══════════════════════════════════════════════════════════╝
+vibe> /config set provider anthropic
+vibe> /config set model claude-3-5-sonnet
 ```
 
-## 🎯 Philosophy
+## 🛠 Core Commands (TUI)
 
-### One Command, Infinite Possibilities
+VIBE v0.0.1 features a powerful command-driven interface within the interactive shell:
 
-VIBE v12 removes all user-facing commands. There is only `vibe`, which launches an interactive terminal UI (TUI).
+| Command | Category | Description |
+|---------|----------|-------------|
+| `/scaffold` | **Web & UI** | AI-driven project scaffolding |
+| `/test` | **Quality** | Intelligent unit test & mock generation |
+| `/debug` | **Debug** | Deep AI error analysis & diagnosis |
+| `/fix` | **Debug** | Autonomous bug fixing & remediation |
+| `/refactor`| **Code** | Propose & apply high-level refactors |
+| `/cicd` | **DevOps** | Generate tailored CI/CD workflows |
+| `/iac` | **Cloud** | Generate Infrastructure-as-Code |
+| `/viz` | **Analysis** | Interactive architecture visualization |
+| `/mood` | **Insights** | Scan project health and developer "vibe" |
 
-**Every feature is intent-driven and implicit.**
+## 🎯 Features
 
-| User Types | VIBE Understands | VIBE Does |
-|------------|------------------|-----------|
-| `"build auth"` | `BUILD` intent → Auth capability | Creates auth module |
-| `"fix tests"` | `FIX` intent → Tests capability | Runs & fixes tests |
-| `"deploy to gcp"` | `DEPLOY` intent → Infra capability | Deploys to GCP |
-| `"undo that"` | `UNDO` intent → Determinism | Restores checkpoint |
-| `"remember this"` | `MEMORY` intent → Memory | Stores in project memory |
+VIBE implements a full suite of **120 professional features** across several categories:
 
-### Approval-First, Safe-by-Default
+### 1. Intelligence & Productivity
+- **Asynchronous Command Generation**: Non-blocking command suggestions.
+- **AI Fallback System**: Intelligent provider selection and fallback.
+- **Vibe Doctor**: Self-healing environment diagnostics and automated fixes.
+- **History-Aware Context**: Learns from your previous commands and decisions.
 
-VIBE never makes destructive changes without approval:
+### 2. Web & UI Generation
+- **Stack Scaffolder**: Template-based and AI-driven custom project creation.
+- **Project Visualizer**: ASCII trees, dependency mapping, and architectural advice.
+- **Live Preview Management**: Integrated dev server control.
 
-```
-vibe> "delete all logs"
+### 3. Debugging & Testing
+- **Deep Error Analysis**: AI-powered stack trace diagnosis (/debug).
+- **Automated Remediation**: One-command bug fixing (/fix).
+- **Pattern Refactoring**: Identification and application of modularity patterns.
 
-⚠️  This will delete 47 log files across 3 directories.
+### 4. Cloud & DevOps
+- **AI CI/CD**: Custom GitHub Actions and GitLab CI generation.
+- **AI IaC**: Terraform and CloudFormation generation.
+- **Deployment Advisor**: Optimal target suggestions and best practices.
 
-Options:
-  [A]pprove  [R]eview files  [C]ancel
+## 🏗 Architecture
 
->
-```
+VIBE is built on **8 hardened core primitives**:
 
-### MCP-First Architecture
+- **COMPLETION**: Universal LLM interface with multi-provider routing.
+- **PLANNING**: Deterministic task decomposition via the `PlannerAgent`.
+- **MULTI-EDIT**: Atomic, safe changes across multiple files.
+- **EXECUTION**: Secure shell & script execution with status tracking.
+- **SEARCH**: Context-aware codebase & web searching.
+- **MEMORY**: Persistence of session decisions and architectural patterns.
+- **APPROVAL**: Risk-based human-in-the-loop safety gates.
+- **DETERMINISM**: Instant checkpoints and rollbacks (/undo).
 
-VIBE uses the Model Context Protocol for all context:
+## 🛡 Safety & Control
 
-- **File System**: Structured project tree with exclusions
-- **Git**: Commit history, status, diffs
-- **OpenAPI**: Endpoint discovery and schema mapping
-- **Tests**: Framework detection and coverage
-- **Memory**: Persistent decisions and patterns
-
-## 🛠 Features
-
-### 8 Primitives Architecture
-
-All VIBE functionality maps to 8 primitives:
-
-| Primitive | Purpose | Example |
-|-----------|---------|---------|
-| **COMPLETION** | LLM calls with smart routing | `"explain this code"` |
-| **PLANNING** | Create execution plans | `"plan the auth implementation"` |
-| **MULTI-EDIT** | Atomic multi-file changes | `"rename this function everywhere"` |
-| **EXECUTION** | Run commands & scripts | `"run the build"` |
-| **APPROVAL** | Gate dangerous operations | `"delete production data"` |
-| **MEMORY** | Persist decisions & patterns | `"remember this approach"` |
-| **ORCHESTRATION** | State machine workflow | `"deploy with rollback"` |
-| **DETERMINISM** | Checkpoints & rollback | `"undo the last change"` |
-
-### Intent Router
-
-VIBE's intent classifier maps natural language to primitives:
-
-1. **Classify**: Analyze user input
-2. **Map**: Connect to internal capabilities
-3. **Clarify**: Ask questions if confidence < 60%
-4. **Execute**: Run through primitives
-
-### LLM Strategy
-
-VIBE selects the **best model per task**:
-
-| Task Type | Model Tier | Examples |
-|-----------|------------|----------|
-| Quick fixes | `fast` | gpt-4o-mini |
-| General coding | `balanced` | gpt-4o, claude-sonnet-4 |
-| Complex reasoning | `reasoning` | claude-opus-4 |
-| Maximum quality | `max` | gpt-4o, o1 |
-
-## 📁 Project Structure
-
-```
-VIBE-CLI/
-├── bin/               # CLI entry point
-├── src/               # Source code
-├── docs/              # Documentation
-├── tests/             # Test suite
-├── .vibe/             # Runtime configuration
-├── .github/           # CI/CD workflows
-├── CLAUDE.md          # AI context
-├── README.md          # User documentation
-├── LICENSE            # MIT License
-└── package.json       # Package config
-```
+VIBE is designed to be **safe-by-default**:
+- **Approvals**: Dangerous operations (file deletion, system commands) always require confirmation.
+- **Checkpoints**: Automatic state snapshots before major changes.
+- **Sandbox**: Optional isolated execution for untrusted commands.
+- **Audit Logs**: Full traceability of all agent actions via `/logs`.
 
 ## 🔧 Configuration
 
-VIBE uses `.vibe/config.json`:
-
-```json
-{
-  "model": {
-    "defaultTier": "balanced",
-    "providers": ["openai", "anthropic"],
-    "fallbackOrder": ["anthropic", "openai"]
-  },
-  "approval": {
-    "defaultPolicy": "prompt",
-    "autoApprovePatterns": ["tests/**", "docs/**"]
-  },
-  "memory": {
-    "persistDecisions": true,
-    "maxContextTokens": 128000
-  }
-}
-```
-
-## 📚 Documentation
-
-- **[Index](docs/index.md)**: Getting started guide
-- **[Features](docs/features.md)**: Complete feature list
-- **[Installation](docs/installation.md)**: Setup instructions
-- **[FAQ](docs/faq.md)**: Common questions
-
-## 🤝 Contributing
-
-VIBE CLI v12 welcomes contributions:
-
-1. Fork the repository
-2. Create a feature branch
-3. Make changes (add to primitives, not new commands)
-4. Run tests: `npm test`
-5. Submit PR
-
-## 📄 License
-
-MIT License - see [LICENSE](LICENSE) for details.
+Configure VIBE via the `/config` command or `.vibe/config.json`. Supports OpenAI, Anthropic, Google, and Local (Ollama) providers.
 
 ---
 
 <p align="center">
-  Built with ❤️ by the VIBE Team
+  Built with ❤️ for AI-native developers
 </p>

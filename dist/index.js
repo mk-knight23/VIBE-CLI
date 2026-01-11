@@ -1,6 +1,6 @@
 "use strict";
 /**
- * VIBE CLI v13 - Main Export
+ * VIBE CLI v0.0.1 - Main Export
  */
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
@@ -18,7 +18,7 @@ var __exportStar = (this && this.__exportStar) || function(m, exports) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.VIBE_VERSION = void 0;
-exports.VIBE_VERSION = '13.0.0';
+exports.VIBE_VERSION = '0.0.1';
 // Core
 __exportStar(require("./core/config-system"), exports);
 __exportStar(require("./utils/structured-logger"), exports);

@@ -1,5 +1,5 @@
 /**
- * VIBE-CLI v12 - GitHub Integration
+ * VIBE-CLI v0.0.1 - GitHub Integration
  * PR reviews, issues, actions, and repository management
  */
 
@@ -145,6 +145,38 @@ export class GitHubIntegration {
   }
 
   /**
+   * Generate a smart commit message using AI
+   */
+  async generateSmartCommitMessage(provider: any): Promise<string> {
+    const status = this.getStatus();
+    const changedFiles = [...status.modified, ...status.added, ...status.deleted];
+
+    if (changedFiles.length === 0) {
+      return 'No changes detected';
+    }
+
+    // Get diff summary
+    const diff = this.runGitCommand('diff --cached') || this.runGitCommand('diff') || '';
+    const diffLines = diff.split('\n').slice(0, 100).join('\n'); // Limit context
+
+    const prompt = `Analyze these git changes and generate a concise, professional commit message in conventional commits format (e.g., feat: add X, fix: resolve Y).
+    
+Files: ${changedFiles.join(', ')}
+
+Diff snapshot:
+${diffLines}
+
+Respond ONLY with the message.`;
+
+    try {
+      const response = await provider.chat([{ role: 'system', content: 'You are a senior developer.' }, { role: 'user', content: prompt }]);
+      return response.content.trim().replace(/```/g, '');
+    } catch {
+      return `Update ${changedFiles.length} files`;
+    }
+  }
+
+  /**
    * Get current repository info
    */
   getCurrentRepository(): Repository | null {
@@ -160,8 +192,8 @@ export class GitHubIntegration {
 
       const branch = this.runGitCommand('rev-parse --abbrev-ref HEAD')?.trim();
       const defaultBranch = this.runGitCommand('rev-parse --origin/main')?.trim() ||
-                           this.runGitCommand('rev-parse --origin/master')?.trim() ||
-                           'main';
+        this.runGitCommand('rev-parse --origin/master')?.trim() ||
+        'main';
 
       return {
         name: repoName,
@@ -458,6 +490,27 @@ export class GitHubIntegration {
         deletions: 0,
       },
     };
+  }
+
+  /**
+   * Create a pull request (via gh CLI or template)
+   */
+  async createPullRequest(title: string, body: string, base = 'main'): Promise<{ success: boolean; url?: string; command?: string }> {
+    const head = this.getCurrentBranch();
+
+    // Check if gh CLI is available
+    try {
+      child_process.execSync('gh --version', { stdio: 'ignore' });
+      const command = `gh pr create --title "${title}" --body "${body}" --base ${base} --head ${head}`;
+      return { success: true, command };
+    } catch {
+      // Fallback to manual link
+      const repo = this.getCurrentRepository();
+      if (!repo) return { success: false };
+
+      const url = `${repo.url}/compare/${base}...${head}?expand=1&title=${encodeURIComponent(title)}&body=${encodeURIComponent(body)}`;
+      return { success: true, url };
+    }
   }
 
   /**

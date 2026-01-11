@@ -1,6 +1,6 @@
 "use strict";
 /**
- * VIBE-CLI v12 - Base Module Class
+ * VIBE-CLI v0.0.1 - Base Module Class
  * All modules extend this class for consistency
  */
 var __importDefault = (this && this.__importDefault) || function (mod) {

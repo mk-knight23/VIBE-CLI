@@ -1,5 +1,5 @@
 /**
- * VIBE-CLI v12 - Checkpoint Manager
+ * VIBE-CLI v0.0.1 - Checkpoint Manager
  * Enhanced checkpoint and rollback system with named checkpoints, diff support, and history tracking
  */
 

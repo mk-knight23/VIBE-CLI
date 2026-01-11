@@ -1,5 +1,5 @@
 /**
- * VIBE-CLI v12 - Tool Execution Engine
+ * VIBE-CLI v0.0.1 - Tool Execution Engine
  * Safe, sandboxed execution with approval gates and rollback support
  */
 import type { IApprovalSystem, MultiEditResult, EditOperation } from '../types';
@@ -88,7 +88,7 @@ export declare class VibeToolExecutor {
     private showDiff;
 }
 /**
- * VIBE-CLI v12 - Checkpoint System
+ * VIBE-CLI v0.0.1 - Checkpoint System
  * Version control for file system operations
  */
 export declare class VibeCheckpointSystem {

@@ -1,6 +1,6 @@
 "use strict";
 /**
- * VIBE-CLI v12 - Logger Utility
+ * VIBE-CLI v0.0.1 - Logger Utility
  * Production-grade logging with levels and formatting
  */
 var __importDefault = (this && this.__importDefault) || function (mod) {

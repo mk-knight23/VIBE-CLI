@@ -1,6 +1,6 @@
 "use strict";
 /**
- * VIBE CLI v12 - Agent System Prompt (Production-Grade)
+ * VIBE CLI v0.0.1 - Agent System Prompt (Production-Grade)
  *
  * ENFORCES EXECUTION OVER EXPLANATION
  * Used by LLM when processing user requests.
@@ -167,7 +167,7 @@ Actions speak louder than words. Create, don't describe.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-This is VIBE CLI v12.1.0 — An Agent That Executes.`;
+This is VIBE CLI v0.0.1.1.0 — An Agent That Executes.`;
 // ============================================================================
 // MODE-SPECIFIC SYSTEM PROMPTS
 // ============================================================================

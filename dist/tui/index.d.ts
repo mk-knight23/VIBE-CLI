@@ -1,5 +1,5 @@
 /**
- * VIBE-CLI v13 - Interactive CLI Engine (Agent Mode)
+ * VIBE-CLI v0.0.1 - Interactive CLI Engine (Agent Mode)
  *
  * ENFORCES EXECUTION OVER EXPLANATION
  * - Mode system: agent/code/ask/debug
@@ -18,10 +18,26 @@ export declare class CLIEngine {
     private history;
     private historyFile;
     private configManager;
+    private agentExecutor;
+    private animationInterval;
     private currentMode;
     constructor(provider: VibeProviderRouter, memory: VibeMemoryManager);
     start(): Promise<void>;
     private handleInput;
+    private handleScaffoldCommand;
+    private handleTestCommand;
+    private handleDocsCommand;
+    private handleVizCommand;
+    private handleDebugCommand;
+    private handleFixCommand;
+    private handleRefactorCommand;
+    private handleMoodCommand;
+    private handleCICDCommand;
+    private handleIACCommand;
+    private handleCloudCommand;
+    private handleLogsCommand;
+    private handleCostCommand;
+    private handleReadinessCommand;
     private handleInternalCommand;
     private handleModeCommand;
     private showModeDescription;
@@ -31,11 +47,18 @@ export declare class CLIEngine {
     private handleUseCommand;
     private handleProviderModelSwitching;
     private callAI;
+    private runAgentTask;
+    private refreshStages;
+    private getProjectContextData;
+    private streamAI;
     private displayResponse;
     private displayExecutionResult;
     private showThinkingAnimation;
     private clearThinkingAnimation;
     private showExecutionStages;
+    private handleDoctorCommand;
+    private handleCommitCommand;
+    private handleCmdCommand;
     private displayWelcome;
     private showHelp;
     private showStatus;

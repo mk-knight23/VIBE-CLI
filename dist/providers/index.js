@@ -1,6 +1,6 @@
 "use strict";
 /**
- * VIBE-CLI v12 - Providers Index
+ * VIBE-CLI v0.0.1 - Providers Index
  */
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.CompletionPrimitive = exports.unifiedRouter = exports.UnifiedProviderRouter = exports.VibeProviderRouter = void 0;

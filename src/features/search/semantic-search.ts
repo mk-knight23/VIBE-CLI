@@ -1,5 +1,5 @@
 /**
- * VIBE-CLI v12 - Semantic Search
+ * VIBE-CLI v0.0.1 - Semantic Search
  * Intelligent code search with semantic understanding
  */
 

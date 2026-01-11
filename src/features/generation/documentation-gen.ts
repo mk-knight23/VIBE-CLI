@@ -1,5 +1,5 @@
 /**
- * VIBE-CLI v12 - Documentation Generator
+ * VIBE-CLI v0.0.1 - Documentation Generator
  * Generate code explanations, docstrings, and API documentation
  */
 
@@ -177,7 +177,7 @@ export class DocumentationGenerator {
   /**
    * Explain code in natural language
    */
-  explainCode(filePath: string): CodeExplanation {
+  async explainCode(filePath: string, provider?: any): Promise<CodeExplanation> {
     const absolutePath = path.isAbsolute(filePath)
       ? filePath
       : path.join(process.cwd(), filePath);
@@ -189,12 +189,27 @@ export class DocumentationGenerator {
     const content = fs.readFileSync(absolutePath, 'utf-8');
     const language = this.detectLanguage(filePath);
 
+    if (provider) {
+      const prompt = `Explain this ${language} code in natural language. Provide a summary, its purpose, inputs, outputs, key concepts, and a concise line-by-line breakdown.
+      
+Code:
+${content}
+
+Respond with a JSON object: {summary, purpose, inputs: string[], outputs: string[], keyConcepts: string[], lineByLine: {lineNumber, line, explanation}[]}`;
+
+      try {
+        const response = await provider.chat([{ role: 'system', content: 'You are an expert developer explaining code.' }, { role: 'user', content: prompt }]);
+        return JSON.parse(response.content.trim().replace(/```json/g, '').replace(/```/g, ''));
+      } catch {
+        // Fallback to local
+      }
+    }
+
     // Generate explanation based on language
     const lines = content.split('\n');
     const summary = this.generateSummary(lines, language);
     const purpose = this.inferPurpose(content, language);
     const { inputs, outputs } = this.findInputsOutputs(content, language);
-    const dependencies = this.findDependencies(content, language);
     const keyConcepts = this.findKeyConcepts(content);
     const lineByLine = this.explainLineByLine(lines);
 
@@ -203,7 +218,7 @@ export class DocumentationGenerator {
       purpose,
       inputs,
       outputs,
-      dependencies,
+      dependencies: this.findDependencies(content, language),
       keyConcepts,
       lineByLine,
     };

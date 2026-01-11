@@ -1,5 +1,5 @@
 /**
- * VIBE-CLI v12 - Tool Execution Engine
+ * VIBE-CLI v0.0.1 - Tool Execution Engine
  * Safe, sandboxed execution with approval gates and rollback support
  */
 
@@ -440,7 +440,7 @@ export class VibeToolExecutor {
 }
 
 /**
- * VIBE-CLI v12 - Checkpoint System
+ * VIBE-CLI v0.0.1 - Checkpoint System
  * Version control for file system operations
  */
 export class VibeCheckpointSystem {

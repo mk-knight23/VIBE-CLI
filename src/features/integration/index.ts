@@ -1,5 +1,7 @@
 /**
  * Integration module exports
  */
-export type { GitHubIntegration, githubIntegration, Repository, Commit, PullRequest, Issue } from './github-integration';
-export type { MCPServer, mcpServer, MCPTool, MCPResource, MCPPrompt, MCPServerConfig } from './mcp-server';
+export { GitHubIntegration, githubIntegration } from './github-integration';
+export type { Repository, Commit, PullRequest, Issue } from './github-integration';
+export { MCPServer, mcpServer } from './mcp-server';
+export type { MCPTool, MCPResource, MCPPrompt, MCPServerConfig } from './mcp-server';

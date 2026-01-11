@@ -1,5 +1,5 @@
 /**
- * VIBE-CLI v12 Orchestrator
+ * VIBE-CLI v0.0.1 Orchestrator
  * Multi-agent orchestration for intent-driven execution
  */
 import type { VibeIntent, VibeSession, IProviderRouter } from '../types';
@@ -33,7 +33,7 @@ export interface ExecutionResult {
     output?: string;
 }
 /**
- * V12 Orchestrator - manages agent execution
+ * V0.0.1 Orchestrator - manages agent execution
  */
 export declare class Orchestrator {
     private provider;

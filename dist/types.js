@@ -1,6 +1,6 @@
 "use strict";
 /**
- * VIBE CLI v12 - Core Types
+ * VIBE CLI v0.0.1 - Core Types
  *
  * All types are defined here to avoid circular imports.
  */

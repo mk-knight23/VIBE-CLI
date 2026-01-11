@@ -7,7 +7,7 @@
  * - Atomic multi-file edits
  * - Undo support via checkpoints
  *
- * Version: 13.0.0
+ * Version: 0.0.1
  */
 export type EditType = 'replace' | 'insert' | 'delete' | 'append' | 'patch';
 export interface EditOperation {

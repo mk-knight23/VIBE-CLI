@@ -1,6 +1,6 @@
 "use strict";
 /**
- * VIBE CLI v12 - Provider Registry
+ * VIBE CLI v0.0.1 - Provider Registry
  *
  * Unified provider router supporting 20+ LLM providers.
  * Each provider is configured with:
@@ -9,7 +9,7 @@
  * - Capabilities (completion, reasoning, etc.)
  * - Free tier availability
  *
- * Version: 12.0.0
+ * Version: 0.0.1
  */
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.PROVIDER_REGISTRY = void 0;

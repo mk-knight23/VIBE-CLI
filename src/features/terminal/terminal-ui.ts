@@ -1,5 +1,5 @@
 /**
- * VIBE-CLI v12 - Terminal UI
+ * VIBE-CLI v0.0.1 - Terminal UI
  * Interactive command preview with syntax highlighting
  */
 
@@ -47,7 +47,7 @@ export class TerminalUI {
     } = options;
 
     // Generate command
-    const generated = this.commandGenerator.generate(input);
+    const generated = await this.commandGenerator.generate(input);
 
     // Display command
     this.displayCommand(generated, { showExplanation, syntaxHighlight });

@@ -1,5 +1,5 @@
 /**
- * VIBE-CLI v12 - Terminal Feature Exports
+ * VIBE-CLI v0.0.1 - Terminal Feature Exports
  */
 
 export * from './command-generator';

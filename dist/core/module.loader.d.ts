@@ -1,5 +1,5 @@
 /**
- * VIBE-CLI v12 - Module Loader
+ * VIBE-CLI v0.0.1 - Module Loader
  * Loads and manages VIBE modules
  */
 import { BaseModule } from '../modules/base.module';

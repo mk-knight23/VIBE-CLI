@@ -1,6 +1,6 @@
 "use strict";
 /**
- * VIBE-CLI v12 - Modules Index
+ * VIBE-CLI v0.0.1 - Modules Index
  */
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.DeploymentModule = exports.SecurityModule = exports.DebuggingModule = exports.TestingModule = exports.CodeAssistantModule = void 0;

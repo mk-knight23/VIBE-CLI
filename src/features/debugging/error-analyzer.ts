@@ -1,5 +1,5 @@
 /**
- * VIBE-CLI v12 - Error Analyzer
+ * VIBE-CLI v0.0.1 - Error Analyzer
  * Stack trace parsing, error pattern recognition, and debugging assistance
  */
 
@@ -323,6 +323,50 @@ export class ErrorAnalyzer {
   }
 
   /**
+   * Analyze an error with AI assistance
+   */
+  async analyzeWithAI(error: Error | string, provider: any): Promise<AnalyzedError> {
+    const baseAnalysis = this.analyzeError(error);
+    const message = typeof error === 'string' ? error : error.message;
+    const stack = typeof error === 'string' ? '' : error.stack || '';
+
+    const prompt = `Analyze this error and provide deep insights:
+    
+Error: ${message}
+Stack Trace:
+${stack}
+
+Initial Analysis Category: ${baseAnalysis.category}
+Initial Analysis Severity: ${baseAnalysis.severity}
+
+Respond with a JSON object: {
+  category: string,
+  severity: string,
+  rootCauseDescription: string,
+  suggestions: string[],
+  relatedFiles: string[],
+  documentationLinks: string[]
+}`;
+
+    try {
+      const response = await provider.chat([{ role: 'system', content: 'You are an expert debugger.' }, { role: 'user', content: prompt }]);
+      const aiResults = JSON.parse(response.content.trim().replace(/```json/g, '').replace(/```/g, ''));
+
+      return {
+        ...baseAnalysis,
+        category: aiResults.category as any || baseAnalysis.category,
+        severity: aiResults.severity as any || baseAnalysis.severity,
+        message: aiResults.rootCauseDescription || baseAnalysis.message,
+        suggestions: aiResults.suggestions || baseAnalysis.suggestions,
+        relatedFiles: [...new Set([...baseAnalysis.relatedFiles, ...(aiResults.relatedFiles || [])])],
+        documentationLinks: [...new Set([...baseAnalysis.documentationLinks, ...(aiResults.documentationLinks || [])])],
+      };
+    } catch {
+      return baseAnalysis;
+    }
+  }
+
+  /**
    * Analyze a single error
    */
   analyzeError(error: Error | string): AnalyzedError {
@@ -402,8 +446,8 @@ export class ErrorAnalyzer {
     for (const line of lines) {
       // Detect error patterns
       const isErrorLine = /(?:error|exception|failed|fatal|critical):/i.test(line) ||
-                          /\berror\b/i.test(line) ||
-                          /TypeError|ReferenceError|SyntaxError|RangeError/i.test(line);
+        /\berror\b/i.test(line) ||
+        /TypeError|ReferenceError|SyntaxError|RangeError/i.test(line);
 
       if (isErrorLine) {
         if (currentError.length > 0) {

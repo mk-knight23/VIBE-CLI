@@ -1,5 +1,5 @@
 /**
- * VIBE-CLI v12 - Modules Integration Tests
+ * VIBE-CLI v0.0.1 - Modules Integration Tests
  * Tests the interaction between modules and core components
  */
 
@@ -429,7 +429,7 @@ describe('File Building Integration', () => {
       expect(VIBE_SYSTEM_PROMPT).toContain('Never say "I\'m not sure');
       expect(VIBE_SYSTEM_PROMPT).toContain('Prefer doing over explaining');
 
-      expect(VIBE_SYSTEM_PROMPT_VERSION).toBe('12.0.0');
+      expect(VIBE_SYSTEM_PROMPT_VERSION).toBe('0.0.1');
     });
   });
 });

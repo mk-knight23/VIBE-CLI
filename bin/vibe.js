@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * VIBE CLI v13 - Production Entry Point
+ * VIBE CLI v0.0.1 - Production Entry Point
  */
 
 // Load environment variables

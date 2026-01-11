@@ -1,5 +1,5 @@
 /**
- * VIBE-CLI v12 - Suggestion Engine
+ * VIBE-CLI v0.0.1 - Suggestion Engine
  * Ranked suggestions with prioritized fixes
  */
 

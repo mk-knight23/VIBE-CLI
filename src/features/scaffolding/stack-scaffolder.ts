@@ -1,5 +1,5 @@
 /**
- * VIBE-CLI v12 - Full-Stack Scaffolder
+ * VIBE-CLI v0.0.1 - Full-Stack Scaffolder
  * Generate complete applications from templates
  */
 
@@ -36,6 +36,7 @@ export interface ScaffoldingOptions {
   styling?: 'css' | 'scss' | 'tailwind' | 'none';
   testing?: 'jest' | 'vitest' | 'playwright' | 'none';
   outputDir?: string;
+  description?: string;
 }
 
 /**
@@ -142,6 +143,71 @@ src/
   config/        # Configuration
   tests/
     `);
+  }
+
+  /**
+   * Generate a custom project based on description using AI
+   */
+  async generateCustom(options: ScaffoldingOptions, provider: any): Promise<ProjectStructure> {
+    console.log(chalk.bold('\n🧠 AI Custom Scaffolding'));
+    console.log(chalk.gray('='.repeat(50)));
+    console.log(chalk.cyan(`Description: ${options.description}`));
+
+    const prompt = `Define a project structure for this description: "${options.description}".
+    Respond with a JSON object:
+    {
+      "directories": ["dir1", "dir2/sub"],
+      "files": [
+        { "path": "file1.ts", "content": "..." },
+        { "path": "dir1/file2.js", "content": "..." }
+      ],
+      "packageJson": { "name": "...", "dependencies": { ... } }
+    }`;
+
+    try {
+      const response = await provider.chat([{ role: 'system', content: 'You are an expert software architect.' }, { role: 'user', content: prompt }]);
+      const customData = JSON.parse(response.content.trim().replace(/```json/g, '').replace(/```/g, ''));
+
+      const outputDir = options.outputDir || process.cwd();
+      const projectDir = path.join(outputDir, options.projectName);
+
+      const structure: ProjectStructure = {
+        rootDir: projectDir,
+        files: customData.files.map((f: any) => ({ ...f, path: path.join(projectDir, f.path) })),
+        directories: customData.directories.map((d: any) => path.join(projectDir, d)),
+        packageJson: customData.packageJson,
+        configFiles: [],
+      };
+
+      progressDisplay.startProgress(structure.directories.length + structure.files.length, 'Creating custom project');
+
+      // Create directories
+      for (const dir of structure.directories) {
+        if (!fs.existsSync(dir)) {
+          fs.mkdirSync(dir, { recursive: true });
+        }
+        progressDisplay.incrementProgress(1);
+      }
+
+      // Add package.json to files
+      structure.files.push({
+        path: path.join(projectDir, 'package.json'),
+        content: JSON.stringify(structure.packageJson, null, 2),
+      });
+
+      // Write files
+      for (const file of structure.files) {
+        fs.writeFileSync(file.path, file.content);
+        progressDisplay.incrementProgress(1);
+      }
+
+      progressDisplay.completeProgress('Custom project generation complete');
+      this.generatedProjects.push(structure);
+      return structure;
+    } catch (error) {
+      console.error(chalk.red('✗ Custom scaffolding failed:'), error);
+      throw error;
+    }
   }
 
   /**

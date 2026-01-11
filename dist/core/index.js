@@ -1,6 +1,6 @@
 "use strict";
 /**
- * VIBE-CLI v12 - Core Engine
+ * VIBE-CLI v0.0.1 - Core Engine
  * Main initialization and orchestration
  */
 Object.defineProperty(exports, "__esModule", { value: true });

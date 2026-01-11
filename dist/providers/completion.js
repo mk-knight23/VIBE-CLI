@@ -1,6 +1,6 @@
 "use strict";
 /**
- * VIBE-CLI v12 - COMPLETION Primitive
+ * VIBE-CLI v0.0.1 - COMPLETION Primitive
  *
  * Handles LLM completion requests with provider routing.
  * Selects best model per task type (completion, planning, refactoring, reasoning).

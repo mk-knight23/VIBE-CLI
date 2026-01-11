@@ -1,6 +1,6 @@
 "use strict";
 /**
- * VIBE-CLI v12 - Tool Execution Engine
+ * VIBE-CLI v0.0.1 - Tool Execution Engine
  * Safe, sandboxed execution with approval gates and rollback support
  */
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
@@ -384,7 +384,7 @@ class VibeToolExecutor {
 }
 exports.VibeToolExecutor = VibeToolExecutor;
 /**
- * VIBE-CLI v12 - Checkpoint System
+ * VIBE-CLI v0.0.1 - Checkpoint System
  * Version control for file system operations
  */
 class VibeCheckpointSystem {

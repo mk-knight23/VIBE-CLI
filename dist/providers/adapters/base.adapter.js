@@ -5,7 +5,7 @@
  * Abstract base class for all LLM provider adapters.
  * Provides unified interface for chat, streaming, and completion.
  *
- * Version: 13.0.0
+ * Version: 0.0.1
  */
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ModelNotFoundError = exports.RateLimitError = exports.AuthenticationError = exports.ProviderError = exports.BaseProviderAdapter = void 0;
