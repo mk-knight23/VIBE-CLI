@@ -63,15 +63,38 @@ class VibeConfigManager {
         const config = this.loadConfig();
         const needsSetup = !config.provider;
         if (needsSetup) {
+            console.clear();
             console.log(chalk_1.default.cyan(`
 ╔═══════════════════════════════════════════════════════════════╗
 ║                                                               ║
-║   Welcome to VIBE v12!                                        ║
-║   Let's get you set up with an AI provider.                   ║
+║   ${chalk_1.default.white.bold('V I B E')}  ${chalk_1.default.green('v13.0.0')}                                    ║
+║   ${chalk_1.default.gray('AI-Powered Development Environment')}                       ║
 ║                                                               ║
 ╚═══════════════════════════════════════════════════════════════╝
       `));
+            console.log(chalk_1.default.white('\nWelcome! Let\'s get you set up in 3 quick steps.\n'));
+            // Step 1: Provider & API Key
+            console.log(chalk_1.default.cyan('Step 1: AI Provider Configuration'));
             await this.configureProvider();
+            // Step 2: Theme Selection
+            console.log(chalk_1.default.cyan('\nStep 2: UI Personalization'));
+            const themes = ['vibe', 'minimal', 'neon'];
+            console.log(chalk_1.default.white('Available themes: ') + themes.join(', '));
+            const themeChoice = await (0, ui_1.prompt)('Choose a theme [vibe/minimal/neon] (default: vibe)');
+            config.theme = themes.includes(themeChoice) ? themeChoice : 'vibe';
+            // Step 3: Telemetry (Feature #12)
+            console.log(chalk_1.default.cyan('\nStep 3: Privacy & Telemetry'));
+            const telemetry = await (0, ui_1.promptYesNo)('Help improve VIBE by sending anonymous usage data? (Opt-in, privacy-first)');
+            config.telemetry = telemetry;
+            this.saveConfig({
+                ...config,
+                theme: config.theme,
+                telemetry: config.telemetry,
+                provider: this.provider.getCurrentProvider()?.id,
+                model: this.provider.getCurrentModel(),
+            });
+            console.log(chalk_1.default.green('\n✓ Setup complete! You\'re ready to vibe.\n'));
+            await (0, ui_1.prompt)('Press [Enter] to start the TUI...');
         }
         return needsSetup;
     }

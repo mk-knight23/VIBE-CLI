@@ -5,7 +5,11 @@
  * Prevents duplicate input / character echo issues.
  */
 import readline from 'readline';
-export declare const rl: readline.Interface;
+export declare let rl: readline.Interface;
+/**
+ * Update the completer function
+ */
+export declare function setCompleter(newCompleter: readline.Completer): void;
 /**
  * Prompt helper - uses the shared readline interface
  */

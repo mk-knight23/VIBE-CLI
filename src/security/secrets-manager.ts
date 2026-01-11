@@ -78,41 +78,42 @@ const DEFAULT_SECRETS_CONFIG: SecretsConfig = {
 const BUILTIN_PATTERNS: SecretPattern[] = [
   {
     name: 'OpenAI API Key',
-    pattern: /^sk-[a-zA-Z0-9]{48}$/,
+    pattern: /sk-[a-zA-Z0-9-]{8,}/g,
     type: 'api-key',
     replacement: 'sk-••••••••••••••••••••••••••••••••••',
   },
   {
     name: 'Anthropic API Key',
-    pattern: /^sk-ant-api03-[a-zA-Z0-9_-]{80,}$/,
+    pattern: /sk-ant-api03-[a-zA-Z0-9_-]{20,}/g,
     type: 'api-key',
     replacement: 'sk-ant-api03-••••••••••••••••••••••••••••••',
   },
   {
     name: 'JWT Token',
-    pattern: /^eyJ[a-zA-Z0-9_-]*\.[a-zA-Z0-9_-]*\.[a-zA-Z0-9_-]*$/,
+    pattern: /eyJ[a-zA-Z0-9_-]+\.[a-zA-Z0-9_-]+\.[a-zA-Z0-9_-]+/g,
     type: 'token',
     replacement: 'eyJ••••••••••••••••••••••••••••••••••••',
   },
   {
     name: 'GitHub PAT',
-    pattern: /^gh[pousr]_[a-zA-Z0-9]{36,}$/,
+    pattern: /gh[pousr]_[a-zA-Z0-9]{20,}/g,
     type: 'token',
     replacement: 'ghp_•••••••••••••••••••••••••••••••••••',
   },
   {
     name: 'Generic API Key',
-    pattern: /^(api_?key|apikey|api_key)["']?\s*[:=]\s*["']?([a-zA-Z0-9_-]{20,})/i,
+    pattern: /(api_?key|apikey|api_key)["']?\s*[:=]\s*["']?([a-zA-Z0-9_-]{20,})/gi,
     type: 'api-key',
     replacement: '$1: [REDACTED]',
   },
   {
     name: 'AWS Access Key',
-    pattern: /^(AKIA|ABIA|ACCA|ASIA)[0-9A-Z]{16}$/,
+    pattern: /(AKIA|ABIA|ACCA|ASIA)[0-9A-Z]{16}/g,
     type: 'credential',
     replacement: '••••••••••••••••',
   },
 ];
+
 
 // ============================================================================
 // Secrets Manager

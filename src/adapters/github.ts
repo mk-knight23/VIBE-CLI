@@ -2,10 +2,13 @@ import axios from 'axios';
 import { secretsManager } from '../security/secrets-manager';
 
 export class GitHubAdapter {
-    private token: string;
+    private token: string | null = null;
+    private initialized = false;
 
-    constructor() {
-        this.token = secretsManager.getSecret('GITHUB_TOKEN') || '';
+    private async ensureInitialized(): Promise<void> {
+        if (this.initialized) return;
+        this.token = await secretsManager.getSecret('GITHUB_TOKEN');
+        this.initialized = true;
     }
 
     private get headers() {
@@ -16,6 +19,7 @@ export class GitHubAdapter {
     }
 
     async getIssues(owner: string, repo: string): Promise<any[]> {
+        await this.ensureInitialized();
         if (!this.token) throw new Error('GITHUB_TOKEN not set.');
         const response = await axios.get(`https://api.github.com/repos/${owner}/${repo}/issues`, {
             headers: this.headers,
@@ -24,6 +28,7 @@ export class GitHubAdapter {
     }
 
     async createPR(owner: string, repo: string, title: string, head: string, base: string, body: string): Promise<any> {
+        await this.ensureInitialized();
         if (!this.token) throw new Error('GITHUB_TOKEN not set.');
         const response = await axios.post(`https://api.github.com/repos/${owner}/${repo}/pulls`, {
             title, head, base, body,
@@ -31,3 +36,4 @@ export class GitHubAdapter {
         return response.data;
     }
 }
+

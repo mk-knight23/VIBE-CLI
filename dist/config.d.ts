@@ -8,6 +8,8 @@ interface StoredConfig {
     model?: string;
     apiKeys?: Record<string, string>;
     autoApprove?: boolean;
+    theme?: string;
+    telemetry?: boolean;
 }
 export declare class VibeConfigManager {
     private configDir;

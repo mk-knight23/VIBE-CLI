@@ -10,27 +10,53 @@ export class MultiEditPrimitive extends BasePrimitive {
     public id = 'multi-edit';
     public name = 'Multi-Edit Primitive';
 
-    public async execute(input: { files: string[]; description: string }): Promise<PrimitiveResult> {
-        logger.info(`Editing ${input.files.length} files: ${input.description}`);
+    public async execute(input: {
+        files?: string[];
+        description?: string;
+        task?: string;
+        step?: number;
+        primitive?: string;
+    }): Promise<PrimitiveResult> {
+        // Use task as description if description is not provided (for orchestration)
+        const description = input.description || input.task;
+
+        if (!description) {
+            return {
+                success: false,
+                error: 'No description or task provided for multi-edit primitive',
+            };
+        }
+
+        // If no files specified, this is a creation task from orchestration
+        const files = input.files || [];
+        const isCreationTask = files.length === 0;
+
+        logger.info(`${isCreationTask ? 'Creating' : 'Editing'} files: ${description}`);
 
         try {
-            // 1. Read files
+            // 1. Read existing files (if any)
             const fileContents: Record<string, string> = {};
-            for (const file of input.files) {
+            for (const file of files) {
                 if (fs.existsSync(file)) {
                     fileContents[file] = await fs.readFile(file, 'utf-8');
                 }
             }
 
             // 2. Prepare LLM prompt
-            const systemPrompt = `You are a surgical code editor. 
+            const systemPrompt = isCreationTask
+                ? `You are an expert software developer. Create complete, working code files based on the requirements.
+Format your output as a JSON object where keys are file paths and values are the complete file content.
+Example: {"src/index.html": "<!DOCTYPE html>...", "src/style.css": "body {...}"}
+Create production-quality code with proper structure.`
+                : `You are a surgical code editor. 
 Given a set of files and a transformation request, output the UPDATED content for EACH modified file.
 Format your output as a JSON object where keys are file paths and values are the NEW content of the entire file.
-
 IMPORTANT: Preserve original indentation and coding style exactly.
 If a file does not need changes, do not include it in the JSON.`;
 
-            const userPrompt = `Request: ${input.description}\n\nFiles:\n${JSON.stringify(fileContents, null, 2)}`;
+            const userPrompt = isCreationTask
+                ? `Create files for: ${description}`
+                : `Request: ${description}\n\nFiles:\n${JSON.stringify(fileContents, null, 2)}`;
 
             const response = await providerRouter.completion(userPrompt, {
                 systemPrompt,
@@ -49,7 +75,7 @@ If a file does not need changes, do not include it in the JSON.`;
             try {
                 const { execSync } = require('child_process');
                 execSync('git add .');
-                execSync(`git commit -m "VIBE_AUTO_CHECKPOINT: Before ${input.description.slice(0, 30)}" --allow-empty`);
+                execSync(`git commit -m "VIBE_AUTO_CHECKPOINT: Before ${description.slice(0, 30)}" --allow-empty`);
             } catch (e) {
                 logger.warn('Git checkpoint failed before multi-edit');
             }
