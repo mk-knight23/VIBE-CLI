@@ -268,4 +268,4 @@ export function getSystemPrompt(options: {
   return prompt;
 }
 
-export const VIBE_SYSTEM_PROMPT_VERSION = '12.1.0';
+export const VIBE_SYSTEM_PROMPT_VERSION = '0.0.1';

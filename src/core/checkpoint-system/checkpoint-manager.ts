@@ -575,7 +575,7 @@ export class CheckpointManager {
     const gitDir = path.join(process.cwd(), '.git');
 
     if (!fs.existsSync(gitDir)) {
-      return this.getAllTrackedFiles();
+      return this.getAllFilesInDirectory();
     }
 
     try {
@@ -583,9 +583,15 @@ export class CheckpointManager {
         cwd: process.cwd(),
         encoding: 'utf-8',
       });
-      return output.trim().split('\n').filter(Boolean);
+      const modifiedFiles = output.trim().split('\n').filter(Boolean);
+      
+      if (modifiedFiles.length === 0) {
+        return this.getAllTrackedFiles();
+      }
+      
+      return modifiedFiles;
     } catch {
-      return [];
+      return this.getAllTrackedFiles();
     }
   }
 
@@ -600,8 +606,44 @@ export class CheckpointManager {
       });
       return output.trim().split('\n').filter(Boolean);
     } catch {
+      return this.getAllFilesInDirectory();
+    }
+  }
+
+  /**
+   * Get all files in directory (fallback when no git repo)
+   */
+  private getAllFilesInDirectory(): string[] {
+    const files: string[] = [];
+    const excludedDirs = ['.git', 'node_modules', '.vibe', 'dist', 'build', '.next', '.nuxt', 'target', '__pycache__'];
+    const excludedExtensions = ['.log', '.lock', '.gz', '.zip', '.tar', '.node_modules'];
+
+    const scanDir = (dir: string, basePath = '') => {
+      const entries = fs.readdirSync(dir, { withFileTypes: true });
+
+      for (const entry of entries) {
+        if (entry.isDirectory()) {
+          if (excludedDirs.includes(entry.name) || entry.name.startsWith('.')) {
+            continue;
+          }
+          scanDir(path.join(dir, entry.name), path.join(basePath, entry.name));
+        } else if (entry.isFile()) {
+          const ext = path.extname(entry.name);
+          if (excludedExtensions.includes(ext) || entry.name.startsWith('.')) {
+            continue;
+          }
+          files.push(path.join(basePath, entry.name));
+        }
+      }
+    };
+
+    try {
+      scanDir(process.cwd());
+    } catch {
       return [];
     }
+
+    return files;
   }
 
   /**

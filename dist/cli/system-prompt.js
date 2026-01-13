@@ -249,5 +249,5 @@ function getSystemPrompt(options = {}) {
     }
     return prompt;
 }
-exports.VIBE_SYSTEM_PROMPT_VERSION = '12.1.0';
+exports.VIBE_SYSTEM_PROMPT_VERSION = '0.0.1';
 //# sourceMappingURL=system-prompt.js.map

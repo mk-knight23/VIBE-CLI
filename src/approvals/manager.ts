@@ -89,16 +89,16 @@ class ApprovalUI {
     };
 
     const header = `${icons[risk]} ${risk.toUpperCase()} RISK OPERATION`;
-    console.log('\n' + header);
-    console.log(chalk.gray('─'.repeat(50)));
+    console.log('\n' + header); // eslint-disable-line no-console
+    console.log(chalk.gray('─'.repeat(50))); // eslint-disable-line no-console
   }
 
   showOperation(operation: string, index: number): void {
-    console.log(chalk.cyan(`  ${index + 1}. ${operation}`));
+    console.log(chalk.cyan(`  ${index + 1}. ${operation}`)); // eslint-disable-line no-console
   }
 
   showDiff(filePath: string, oldContent: string, newContent: string): void {
-    console.log(chalk.cyan(`\n─── Diff: ${filePath} ───\n`));
+    console.log(chalk.cyan(`\n─── Diff: ${filePath} ───\n`)); // eslint-disable-line no-console
 
     const oldLines = oldContent.split('\n');
     const newLines = newContent.split('\n');
@@ -109,17 +109,17 @@ class ApprovalUI {
       const newLine = newLines[i];
 
       if (oldLine === newLine) {
-        console.log(chalk.gray(`    ${String(i + 1).padStart(3)} │ ${oldLine || ''}`));
+        console.log(chalk.gray(`    ${String(i + 1).padStart(3)} │ ${oldLine || ''}`)); // eslint-disable-line no-console
       } else {
         if (oldLine !== undefined) {
-          console.log(chalk.red(`   -${String(i + 1).padStart(3)} │ ${oldLine}`));
+          console.log(chalk.red(`   -${String(i + 1).padStart(3)} │ ${oldLine}`)); // eslint-disable-line no-console
         }
         if (newLine !== undefined) {
-          console.log(chalk.green(`   +${String(i + 1).padStart(3)} │ ${newLine}`));
+          console.log(chalk.green(`   +${String(i + 1).padStart(3)} │ ${newLine}`)); // eslint-disable-line no-console
         }
       }
     }
-    console.log('');
+    console.log(''); // eslint-disable-line no-console
   }
 
   showApprovalOptions(): void {
@@ -133,7 +133,7 @@ class ApprovalUI {
     [c] Cancel request
     [?] Show help
     [q] Quit
-    `));
+    `)); // eslint-disable-line no-console
   }
 
   showHelp(risk: RiskLevel): void {
@@ -143,7 +143,7 @@ class ApprovalUI {
   - ${risk === 'low' ? 'Read-only or safe operations' : risk === 'medium' ? 'File modifications' : 'Shell commands, deployments, or deletions'}
   - Auto-approve: ${risk === 'low' ? 'Enabled' : risk === 'medium' ? 'Disabled' : 'Never'}
   - ${risk === 'critical' ? 'This operation could affect production systems!' : ''}
-    `));
+    `)); // eslint-disable-line no-console
   }
 
   close(): void {
@@ -280,14 +280,14 @@ export class ApprovalManager {
    */
   private async showPrompt(request: ApprovalRequest): Promise<boolean> {
     this.ui.showBanner(request.risk);
-    console.log(chalk.white(`  ${request.description}\n`));
+    console.log(chalk.white(`  ${request.description}\n`)); // eslint-disable-line no-console
 
     if (request.operations.length > 0) {
-      console.log(chalk.gray('  Operations:'));
+      console.log(chalk.gray('  Operations:')); // eslint-disable-line no-console
       request.operations.forEach((op, i) => this.ui.showOperation(op, i));
     }
 
-    console.log('');
+    console.log(''); // eslint-disable-line no-console
 
     // Get user choice
     while (true) {
@@ -339,7 +339,7 @@ export class ApprovalManager {
           return false;
 
         default:
-          console.log(chalk.yellow('  Invalid option. Type ? for help.'));
+          console.log(chalk.yellow('  Invalid option. Type ? for help.')); // eslint-disable-line no-console
           continue;
       }
     }
@@ -383,7 +383,7 @@ export class ApprovalManager {
 
     // Show diff preview
     this.ui.showBanner(request.risk);
-    console.log(chalk.white(`  ${description}\n`));
+    console.log(chalk.white(`  ${description}\n`)); // eslint-disable-line no-console
 
     for (const op of operations) {
       this.ui.showDiff(op.file, op.oldContent, op.newContent);
@@ -499,15 +499,15 @@ export class ApprovalManager {
     const pending = this.listRequests().filter(r => r.status === 'pending');
 
     if (pending.length === 0) {
-      console.log(chalk.cyan('\n  No pending approvals.\n'));
+      console.log(chalk.cyan('\n  No pending approvals.\n')); // eslint-disable-line no-console
       return;
     }
 
-    console.log(chalk.cyan('\n  Pending Approvals:\n'));
+    console.log(chalk.cyan('\n  Pending Approvals:\n')); // eslint-disable-line no-console
 
     for (const request of pending) {
-      console.log(`  ${request.risk.toUpperCase()} ${request.description}`);
-      console.log(chalk.gray(`    Operations: ${request.operations.join(', ')}\n`));
+      console.log(`  ${request.risk.toUpperCase()} ${request.description}`); // eslint-disable-line no-console
+      console.log(chalk.gray(`    Operations: ${request.operations.join(', ')}\n`)); // eslint-disable-line no-console
     }
   }
 

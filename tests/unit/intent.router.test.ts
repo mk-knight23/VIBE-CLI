@@ -88,7 +88,7 @@ describe('IntentRouter', () => {
       const result = await router.classify('hello');
 
       // Low confidence queries might need clarification
-      if (result.confidence < 0.6) {
+      if (result.intent.confidence < 0.6) {
         expect(result.suggestedOptions).toBeDefined();
       }
     });

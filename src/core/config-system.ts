@@ -26,6 +26,13 @@ const SecurityConfigSchema = z.object({
     allowedDomains: z.array(z.string()).default(['*.github.com', '*.npmjs.com']),
 });
 
+const MCPServerConfigSchema = z.object({
+    command: z.string(),
+    args: z.array(z.string()).default([]),
+    env: z.record(z.string(), z.string()).optional(),
+    disabled: z.boolean().default(false),
+});
+
 const VibeConfigSchema = z.object({
     model: ModelConfigSchema.default({
         defaultTier: 'balanced',
@@ -43,12 +50,20 @@ const VibeConfigSchema = z.object({
         failOnCritical: true,
         allowedDomains: ['*.github.com', '*.npmjs.com']
     }),
+    mcpServers: z.record(z.string(), MCPServerConfigSchema).default({}),
     telemetry: z.boolean().default(true),
     theme: z.string().default('vibe'),
     safeMode: z.boolean().default(false),
     dryRun: z.boolean().default(false),
     profile: z.string().default('default'),
     profiles: z.record(z.string(), z.any()).default({}),
+    onboardingComplete: z.boolean().default(false),
+    apiKey: z.string().optional(),
+    provider: z.string().default('anthropic'),
+    autoSave: z.boolean().default(true),
+    spellcheck: z.boolean().default(true),
+    editor: z.string().default('code'),
+    completionStyle: z.enum(['brief', 'detailed']).default('brief'),
 });
 
 export type VibeConfig = z.infer<typeof VibeConfigSchema>;

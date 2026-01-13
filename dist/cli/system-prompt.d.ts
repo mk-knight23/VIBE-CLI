@@ -40,5 +40,5 @@ export declare function getSystemPrompt(options?: {
     };
     projectContext?: string;
 }): string;
-export declare const VIBE_SYSTEM_PROMPT_VERSION = "12.1.0";
+export declare const VIBE_SYSTEM_PROMPT_VERSION = "0.0.1";
 //# sourceMappingURL=system-prompt.d.ts.map

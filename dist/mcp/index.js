@@ -4,160 +4,102 @@
  * Model Context Protocol backbone for structured context
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.mcpManager = exports.VibeMCPManager = exports.MemoryContextProvider = exports.TestsContextProvider = exports.OpenAPIContextProvider = exports.GitContextProvider = exports.FileSystemContextProvider = exports.MCPContextAggregator = void 0;
+exports.mcpManager = exports.VibeMCPManager = void 0;
+const index_js_1 = require("@modelcontextprotocol/sdk/client/index.js");
+const stdio_js_1 = require("@modelcontextprotocol/sdk/client/stdio.js");
+const config_system_1 = require("../core/config-system");
+const structured_logger_1 = require("../utils/structured-logger");
+const index_1 = require("../tools/registry/index");
 const events_1 = require("events");
-// Re-export classes
-var context_provider_js_1 = require("./context-provider.js");
-Object.defineProperty(exports, "MCPContextAggregator", { enumerable: true, get: function () { return context_provider_js_1.MCPContextAggregator; } });
-Object.defineProperty(exports, "FileSystemContextProvider", { enumerable: true, get: function () { return context_provider_js_1.FileSystemContextProvider; } });
-Object.defineProperty(exports, "GitContextProvider", { enumerable: true, get: function () { return context_provider_js_1.GitContextProvider; } });
-Object.defineProperty(exports, "OpenAPIContextProvider", { enumerable: true, get: function () { return context_provider_js_1.OpenAPIContextProvider; } });
-Object.defineProperty(exports, "TestsContextProvider", { enumerable: true, get: function () { return context_provider_js_1.TestsContextProvider; } });
-Object.defineProperty(exports, "MemoryContextProvider", { enumerable: true, get: function () { return context_provider_js_1.MemoryContextProvider; } });
-// MCP Manager - handles connections to MCP servers
+const logger = new structured_logger_1.Logger("VibeMCPManager");
 class VibeMCPManager extends events_1.EventEmitter {
-    servers;
-    configPath;
+    connections = new Map();
     constructor() {
         super();
-        this.servers = new Map();
-        this.configPath = '.vibe/mcp.json';
     }
-    /**
-     * Load MCP configuration
-     */
-    loadConfig() {
-        try {
-            const fs = require('fs');
-            if (fs.existsSync(this.configPath)) {
-                const config = JSON.parse(fs.readFileSync(this.configPath, 'utf-8'));
-                return config.servers || [];
+    async initialize() {
+        const config = config_system_1.configManager.getConfig();
+        const servers = config.mcpServers || {};
+        for (const [name, serverConfig] of Object.entries(servers)) {
+            if (serverConfig.disabled)
+                continue;
+            try {
+                await this.connectToServer(name, serverConfig);
+            }
+            catch (error) {
+                logger.error(`Failed to connect to MCP server ${name}: ${error.message}`);
             }
         }
-        catch { }
-        return [];
     }
-    /**
-     * Connect to an MCP server
-     */
-    async connect(config) {
-        if (this.servers.has(config.name)) {
-            return; // Already connected
+    async connectToServer(name, config) {
+        logger.info(`Connecting to MCP server: ${name} (${config.command})`);
+        const env = {};
+        for (const [key, value] of Object.entries(process.env)) {
+            if (value !== undefined)
+                env[key] = value;
         }
-        console.log(`Connecting to MCP server: ${config.name}`);
-        // Store connection info (actual implementation would spawn process)
-        this.servers.set(config.name, {
-            process: null,
-            tools: [],
-            resources: []
+        if (config.env) {
+            Object.assign(env, config.env);
+        }
+        const transport = new stdio_js_1.StdioClientTransport({
+            command: config.command,
+            args: config.args,
+            env: env
         });
-        this.emit('connect', { server: config.name });
-    }
-    /**
-     * Disconnect from an MCP server
-     */
-    disconnect(name) {
-        const server = this.servers.get(name);
-        if (server) {
-            if (server.process) {
-                server.process.kill();
+        const client = new index_js_1.Client({
+            name: "vibe-ai-teammate",
+            version: "0.0.2",
+        }, {
+            capabilities: {},
+        });
+        await client.connect(transport);
+        this.connections.set(name, { client, transport, name });
+        // Register tools from this server
+        try {
+            const { tools } = await client.listTools();
+            for (const tool of tools) {
+                index_1.toolRegistry.register({
+                    name: `${name}_${tool.name}`,
+                    description: tool.description || "",
+                    category: "code",
+                    schema: {
+                        type: "object",
+                        properties: tool.inputSchema.properties || {},
+                        required: tool.inputSchema.required || []
+                    },
+                    riskLevel: "medium",
+                    requiresApproval: true,
+                    handler: async (args) => {
+                        const result = await client.callTool({
+                            name: tool.name,
+                            arguments: args
+                        });
+                        return {
+                            success: !result.isError,
+                            output: JSON.stringify(result.content, null, 2),
+                            duration: 0
+                        };
+                    }
+                });
             }
-            this.servers.delete(name);
-            this.emit('disconnect', { server: name });
+            logger.info(`Connected to ${name} and registered ${tools.length} tools`);
         }
-    }
-    /**
-     * Disconnect from all servers
-     */
-    disconnectAll() {
-        for (const name of this.servers.keys()) {
-            this.disconnect(name);
+        catch (e) {
+            logger.warn(`Connected to ${name} but failed to list tools`);
         }
+        this.emit('connect', { server: name });
     }
-    /**
-     * Call a tool on an MCP server
-     */
-    async callTool(serverName, toolName, args) {
-        const server = this.servers.get(serverName);
-        if (!server) {
-            throw new Error(`MCP server not connected: ${serverName}`);
+    async shutdown() {
+        for (const connection of this.connections.values()) {
+            await connection.transport.close();
         }
-        // In a real implementation, this would send the request via MCP protocol
-        console.log(`Calling ${serverName}/${toolName}`);
-        return { result: 'tool result' };
+        this.connections.clear();
     }
-    /**
-     * Get all available tools across servers
-     */
-    getAllTools() {
-        const result = [];
-        for (const [name, server] of this.servers) {
-            for (const tool of server.tools) {
-                result.push({ server: name, tool });
-            }
-        }
-        return result;
-    }
-    /**
-     * Get tools from a specific server
-     */
-    getServerTools(name) {
-        return this.servers.get(name)?.tools || [];
-    }
-    /**
-     * List connected servers
-     */
     listServers() {
-        return Array.from(this.servers.keys());
+        return Array.from(this.connections.keys());
     }
-    /**
-     * Check if server is connected
-     */
     isConnected(name) {
-        return this.servers.has(name);
-    }
-    /**
-     * Get all resources from connected servers
-     */
-    getAllResources() {
-        const resources = [];
-        for (const server of this.servers.values()) {
-            resources.push(...server.resources);
-        }
-        return resources;
-    }
-    /**
-     * Read a resource by URI
-     */
-    async readResource(uri) {
-        // In a real implementation, this would route to the appropriate server
-        return { contents: [{ mimeType: 'text/plain', text: 'Resource content' }] };
-    }
-    /**
-     * Create default MCP configuration
-     */
-    createDefaultConfig() {
-        const defaultConfig = {
-            servers: [
-                {
-                    name: 'filesystem',
-                    command: 'npx',
-                    args: ['-y', '@modelcontextprotocol/server-filesystem', process.cwd()]
-                },
-                {
-                    name: 'git',
-                    command: 'npx',
-                    args: ['-y', '@modelcontextprotocol/server-github']
-                }
-            ]
-        };
-        const fs = require('fs');
-        const dir = require('path').dirname(this.configPath);
-        if (!fs.existsSync(dir)) {
-            fs.mkdirSync(dir, { recursive: true });
-        }
-        fs.writeFileSync(this.configPath, JSON.stringify(defaultConfig, null, 2));
-        return this.configPath;
+        return this.connections.has(name);
     }
 }
 exports.VibeMCPManager = VibeMCPManager;

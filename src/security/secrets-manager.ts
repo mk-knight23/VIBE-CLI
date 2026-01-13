@@ -96,9 +96,9 @@ const BUILTIN_PATTERNS: SecretPattern[] = [
   },
   {
     name: 'GitHub PAT',
-    pattern: /gh[pousr]_[a-zA-Z0-9]{20,}/g,
+    pattern: /(ghp|gho|ghu|ghs|ghr)_[a-zA-Z0-9]{8,}/g,
     type: 'token',
-    replacement: 'ghp_•••••••••••••••••••••••••••••••••••',
+    replacement: 'gh•_•••••••••••••••••••••••••••••••••••••••••••••••••••••••••••',
   },
   {
     name: 'Generic API Key',

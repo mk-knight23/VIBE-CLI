@@ -2,6 +2,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import chalk from 'chalk';
 import { Spinner } from '../ui/progress/spinner';
+import { DEFAULT_MCP_SERVERS } from './mcp-defaults';
 
 export class Bootstrapper {
     static async init(projectPath: string = process.cwd()): Promise<boolean> {
@@ -20,6 +21,7 @@ export class Bootstrapper {
                 const defaultConfig = {
                     model: { defaultTier: 'balanced' },
                     approval: { defaultPolicy: 'prompt' },
+                    mcpServers: DEFAULT_MCP_SERVERS,
                     theme: 'vibe'
                 };
                 fs.writeFileSync(configPath, JSON.stringify(defaultConfig, null, 2));

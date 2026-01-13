@@ -1,8 +1,8 @@
 /**
- * VIBE CLI v0.0.1 - Main Export
+ * VIBE CLI v0.0.2 - Main Export
  */
 
-export const VIBE_VERSION = '0.0.1';
+export { VIBE_VERSION } from './version';
 
 // Core
 export * from './core/config-system';

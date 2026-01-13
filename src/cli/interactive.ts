@@ -5,14 +5,17 @@ import { PlanningPrimitive } from '../primitives/planning';
 import { OrchestrationPrimitive } from '../primitives/orchestration';
 import { ApprovalPrimitive } from '../primitives/approval';
 import { Logger } from '../utils/structured-logger';
+import { CommandHandler } from './command-handler';
 
 const logger = new Logger('Interactive');
 
 export async function runInteractive(primitiveMap: Map<string, IPrimitive>) {
     console.log(chalk.cyan(`
   VIBE Interactive Mode
-  Type 'exit' or 'quit' to leave.
+  Type '/help' for commands, 'exit' or 'quit' to leave.
     `));
+
+    const commandHandler = new CommandHandler(primitiveMap);
 
     while (true) {
         const { task } = await inquirer.prompt([
@@ -24,13 +27,21 @@ export async function runInteractive(primitiveMap: Map<string, IPrimitive>) {
             }
         ]);
 
-        if (['exit', 'quit'].includes(task.toLowerCase().trim())) {
+        const trimmedTask = task.trim();
+
+        if (['exit', 'quit'].includes(trimmedTask.toLowerCase())) {
             console.log(chalk.yellow('Goodbye!'));
             process.exit(0);
         }
 
+        // Check for slash commands
+        if (trimmedTask.startsWith('/')) {
+            const handled = await commandHandler.handle(trimmedTask);
+            if (handled) continue;
+        }
+
         try {
-            logger.info(`Thinking about: "${task}"`);
+            logger.info(`Thinking about: "${trimmedTask}"`);
 
             // 1. Planning
             process.stdout.write(chalk.blue('🧠 Thinking: '));

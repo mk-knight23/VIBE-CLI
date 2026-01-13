@@ -86,14 +86,14 @@ class ApprovalUI {
             critical: '🚨',
         };
         const header = `${icons[risk]} ${risk.toUpperCase()} RISK OPERATION`;
-        console.log('\n' + header);
-        console.log(chalk_1.default.gray('─'.repeat(50)));
+        console.log('\n' + header); // eslint-disable-line no-console
+        console.log(chalk_1.default.gray('─'.repeat(50))); // eslint-disable-line no-console
     }
     showOperation(operation, index) {
-        console.log(chalk_1.default.cyan(`  ${index + 1}. ${operation}`));
+        console.log(chalk_1.default.cyan(`  ${index + 1}. ${operation}`)); // eslint-disable-line no-console
     }
     showDiff(filePath, oldContent, newContent) {
-        console.log(chalk_1.default.cyan(`\n─── Diff: ${filePath} ───\n`));
+        console.log(chalk_1.default.cyan(`\n─── Diff: ${filePath} ───\n`)); // eslint-disable-line no-console
         const oldLines = oldContent.split('\n');
         const newLines = newContent.split('\n');
         const maxLines = Math.max(oldLines.length, newLines.length);
@@ -101,18 +101,18 @@ class ApprovalUI {
             const oldLine = oldLines[i];
             const newLine = newLines[i];
             if (oldLine === newLine) {
-                console.log(chalk_1.default.gray(`    ${String(i + 1).padStart(3)} │ ${oldLine || ''}`));
+                console.log(chalk_1.default.gray(`    ${String(i + 1).padStart(3)} │ ${oldLine || ''}`)); // eslint-disable-line no-console
             }
             else {
                 if (oldLine !== undefined) {
-                    console.log(chalk_1.default.red(`   -${String(i + 1).padStart(3)} │ ${oldLine}`));
+                    console.log(chalk_1.default.red(`   -${String(i + 1).padStart(3)} │ ${oldLine}`)); // eslint-disable-line no-console
                 }
                 if (newLine !== undefined) {
-                    console.log(chalk_1.default.green(`   +${String(i + 1).padStart(3)} │ ${newLine}`));
+                    console.log(chalk_1.default.green(`   +${String(i + 1).padStart(3)} │ ${newLine}`)); // eslint-disable-line no-console
                 }
             }
         }
-        console.log('');
+        console.log(''); // eslint-disable-line no-console
     }
     showApprovalOptions() {
         console.log(chalk_1.default.cyan(`
@@ -125,7 +125,7 @@ class ApprovalUI {
     [c] Cancel request
     [?] Show help
     [q] Quit
-    `));
+    `)); // eslint-disable-line no-console
     }
     showHelp(risk) {
         console.log(chalk_1.default.cyan(`
@@ -134,7 +134,7 @@ class ApprovalUI {
   - ${risk === 'low' ? 'Read-only or safe operations' : risk === 'medium' ? 'File modifications' : 'Shell commands, deployments, or deletions'}
   - Auto-approve: ${risk === 'low' ? 'Enabled' : risk === 'medium' ? 'Disabled' : 'Never'}
   - ${risk === 'critical' ? 'This operation could affect production systems!' : ''}
-    `));
+    `)); // eslint-disable-line no-console
     }
     close() {
         this.rl.close();
@@ -245,12 +245,12 @@ class ApprovalManager {
      */
     async showPrompt(request) {
         this.ui.showBanner(request.risk);
-        console.log(chalk_1.default.white(`  ${request.description}\n`));
+        console.log(chalk_1.default.white(`  ${request.description}\n`)); // eslint-disable-line no-console
         if (request.operations.length > 0) {
-            console.log(chalk_1.default.gray('  Operations:'));
+            console.log(chalk_1.default.gray('  Operations:')); // eslint-disable-line no-console
             request.operations.forEach((op, i) => this.ui.showOperation(op, i));
         }
-        console.log('');
+        console.log(''); // eslint-disable-line no-console
         // Get user choice
         while (true) {
             const answer = await this.ui.question(chalk_1.default.cyan('  Proceed? '));
@@ -292,7 +292,7 @@ class ApprovalManager {
                     request.status = 'denied';
                     return false;
                 default:
-                    console.log(chalk_1.default.yellow('  Invalid option. Type ? for help.'));
+                    console.log(chalk_1.default.yellow('  Invalid option. Type ? for help.')); // eslint-disable-line no-console
                     continue;
             }
         }
@@ -328,7 +328,7 @@ class ApprovalManager {
         this.requests.set(request.id, request);
         // Show diff preview
         this.ui.showBanner(request.risk);
-        console.log(chalk_1.default.white(`  ${description}\n`));
+        console.log(chalk_1.default.white(`  ${description}\n`)); // eslint-disable-line no-console
         for (const op of operations) {
             this.ui.showDiff(op.file, op.oldContent, op.newContent);
         }
@@ -404,13 +404,13 @@ class ApprovalManager {
     showPending() {
         const pending = this.listRequests().filter(r => r.status === 'pending');
         if (pending.length === 0) {
-            console.log(chalk_1.default.cyan('\n  No pending approvals.\n'));
+            console.log(chalk_1.default.cyan('\n  No pending approvals.\n')); // eslint-disable-line no-console
             return;
         }
-        console.log(chalk_1.default.cyan('\n  Pending Approvals:\n'));
+        console.log(chalk_1.default.cyan('\n  Pending Approvals:\n')); // eslint-disable-line no-console
         for (const request of pending) {
-            console.log(`  ${request.risk.toUpperCase()} ${request.description}`);
-            console.log(chalk_1.default.gray(`    Operations: ${request.operations.join(', ')}\n`));
+            console.log(`  ${request.risk.toUpperCase()} ${request.description}`); // eslint-disable-line no-console
+            console.log(chalk_1.default.gray(`    Operations: ${request.operations.join(', ')}\n`)); // eslint-disable-line no-console
         }
     }
     /**

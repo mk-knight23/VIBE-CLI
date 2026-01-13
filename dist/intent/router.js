@@ -70,13 +70,13 @@ class IntentRouter {
             {
                 category: 'ui',
                 keywords: ['ui', 'component', 'button', 'form', 'modal', 'dashboard', 'layout', 'frontend', 'interface', 'portfolio', 'page', 'home', 'header', 'footer', 'sidebar', 'nav', 'navigation', 'card', 'widget', 'hero', 'modal'],
-                phrases: [/ui/i, /component/i, /button/i, /form/i, /modal/i, /dashboard/i, /portfolio/i, /frontend/i, /create\s+a?\s*(?:\w+\s+)?page/i, /create\s+a?\s*(?:\w+\s+)?layout/i, /build\s+a?\s*(?:\w+\s+)?layout/i, /build\s+a?\s*(?:\w+\s+)?component/i],
+                phrases: [/ui/i, /component/i, /button/i, /form/i, /modal/i, /dashboard/i, /portfolio/i, /frontend/i, /create\s+a?\s*(?:\w+\s+)?page/i, /create\s+a?\s*(?:\w+\s+)?layout/i, /design\s+a?\s*(?:\w+\s+)?component/i],
                 confidence: 0.95,
             },
             {
                 category: 'deploy',
-                keywords: ['deploy', 'push', 'release', 'publish', 'ship', 'production'],
-                phrases: [/deploy/i, /push\s+to/i, /release/i, /publish/i, /ship/i, /to\s+production/i, /^build\s+to\s+/i],
+                keywords: ['deploy', 'push', 'release', 'publish', 'ship', 'production', 'ci', 'cd', 'pipeline', 'build', 'compile', 'make'],
+                phrases: [/deploy/i, /push\s+to/i, /release/i, /publish/i, /ship/i, /to\s+production/i, /ci\s*\/?\s*cd/i, /pipeline/i, /build\s+(?:the\s+)?project/i, /build\s+(?:the\s+)?app/i],
                 confidence: 0.9,
             },
             {
@@ -292,7 +292,11 @@ class IntentRouter {
      */
     calculatePatternScore(input, pattern) {
         const lowerInput = input.toLowerCase();
-        const keywordScore = pattern.keywords.filter(k => lowerInput.includes(k.toLowerCase())).length * 0.3;
+        const inputWords = lowerInput.split(/\s+/);
+        const keywordScore = pattern.keywords.filter(k => {
+            const lowerKeyword = k.toLowerCase();
+            return inputWords.some(word => word === lowerKeyword);
+        }).length * 0.3;
         const phraseScore = pattern.phrases.filter(p => p.test(input)).length * 0.4;
         return keywordScore + phraseScore;
     }
@@ -525,7 +529,12 @@ Respond with ONLY the category name and a brief description of what you're tryin
         if (!pattern)
             return this.UNKNOWN_CONFIDENCE;
         let score = pattern.confidence;
-        const keywordMatches = pattern.keywords.filter(k => input.includes(k)).length;
+        const lowerInput = input.toLowerCase();
+        const inputWords = lowerInput.split(/\s+/);
+        const keywordMatches = pattern.keywords.filter(k => {
+            const lowerKeyword = k.toLowerCase();
+            return inputWords.some(word => word === lowerKeyword);
+        }).length;
         const phraseMatches = pattern.phrases.filter(p => p.test(input)).length;
         score += (keywordMatches + phraseMatches) * 0.05;
         return Math.min(score, 1.0);
